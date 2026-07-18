@@ -1,0 +1,28 @@
+meta {
+  name: bad-signature
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/webhooks/orders
+  body: json
+  auth: none
+}
+
+headers {
+  content-type: application/json
+  x-webhook-signature: deadbeef
+}
+
+body:json {
+  {
+    "external_order_id": "EXT-9999",
+    "order_code": "ORD-9999",
+    "total": 100000
+  }
+}
+
+assert {
+  res.status: eq 401
+}

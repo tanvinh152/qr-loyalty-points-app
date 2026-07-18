@@ -1,0 +1,35 @@
+meta {
+  name: valid-order
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/webhooks/orders
+  body: json
+  auth: none
+}
+
+headers {
+  content-type: application/json
+  x-webhook-signature: {{sig}}
+}
+
+body:json {
+  {
+    "external_order_id": "EXT-5001",
+    "order_code": "ORD-5001",
+    "total": 180000
+  }
+}
+
+script:pre-request {
+  const crypto = require('crypto');
+  const raw = JSON.stringify(req.getBody());
+  const sig = crypto.createHmac('sha256', bru.getEnvVar('webhookSecret')).update(raw).digest('hex');
+  bru.setVar('sig', sig);
+}
+
+assert {
+  res.status: eq 200
+}

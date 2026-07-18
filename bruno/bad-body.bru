@@ -1,0 +1,37 @@
+meta {
+  name: bad-body
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/webhooks/orders
+  body: json
+  auth: none
+}
+
+headers {
+  content-type: application/json
+  x-webhook-signature: {{sig}}
+}
+
+body:json {
+  {
+    "order_code": "ORD-8888"
+  }
+}
+
+script:pre-request {
+  const crypto = require('crypto');
+  const raw = JSON.stringify(req.getBody());
+  const sig = crypto.createHmac('sha256', bru.getEnvVar('webhookSecret')).update(raw).digest('hex');
+  bru.setVar('sig', sig);
+}
+
+docs {
+  Valid signature but payload missing external_order_id + total -> 422.
+}
+
+assert {
+  res.status: eq 422
+}
