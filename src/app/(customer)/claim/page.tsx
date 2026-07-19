@@ -1,7 +1,9 @@
 import { ClaimForm } from "./claim-form"
+import { getMessages } from "@/lib/i18n/server"
 
-export const metadata = {
-  title: "Claim Loyalty Points",
+export async function generateMetadata() {
+  const t = await getMessages()
+  return { title: t.claim.metaTitle }
 }
 
 export default function ClaimPage() {

@@ -8,17 +8,24 @@ import {
 } from "@/components/ui/table"
 import { PageLink } from "@/components/page-link"
 import { createClient } from "@/lib/supabase/server"
+import { getMessages } from "@/lib/i18n/server"
+import type { TransactionSource, TransactionType } from "@/lib/db-types"
 
-export const metadata = { title: "Transactions" }
+export async function generateMetadata() {
+  const t = await getMessages()
+  return { title: t.admin.transactions.metaTitle }
+}
 
 const PAGE_SIZE = 20
 
 type TxRow = {
   id: string
-  points: number
+  type: TransactionType
+  source: TransactionSource
+  amount: number
+  order_code: string | null
   created_at: string
   customers: { full_name: string | null; phone: string } | null
-  orders: { order_code: string } | null
 }
 
 export default async function TransactionsPage({
@@ -26,6 +33,8 @@ export default async function TransactionsPage({
 }: {
   searchParams: Promise<{ page?: string }>
 }) {
+  const t = await getMessages()
+  const tx = t.admin.transactions
   const { page } = await searchParams
   const pageNum = Math.max(1, Number(page) || 1)
   const from = (pageNum - 1) * PAGE_SIZE
@@ -33,10 +42,11 @@ export default async function TransactionsPage({
 
   const supabase = await createClient()
   const { data, count } = await supabase
-    .from("point_transactions")
-    .select("id, points, created_at, customers(full_name, phone), orders(order_code)", {
-      count: "exact",
-    })
+    .from("transactions")
+    .select(
+      "id, type, source, amount, order_code, created_at, customers(full_name, phone)",
+      { count: "exact" }
+    )
     .order("created_at", { ascending: false })
     .range(from, to)
 
@@ -45,33 +55,39 @@ export default async function TransactionsPage({
 
   return (
     <div className="grid gap-6">
-      <h1 className="text-2xl font-semibold">Transaction History</h1>
+      <h1 className="text-2xl font-semibold">{tx.title}</h1>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Order</TableHead>
-              <TableHead className="text-right">Points</TableHead>
+              <TableHead>{tx.date}</TableHead>
+              <TableHead>{tx.customer}</TableHead>
+              <TableHead>{tx.order}</TableHead>
+              <TableHead>{tx.type}</TableHead>
+              <TableHead>{tx.source}</TableHead>
+              <TableHead className="text-right">{tx.amount}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="text-muted-foreground text-center">
-                  No transactions yet.
+                <TableCell colSpan={6} className="text-muted-foreground text-center">
+                  {tx.empty}
                 </TableCell>
               </TableRow>
             )}
-            {rows.map((t) => (
-              <TableRow key={t.id}>
-                <TableCell>{new Date(t.created_at).toLocaleString()}</TableCell>
+            {rows.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell>{new Date(row.created_at).toLocaleString()}</TableCell>
                 <TableCell>
-                  {t.customers?.full_name ?? t.customers?.phone ?? "—"}
+                  {row.customers?.full_name ?? row.customers?.phone ?? "—"}
                 </TableCell>
-                <TableCell>{t.orders?.order_code ?? "—"}</TableCell>
-                <TableCell className="text-right font-medium">+{t.points}</TableCell>
+                <TableCell>{row.order_code ?? "—"}</TableCell>
+                <TableCell>{row.type}</TableCell>
+                <TableCell className="text-muted-foreground">{row.source}</TableCell>
+                <TableCell className="text-right font-medium">
+                  {row.amount > 0 ? `+${row.amount}` : row.amount}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -82,14 +98,16 @@ export default async function TransactionsPage({
           href={`/admin/transactions?page=${pageNum - 1}`}
           disabled={pageNum <= 1}
         >
-          Previous
+          {t.common.previous}
         </PageLink>
-        <span className="text-muted-foreground text-sm">Page {pageNum}</span>
+        <span className="text-muted-foreground text-sm">
+          {t.common.page(pageNum)}
+        </span>
         <PageLink
           href={`/admin/transactions?page=${pageNum + 1}`}
           disabled={!hasNext}
         >
-          Next
+          {t.common.next}
         </PageLink>
       </div>
     </div>

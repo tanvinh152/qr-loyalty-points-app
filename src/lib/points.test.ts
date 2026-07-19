@@ -1,35 +1,76 @@
 import { describe, it, expect } from "vitest"
 
-import { calcPoints, type PointSettings } from "./points"
+import {
+  calcBasePoints,
+  calcOrderPoints,
+  type ClaimItem,
+  type LoyaltyRules,
+  type SkuPointMap,
+} from "./points"
 
-const base: PointSettings = {
-  conversion_rate: 0.1,
-  min_order_value: 50000,
-  rounding: "floor",
-}
+const rules: LoyaltyRules = { rounding: "floor", unmapped_sku_points: 0 }
+const skuMap: SkuPointMap = { SP000001: 50, STPLCHODNC500: 100 }
 
-describe("calcPoints", () => {
-  it("returns 0 below the minimum order value", () => {
-    expect(calcPoints(45000, base)).toBe(0)
+const items: ClaimItem[] = [
+  { sku: "SP000001", quantity: 2 },
+  { sku: "STPLCHODNC500", quantity: 1 },
+]
+
+describe("calcBasePoints", () => {
+  it("sums quantity × per-SKU points", () => {
+    expect(calcBasePoints(items, skuMap, rules)).toBe(200)
   })
 
-  it("awards points at the minimum threshold", () => {
-    expect(calcPoints(50000, base)).toBe(5000)
+  it("gives an unmapped SKU the configured fallback", () => {
+    const unknown: ClaimItem[] = [{ sku: "NOPE", quantity: 3 }]
+    expect(calcBasePoints(unknown, skuMap, rules)).toBe(0)
+    expect(
+      calcBasePoints(unknown, skuMap, { ...rules, unmapped_sku_points: 5 })
+    ).toBe(15)
+  })
+
+  it("ignores items without a SKU or with a bad quantity", () => {
+    expect(
+      calcBasePoints(
+        [
+          { sku: null, quantity: 4 },
+          { sku: "SP000001", quantity: 0 },
+          { sku: "SP000001", quantity: -2 },
+        ],
+        skuMap,
+        rules
+      )
+    ).toBe(0)
+  })
+})
+
+describe("calcOrderPoints", () => {
+  it("applies the tier multiplier", () => {
+    expect(calcOrderPoints(items, skuMap, 1.5, rules)).toBe(300)
   })
 
   it("floors by default rule", () => {
-    expect(calcPoints(99999, base)).toBe(9999) // 9999.9 -> floor
+    // 200 × 1.2 = 240; use an odd multiplier to hit a fraction: 200 × 1.234 = 246.8
+    expect(calcOrderPoints(items, skuMap, 1.234, rules)).toBe(246)
   })
 
   it("rounds when configured", () => {
-    expect(calcPoints(99999, { ...base, rounding: "round" })).toBe(10000)
+    expect(
+      calcOrderPoints(items, skuMap, 1.234, { ...rules, rounding: "round" })
+    ).toBe(247)
   })
 
   it("ceils when configured", () => {
-    expect(calcPoints(99991, { ...base, rounding: "ceil" })).toBe(10000) // 9999.1 -> 10000
+    expect(
+      calcOrderPoints(items, skuMap, 1.001, { ...rules, rounding: "ceil" })
+    ).toBe(201)
   })
 
-  it("handles zero conversion rate", () => {
-    expect(calcPoints(100000, { ...base, conversion_rate: 0 })).toBe(0)
+  it("treats a missing or zero multiplier as ×1", () => {
+    expect(calcOrderPoints(items, skuMap, 0, rules)).toBe(200)
+  })
+
+  it("returns 0 for an empty order", () => {
+    expect(calcOrderPoints([], skuMap, 2, rules)).toBe(0)
   })
 })
