@@ -1,54 +1,100 @@
-import { Button } from "@/components/ui/button"
+import { AlertTriangle, Coins, Gift, PackageCheck } from "lucide-react"
+
+import { EmptyState } from "@/components/empty-state"
+import { PageHeader } from "@/components/page-header"
+import { SearchInput } from "@/components/search-input"
+import { StatCard } from "@/components/stat-card"
 import { createClient } from "@/lib/supabase/server"
 import { getMessages } from "@/lib/i18n/server"
+import { getRewardCategories } from "@/lib/loyalty"
+import { LOW_STOCK } from "@/lib/rewards"
 import type { RewardRow } from "@/lib/db-types"
-import { RewardForm } from "./reward-form"
-import { deleteReward } from "./actions"
+import { RewardCard } from "./reward-card"
+import { RewardDialog } from "./reward-form"
 
 export async function generateMetadata() {
   const t = await getMessages()
   return { title: t.admin.rewards.metaTitle }
 }
 
-export default async function RewardsPage() {
+export default async function RewardsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>
+}) {
   const t = await getMessages()
   const m = t.admin.rewards
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from("rewards")
-    .select("*")
-    .order("points_cost", { ascending: true })
+  const { q } = await searchParams
+  const search = q?.trim()
 
+  const supabase = await createClient()
+  let query = supabase.from("rewards").select("*").order("points_cost", {
+    ascending: true,
+  })
+  if (search) query = query.ilike("name", `%${search}%`)
+
+  const [{ data }, categories] = await Promise.all([
+    query,
+    getRewardCategories(),
+  ])
   const rewards = (data ?? []) as RewardRow[]
+
+  const active = rewards.filter((r) => r.is_active).length
+  const lowStock = rewards.filter((r) => r.quantity <= LOW_STOCK).length
+  const avgCost = rewards.length
+    ? Math.round(
+        rewards.reduce((sum, r) => sum + r.points_cost, 0) / rewards.length,
+      )
+    : 0
+  // One shared scale for every stock bar in the grid.
+  const maxQuantity = Math.max(0, ...rewards.map((r) => r.quantity))
 
   return (
     <div className="grid gap-6">
-      <div className="grid gap-1">
-        <h1 className="text-2xl font-semibold">{m.title}</h1>
-        <p className="text-muted-foreground text-sm">{m.helper}</p>
+      <PageHeader title={m.title} description={m.helper}>
+        <RewardDialog categories={categories} />
+      </PageHeader>
+
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label={m.statTotal} value={rewards.length} icon={Gift} />
+        <StatCard
+          label={m.statActive}
+          value={active}
+          icon={PackageCheck}
+          tone="secondary"
+        />
+        <StatCard
+          label={m.statLowStock}
+          value={lowStock}
+          hint={m.statLowStockHint(LOW_STOCK)}
+          icon={AlertTriangle}
+          tone="neutral"
+        />
+        <StatCard label={m.statAvgCost} value={avgCost} icon={Coins} />
       </div>
 
-      <div className="grid gap-4">
-        {rewards.length === 0 && (
-          <p className="text-muted-foreground text-sm">{m.empty}</p>
-        )}
-        {rewards.map((reward) => (
-          <div key={reward.id} className="grid gap-2 rounded-md border p-4">
-            <RewardForm row={reward} />
-            <form action={deleteReward} className="justify-self-end">
-              <input type="hidden" name="id" value={reward.id} />
-              <Button type="submit" variant="outline" size="sm">
-                {t.common.delete}
-              </Button>
-            </form>
-          </div>
-        ))}
-      </div>
+      <SearchInput
+        action="/admin/rewards"
+        defaultValue={search}
+        label={t.common.search}
+        placeholder={m.searchPlaceholder}
+        className="sm:w-96"
+      />
 
-      <div className="grid gap-2 rounded-md border border-dashed p-4">
-        <h2 className="text-sm font-medium">{m.addTitle}</h2>
-        <RewardForm />
-      </div>
+      {rewards.length === 0 ? (
+        <EmptyState title={search ? m.noMatch : m.empty} icon={Gift} />
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          {rewards.map((reward) => (
+            <RewardCard
+              key={reward.id}
+              reward={reward}
+              maxQuantity={maxQuantity}
+              categories={categories}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

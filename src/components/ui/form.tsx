@@ -24,7 +24,7 @@ type FormFieldContextValue<
 }
 
 const FormFieldContext = React.createContext<FormFieldContextValue>(
-  {} as FormFieldContextValue
+  {} as FormFieldContextValue,
 )
 
 function FormField<
@@ -43,7 +43,7 @@ type FormItemContextValue = {
 }
 
 const FormItemContext = React.createContext<FormItemContextValue>(
-  {} as FormItemContextValue
+  {} as FormItemContextValue,
 )
 
 function useFormField() {
@@ -148,8 +148,19 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
   )
 }
 
+/**
+ * `z.coerce.number()` types its *input* as `unknown`, so a coerced field's
+ * value is not assignable to an <input>. Everything the DOM holds is a string
+ * anyway, so normalise it here rather than casting at every call site.
+ */
+function fieldValue(value: unknown): string {
+  if (value === null || value === undefined) return ""
+  return String(value)
+}
+
 export {
   useFormField,
+  fieldValue,
   Form,
   FormItem,
   FormLabel,

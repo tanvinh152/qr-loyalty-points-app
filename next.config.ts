@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    // Pancake product thumbnails shown in the admin SKU picker.
+    remotePatterns: [{ protocol: "https", hostname: "content.pancake.vn" }],
+  },
 };
 
 export default nextConfig;

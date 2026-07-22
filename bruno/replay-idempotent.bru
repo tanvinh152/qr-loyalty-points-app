@@ -5,36 +5,31 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/api/webhooks/orders
+  url: {{baseUrl}}/api/webhooks/pancake
   body: json
   auth: none
 }
 
 headers {
   content-type: application/json
-  x-webhook-signature: {{sig}}
+  x-webhook-secret: {{webhookSecret}}
 }
 
 body:json {
   {
-    "external_order_id": "EXT-5001",
-    "order_code": "ORD-5001",
-    "total": 180000
+    "id": "{{orderId}}"
   }
 }
 
-script:pre-request {
-  const crypto = require('crypto');
-  const raw = JSON.stringify(req.getBody());
-  const sig = crypto.createHmac('sha256', bru.getEnvVar('webhookSecret')).update(raw).digest('hex');
-  bru.setVar('sig', sig);
-}
-
 docs {
-  Send the same external_order_id twice. Second call must still 200 and NOT
-  create a duplicate order (upsert on external_order_id).
+  Same order twice. The second call must still 200 and must NOT create a second
+  transaction — the partial unique index on transactions.order_code is the
+  idempotency key, shared with the manual claim flow.
+
+  Expect `{"claimed":false,"skipped":"already_claimed"}` the second time.
 }
 
 assert {
   res.status: eq 200
+  res.body.claimed: eq false
 }

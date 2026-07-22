@@ -35,7 +35,7 @@ Pancake POS REST API · Tailwind + shadcn/ui (Base UI) · React Hook Form + Zod.
 ## Local setup
 1. `cp .env.example .env.local` and fill Supabase + Pancake values.
 2. Apply DB (see below).
-3. `npm run dev` → http://localhost:3000 (redirects to `/claim`).
+3. `npm run dev` → http://localhost:3000 (redirects to `/login` — the QR landing).
 
 ### Pancake credentials
 `PANCAKE_API_KEY` and `PANCAKE_SHOP_ID` are server-only. Sanity check a key with:
@@ -65,13 +65,33 @@ at `/admin/login`.
 - `npm test` — vitest unit tests (`calcOrderPoints`, phone masking)
 - `npm run lint` — ESLint
 
+## Customer accounts (Phase 4)
+- **Auth is phone + password.** Supabase Auth's password provider is email-keyed, so
+  `phoneToEmail()` (`src/lib/phone.ts`) turns the normalized phone into a synthetic
+  address at `CUSTOMER_EMAIL_DOMAIN`. No SMS provider, no OTP cost. Signup calls
+  `auth.admin.createUser({ email_confirm: true })` with the service-role client: the
+  public signup endpoint runs an email validator that rejects synthetic domains
+  (`email_address_invalid`) and would queue a confirmation mail to an address nobody
+  owns. No Supabase auth setting needs changing.
+- **Ownership proof**: `CUSTOMER_SIGNUP_REQUIRE_PROOF=true` makes `/register` demand an
+  order code whose masked phone matches (same `matchesMask` gate as `/claim`). With it
+  off — the testing default — anyone who knows a phone number inherits the points
+  already claimed against it. Keep it on in production until Zalo OTP replaces it.
+- **Roles**: admins are `app_metadata.role = 'admin'` (service-role writable only).
+  `0005_roles_and_customer_rls.sql` backfills every existing auth user as an admin and
+  rewrites the RLS policies around `public.is_admin()`; customers get self-scoped reads
+  on their own `customers` row and `transactions`. New admins need the claim set
+  manually, e.g. `update auth.users set raw_app_meta_data = raw_app_meta_data ||
+  '{"role":"admin"}'::jsonb where email = '…';`.
+- **Redemption** goes through the `redeem_reward` RPC (`0006_redeem_rpc.sql`), which locks
+  the reward row before checking stock and balance. `lifetime_points` is never reduced, so
+  spending cannot demote a tier.
+- Routes: `/login`, `/register`, and the account area `/dashboard`, `/rewards`, `/history`
+  (guarded in `src/lib/supabase/middleware.ts`).
+
 ## Roadmap
-- **Phase 3** — `POST /api/webhooks/pancake`: auto-claim on order status change,
-  reusing `claim_points` with `source='webhook'`.
-- **Phase 4** — customer accounts (phone + password), `/dashboard` with tier card
-  and reward redemption. Signup requires phone + a real order code for that phone
-  as ownership proof (no SMS OTP), otherwise anyone could register someone else's
-  number and inherit their balance.
+- Zalo OTP as the signup ownership proof, replacing the order-code check.
+- Self-serve password reset (today `/login` tells the customer to contact support).
 
 ## Deployment (Vercel + Supabase Cloud)
 - **Test env `mia`** = Vercel Preview; **prod `EVA`** = Vercel Production.

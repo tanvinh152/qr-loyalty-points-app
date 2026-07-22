@@ -2,14 +2,27 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/* The Stitch mockups are Tailwind CDN pages full of arbitrary values
+   (`from-[#0b1326]`, `bg-[url(...)]`). They are reference art, not sources —
+   without this, automatic content detection compiles their classes into the
+   app bundle and the `url()` references fail to resolve at build time. */
+@source not "../../design";
+
+/* Design system: Stitch "Chicha Pet Members" (design/stitch-v2/README.md).
+   Dark mode only — every screen in that project ships `<html class="dark">`, so
+   there is no light palette to port and no `dark` variant to declare. The token
+   NAMES are inherited from the previous light "Loyalty Core" system so no page
+   markup had to change when the values flipped.
+   Colors stay as the hex the design spec states: Tailwind v4 composes opacity
+   with color-mix(), so `/50` modifiers work on hex just as well as on oklch,
+   and keeping the literal values makes the file diffable against the spec. */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-hanken);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-hanken);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -27,94 +40,155 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-container: var(--destructive-container);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
+  --color-secondary-container: var(--secondary-container);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-container: var(--primary-container);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  /* Stitch tonal surfaces. Depth comes from these layers plus a 1px outline,
+     never from a shadow. */
+  --color-surface-low: var(--surface-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-high: var(--surface-high);
+  --color-surface-highest: var(--surface-highest);
+  --color-outline: var(--outline);
+  --color-chicha-blue: var(--chicha-blue);
+  --color-brand: var(--brand);
+  /* Set by the tier-accent classes on a wrapper, so `text-tier` inside a tier
+     panel resolves to that tier's gem colour without naming it. */
+  --color-tier: var(--tier);
+  --color-tier-1: var(--tier-1);
+  --color-tier-2: var(--tier-2);
+  --color-tier-3: var(--tier-3);
+  --color-tier-4: var(--tier-4);
+  --color-tier-5: var(--tier-5);
+
+  /* Shape language is soft: 8px hairline, 12px controls, 1rem cards,
+     2rem panels, 3rem hero surfaces. */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 2rem;
+  --radius-4xl: 3rem;
+
+  /* Semantic type scale — page markup reads like the design spec. */
+  /* The mockups' hero numerals (points balance, tier title) sit a step above
+     headline-lg; without this they render at 30px and read as a section title. */
+  --text-display: 48px;
+  --text-display--line-height: 56px;
+  --text-display--letter-spacing: -0.02em;
+  --text-display--font-weight: 700;
+  --text-headline-lg: 30px;
+  --text-headline-lg--line-height: 38px;
+  --text-headline-lg--letter-spacing: -0.02em;
+  --text-headline-lg--font-weight: 700;
+  --text-headline-md: 20px;
+  --text-headline-md--line-height: 28px;
+  --text-headline-md--font-weight: 600;
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 24px;
+  --text-body-lg--font-weight: 400;
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 20px;
+  --text-body-sm--font-weight: 400;
+  --text-body-xs: 12px;
+  --text-body-xs--line-height: 16px;
+  --text-body-xs--font-weight: 400;
+  --text-label-sm: 10px;
+  --text-label-sm--line-height: 14px;
+  --text-label-sm--letter-spacing: 0.04em;
+  --text-label-sm--font-weight: 700;
+  --text-label-md: 12px;
+  --text-label-md--line-height: 16px;
+  --text-label-md--letter-spacing: 0.02em;
+  --text-label-md--font-weight: 600;
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* The canvas is the darkest layer; every surface above it steps lighter. */
+  --background: #10131a;
+  --foreground: #e0e2ec;
+  --card: #1d2027;
+  --card-foreground: #e0e2ec;
+  --popover: #191b23;
+  --popover-foreground: #e0e2ec;
+  --primary: #d8e2ff;
+  --primary-foreground: #122f5f;
+  /* The saturated step: filled buttons, the active nav pill, focus glows. */
+  --primary-container: #4d8eff;
+  --secondary: #4edea3;
+  --secondary-foreground: #003824;
+  --secondary-container: #00b47d;
+  --muted: #191b23;
+  --muted-foreground: #c4c6d0;
+  /* accent == the tint behind active nav and chips, one step above --card. */
+  --accent: #272a31;
+  --accent-foreground: #d8e2ff;
+  --destructive: #ffb4ab;
+  --destructive-container: #93000a;
+  --success: #4edea3;
+  --warning: #ffb95f;
+  --border: #44474f;
+  --input: #44474f;
+  --ring: #4d8eff;
+  --outline: #8e909a;
+  /* Chicha `surface` — the page canvas, same value as --background. */
+  --surface-low: #10131a;
+  --surface-container: #1d2027;
+  --surface-high: #272a31;
+  --surface-highest: #32353c;
+  /* The brand mark's saturated blue. Reserved for the logo and hero accents —
+     it fails contrast as a text or border color on this canvas. */
+  --chicha-blue: #261cc1;
+  /* The dangnhap CTA blue: a lifted `chicha-blue` that carries white text at an
+     accessible contrast, which #261cc1 itself does not. Filled buttons only. */
+  --brand: #4d45e6;
+  /* Tier accents for the member screens. Keyed by membership_tiers.sort_order,
+     never by name: tier names are admin-editable rows. */
+  --tier-1: #cbd5e1;
+  --tier-2: #fbbf24;
+  --tier-3: #a5b4fc;
+  --tier-4: #f43f5e;
+  --tier-5: #67e8f9;
+  --chart-1: #4d8eff;
+  --chart-2: #4edea3;
+  --chart-3: #ffb95f;
+  --chart-4: #adc6ff;
+  --chart-5: #d8e2ff;
+  --radius: 1rem;
+  --sidebar: #0b0e15;
+  --sidebar-foreground: #e0e2ec;
+  --sidebar-primary: #4d8eff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #272a31;
+  --sidebar-accent-foreground: #d8e2ff;
+  --sidebar-border: #44474f;
+  --sidebar-ring: #4d8eff;
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+/* The auth screens' canvas texture (`dangnhap.html`): a faint dot grid that
+   keeps the empty background from reading as flat black. */
+@utility pattern-paws {
+  background-image: radial-gradient(
+    circle at 10px 10px,
+    rgba(216, 226, 255, 0.05) 2px,
+    transparent 0
+  );
+  background-size: 30px 30px;
 }
 
 @layer base {
@@ -122,9 +196,21 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground text-body-lg;
   }
   html {
     @apply font-sans;
+  }
+  /* The spec drops headline-lg to 24/32 on phones. */
+  @media (width < 48rem) {
+    .text-headline-lg {
+      font-size: 24px;
+      line-height: 32px;
+      letter-spacing: -0.01em;
+    }
+    .text-display {
+      font-size: 36px;
+      line-height: 44px;
+    }
   }
 }

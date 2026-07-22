@@ -29,7 +29,10 @@ export const pancakeOrderSchema = z.object({
   // Masked, e.g. "0****70".
   bill_phone_number: z.string().nullish(),
   shipping_address: z
-    .object({ phone_number: z.string().nullish(), full_name: z.string().nullish() })
+    .object({
+      phone_number: z.string().nullish(),
+      full_name: z.string().nullish(),
+    })
     .nullish(),
   customer: z
     .object({
@@ -59,14 +62,60 @@ export type OrderLineItem = {
   points: number
 }
 
+// ---- Product catalog (GET /shops/:id/products/variations) ----
+//
+// Shape verified against shop 1328315613 (45 variations, one page at page_size=100).
+// Same narrow-parse rule as the order: only what the admin picker renders.
+
+export const pancakeVariationSchema = z.object({
+  id: z.string(),
+  // The SKU. Same value an order item carries as variation_info.display_id, and
+  // what we persist as product_points.product_code.
+  display_id: z.string().nullish(),
+  barcode: z.string().nullish(),
+  retail_price: z.number().nullish(),
+  remain_quantity: z.number().nullish(),
+  images: z.array(z.string()).nullish(),
+  is_hidden: z.boolean().nullish(),
+  is_locked: z.boolean().nullish(),
+  // Variation attributes, e.g. [{name:"Cát sắn Chicha", value:"3 túi"}]. Several
+  // variations share one product.name — only this tells them apart.
+  fields: z
+    .array(
+      z.object({ name: z.string().nullish(), value: z.string().nullish() }),
+    )
+    .nullish(),
+  product: z
+    .object({ name: z.string().nullish(), is_published: z.boolean().nullish() })
+    .nullish(),
+})
+
+export const pancakeVariationsResponseSchema = z.object({
+  success: z.boolean().optional(),
+  data: z.array(pancakeVariationSchema).default([]),
+  total_pages: z.number().int().nullish(),
+  page_number: z.number().int().nullish(),
+})
+
+// The catalog view handed to the browser. Everything the picker shows, nothing else.
+export type CatalogVariation = {
+  sku: string
+  name: string
+  /** Joined variation attributes, e.g. "Cát sắn Chicha: 3 túi · Xịt khử mùi: 237ml". */
+  attrs: string
+  image: string | null
+  price: number | null
+  remain: number | null
+}
+
 export type PancakeError =
-  | "not_found"
-  | "unauthorized"
-  | "unavailable"
-  | "malformed"
+  "not_found" | "unauthorized" | "unavailable" | "malformed"
 
 export class PancakeRequestError extends Error {
-  constructor(readonly kind: PancakeError, message?: string) {
+  constructor(
+    readonly kind: PancakeError,
+    message?: string,
+  ) {
     super(message ?? kind)
     this.name = "PancakeRequestError"
   }

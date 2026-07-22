@@ -9,7 +9,7 @@ export type LoginState = { error: string } | null
 
 export async function login(
   _prev: LoginState,
-  formData: FormData
+  formData: FormData,
 ): Promise<LoginState> {
   const t = await getMessages()
   const l = t.admin.login

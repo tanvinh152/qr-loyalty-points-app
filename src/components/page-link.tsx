@@ -1,29 +1,42 @@
 import Link from "next/link"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-// Pagination link that renders as a disabled-looking span when there's no target.
+/**
+ * Chevron pager button for a table footer.
+ * Renders as a dimmed, inert span when there is no page to go to — a disabled
+ * link is not focusable, so nothing is lost by dropping the anchor.
+ */
 export function PageLink({
   href,
   disabled,
-  children,
+  direction,
+  label,
 }: {
   href: string
   disabled?: boolean
-  children: React.ReactNode
+  direction: "prev" | "next"
+  /** Accessible name — the button itself is icon-only. */
+  label: string
 }) {
-  const className = cn(buttonVariants({ variant: "outline", size: "sm" }))
+  const Icon = direction === "prev" ? ChevronLeft : ChevronRight
+  const className = cn(
+    buttonVariants({ variant: "outline", size: "icon-sm" }),
+    "text-muted-foreground",
+  )
+
   if (disabled) {
     return (
-      <span className={cn(className, "pointer-events-none opacity-50")}>
-        {children}
+      <span className={cn(className, "opacity-30")} aria-hidden>
+        <Icon className="size-[18px]" />
       </span>
     )
   }
   return (
-    <Link href={href} className={className}>
-      {children}
+    <Link href={href} className={className} aria-label={label}>
+      <Icon className="size-[18px]" aria-hidden />
     </Link>
   )
 }

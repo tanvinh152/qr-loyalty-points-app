@@ -2,6 +2,7 @@
 
 import { useActionState } from "react"
 
+import { FormError } from "@/components/form-error"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,22 +13,20 @@ export function LoginForm() {
   const l = useT().admin.login
   const [state, formAction, isPending] = useActionState<LoginState, FormData>(
     login,
-    null
+    null,
   )
 
   return (
     <form action={formAction} className="grid gap-4">
       <div className="grid gap-2">
         <Label htmlFor="email">{l.email}</Label>
-        <Input id="email" name="email" type="email" required autoFocus />
+        <Input id="email" name="email" type="email" required />
       </div>
       <div className="grid gap-2">
         <Label htmlFor="password">{l.password}</Label>
         <Input id="password" name="password" type="password" required />
       </div>
-      {state?.error && (
-        <p className="text-destructive text-sm">{state.error}</p>
-      )}
+      <FormError message={state?.error} />
       <Button type="submit" disabled={isPending}>
         {isPending ? l.signingIn : l.signIn}
       </Button>

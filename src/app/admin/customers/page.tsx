@@ -1,3 +1,6 @@
+import Link from "next/link"
+import { Users } from "lucide-react"
+
 import {
   Table,
   TableBody,
@@ -6,7 +9,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { PageLink } from "@/components/page-link"
+import { Badge } from "@/components/ui/badge"
+import { EmptyState } from "@/components/empty-state"
+import { InitialsAvatar } from "@/components/initials-avatar"
+import { Pagination } from "@/components/pagination"
+import { PageHeader } from "@/components/page-header"
+import { FieldLegend } from "@/components/field-legend"
+import { SearchInput } from "@/components/search-input"
+import { SectionCard } from "@/components/section-card"
+import { StatusDot } from "@/components/status-dot"
 import { createClient } from "@/lib/supabase/server"
 import { getMessages } from "@/lib/i18n/server"
 import type { CustomerRow } from "@/lib/db-types"
@@ -48,70 +59,120 @@ export default async function CustomersPage({
 
   const { data, count } = await query
   const customers = (data ?? []) as unknown as CustomerWithTier[]
-  const hasNext = (count ?? 0) > to + 1
+  const total = count ?? 0
+  const hasNext = total > to + 1
   const pageHref = (n: number) =>
     `/admin/customers?page=${n}${search ? `&q=${encodeURIComponent(search)}` : ""}`
 
   return (
     <div className="grid gap-6">
-      <h1 className="text-2xl font-semibold">{cm.title}</h1>
-      <form className="flex gap-2" action="/admin/customers">
-        <input
-          type="search"
-          name="q"
-          defaultValue={search ?? ""}
-          placeholder={cm.search}
-          className="border-input bg-background h-9 w-full max-w-sm rounded-md border px-3 text-sm"
-        />
-      </form>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{cm.name}</TableHead>
-              <TableHead>{cm.phone}</TableHead>
-              <TableHead>{cm.email}</TableHead>
-              <TableHead>{cm.tier}</TableHead>
-              <TableHead className="text-right">{cm.currentPoints}</TableHead>
-              <TableHead className="text-right">{cm.lifetimePoints}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {customers.length === 0 && (
+      <PageHeader title={cm.title} description={cm.subtitle}>
+        <div className="border-border bg-card flex items-center gap-6 rounded-lg border px-6 py-2">
+          <div>
+            <p className="text-label-md text-muted-foreground tracking-wider uppercase">
+              {cm.totalMembers}
+            </p>
+            <p className="text-primary text-xl font-bold tabular-nums">
+              {total.toLocaleString()}
+            </p>
+          </div>
+        </div>
+      </PageHeader>
+
+      <SearchInput
+        action="/admin/customers"
+        defaultValue={search}
+        label={cm.search}
+        placeholder={cm.search}
+        className="sm:w-96"
+      />
+
+      <FieldLegend
+        items={[
+          { term: cm.currentPoints, hint: cm.currentPointsHint },
+          { term: cm.lifetimePoints, hint: cm.lifetimePointsHint },
+        ]}
+      />
+
+      <SectionCard
+        footer={
+          <Pagination
+            page={pageNum}
+            shown={customers.length}
+            total={total}
+            hasNext={hasNext}
+            hrefFor={pageHref}
+            labels={t.common}
+          />
+        }
+      >
+        {customers.length === 0 ? (
+          <EmptyState title={cm.empty} icon={Users} />
+        ) : (
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={6} className="text-muted-foreground text-center">
-                  {cm.empty}
-                </TableCell>
+                <TableHead>{cm.name}</TableHead>
+                <TableHead>{cm.phone}</TableHead>
+                <TableHead>{cm.tier}</TableHead>
+                <TableHead className="text-right">{cm.currentPoints}</TableHead>
+                <TableHead className="text-right">
+                  {cm.lifetimePoints}
+                </TableHead>
+                <TableHead>{cm.profileStatus}</TableHead>
               </TableRow>
-            )}
-            {customers.map((c) => (
-              <TableRow key={c.id}>
-                <TableCell>{c.full_name ?? "—"}</TableCell>
-                <TableCell>{c.phone}</TableCell>
-                <TableCell>{c.email ?? "—"}</TableCell>
-                <TableCell>{c.membership_tiers?.name ?? "—"}</TableCell>
-                <TableCell className="text-right font-medium">
-                  {c.current_points}
-                </TableCell>
-                <TableCell className="text-muted-foreground text-right">
-                  {c.lifetime_points}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex items-center justify-between">
-        <PageLink href={pageHref(pageNum - 1)} disabled={pageNum <= 1}>
-          {t.common.previous}
-        </PageLink>
-        <span className="text-muted-foreground text-sm">
-          {t.common.page(pageNum)}
-        </span>
-        <PageLink href={pageHref(pageNum + 1)} disabled={!hasNext}>
-          {t.common.next}
-        </PageLink>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {customers.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <InitialsAvatar name={c.full_name?.trim() || c.phone} />
+                      <div>
+                        <Link
+                          href={`/admin/customers/${c.id}`}
+                          className="text-body-sm leading-tight font-semibold hover:underline"
+                        >
+                          {c.full_name ?? c.phone}
+                        </Link>
+                        <p className="text-muted-foreground text-body-xs">
+                          {c.email ?? "—"}
+                        </p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{c.phone}</TableCell>
+                  <TableCell>
+                    {c.membership_tiers ? (
+                      <Badge variant="secondary">
+                        {c.membership_tiers.name}
+                      </Badge>
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
+                  <TableCell className="text-primary text-right font-bold tabular-nums">
+                    {c.current_points.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-right tabular-nums">
+                    {c.lifetime_points.toLocaleString()}
+                  </TableCell>
+                  <TableCell>
+                    <StatusDot
+                      label={
+                        c.profile_completed_at
+                          ? cm.profileComplete
+                          : cm.profileIncomplete
+                      }
+                      tone={c.profile_completed_at ? "success" : "neutral"}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </SectionCard>
     </div>
   )
 }

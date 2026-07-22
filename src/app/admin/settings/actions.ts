@@ -10,7 +10,7 @@ export type SaveState = { ok: boolean; message: string } | null
 
 export async function saveSettings(
   _prev: SaveState,
-  formData: FormData
+  formData: FormData,
 ): Promise<SaveState> {
   const t = await getMessages()
   const s = t.admin.settings
@@ -21,7 +21,10 @@ export async function saveSettings(
     claimable_statuses: formData.get("claimable_statuses"),
   })
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? s.invalidInput }
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? s.invalidInput,
+    }
   }
 
   const supabase = await createClient()
@@ -40,7 +43,10 @@ export async function saveSettings(
   }
 
   const { error } = existing
-    ? await supabase.from("loyalty_settings").update(payload).eq("id", existing.id)
+    ? await supabase
+        .from("loyalty_settings")
+        .update(payload)
+        .eq("id", existing.id)
     : await supabase.from("loyalty_settings").insert(payload)
 
   if (error) return { ok: false, message: s.saveFailed }

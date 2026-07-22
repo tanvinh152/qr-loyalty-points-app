@@ -21,7 +21,7 @@ export type SkuPointMap = Record<string, number>
 export function pointsForItem(
   item: ClaimItem,
   skuMap: SkuPointMap,
-  rules: LoyaltyRules
+  rules: LoyaltyRules,
 ): number {
   if (!Number.isFinite(item.quantity) || item.quantity <= 0) return 0
   const mapped = item.sku ? skuMap[item.sku] : undefined
@@ -32,9 +32,12 @@ export function pointsForItem(
 export function calcBasePoints(
   items: ClaimItem[],
   skuMap: SkuPointMap,
-  rules: LoyaltyRules
+  rules: LoyaltyRules,
 ): number {
-  return items.reduce((sum, item) => sum + pointsForItem(item, skuMap, rules), 0)
+  return items.reduce(
+    (sum, item) => sum + pointsForItem(item, skuMap, rules),
+    0,
+  )
 }
 
 export function applyRounding(value: number, rounding: Rounding): number {
@@ -52,7 +55,7 @@ export function calcOrderPoints(
   items: ClaimItem[],
   skuMap: SkuPointMap,
   multiplier: number,
-  rules: LoyaltyRules
+  rules: LoyaltyRules,
 ): number {
   const base = calcBasePoints(items, skuMap, rules)
   return applyRounding(base * (multiplier > 0 ? multiplier : 1), rules.rounding)

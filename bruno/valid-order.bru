@@ -5,29 +5,33 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/api/webhooks/orders
+  url: {{baseUrl}}/api/webhooks/pancake
   body: json
   auth: none
 }
 
 headers {
   content-type: application/json
-  x-webhook-signature: {{sig}}
+  x-webhook-secret: {{webhookSecret}}
 }
 
 body:json {
   {
-    "external_order_id": "EXT-5001",
-    "order_code": "ORD-5001",
-    "total": 180000
+    "id": "{{orderId}}"
   }
 }
 
-script:pre-request {
-  const crypto = require('crypto');
-  const raw = JSON.stringify(req.getBody());
-  const sig = crypto.createHmac('sha256', bru.getEnvVar('webhookSecret')).update(raw).digest('hex');
-  bru.setVar('sig', sig);
+docs {
+  Pancake does not sign its webhooks — shop config only supports static
+  `webhook_headers` — so auth is a shared secret compared in constant time.
+
+  The body is only a pointer. The route re-fetches the order from the Pancake
+  API and ignores everything else it was sent.
+
+  200 covers both `{claimed:true}` and `{claimed:false, skipped:...}`: Pancake
+  retries any non-2xx, so business skips must not be error statuses. Point
+  `orderId` at an order in a claimable status (3/16) whose Pancake customer
+  already exists in `customers.pancake_customer_id` to see a real claim.
 }
 
 assert {

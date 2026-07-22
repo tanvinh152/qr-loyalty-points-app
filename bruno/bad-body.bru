@@ -5,31 +5,26 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/api/webhooks/orders
+  url: {{baseUrl}}/api/webhooks/pancake
   body: json
   auth: none
 }
 
 headers {
   content-type: application/json
-  x-webhook-signature: {{sig}}
+  x-webhook-secret: {{webhookSecret}}
 }
 
 body:json {
   {
-    "order_code": "ORD-8888"
+    "status": 3
   }
 }
 
-script:pre-request {
-  const crypto = require('crypto');
-  const raw = JSON.stringify(req.getBody());
-  const sig = crypto.createHmac('sha256', bru.getEnvVar('webhookSecret')).update(raw).digest('hex');
-  bru.setVar('sig', sig);
-}
-
 docs {
-  Valid signature but payload missing external_order_id + total -> 422.
+  Valid secret but no order identifier anywhere in the payload -> 422. This is
+  one of the few non-2xx business responses: without an id there is nothing to
+  look up, and a retry would fail identically.
 }
 
 assert {

@@ -6,11 +6,14 @@ export function Progress({
   value,
   className,
   label,
+  accent = false,
 }: {
   /** 0–1 */
   value: number
   className?: string
   label?: string
+  /** Fill with the surrounding tier accent instead of the default blue. */
+  accent?: boolean
 }) {
   const pct = Math.round(Math.min(1, Math.max(0, value)) * 100)
   return (
@@ -20,10 +23,16 @@ export function Progress({
       aria-valuemax={100}
       aria-valuenow={pct}
       aria-label={label}
-      className={cn("bg-secondary h-2 w-full overflow-hidden rounded-full", className)}
+      className={cn(
+        "bg-surface-container border-border/40 h-2 w-full overflow-hidden rounded-full border",
+        className,
+      )}
     >
       <div
-        className="bg-primary h-full rounded-full transition-all"
+        className={cn(
+          "h-full rounded-full transition-all",
+          accent ? "bg-tier" : "bg-primary-container",
+        )}
         style={{ width: `${pct}%` }}
       />
     </div>

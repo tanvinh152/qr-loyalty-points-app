@@ -18,8 +18,22 @@ export function normalizePhone(input: string): string {
   return digitsOnly.replace(/^\+/, "")
 }
 
+// Customer accounts are phone + password, but Supabase Auth's password provider
+// is keyed by email — so the phone becomes a synthetic address. Normalizing
+// first is what keeps the alias 1:1 with `customers.phone`, whatever format the
+// customer typed. The domain is never mailed to; email confirmation is off.
+const EMAIL_DOMAIN =
+  process.env.CUSTOMER_EMAIL_DOMAIN ?? "customer.chicha-label.app"
+
+export function phoneToEmail(phone: string): string {
+  return `${normalizePhone(phone)}@${EMAIL_DOMAIN}`
+}
+
 // Fails closed: an empty or all-masked value never matches.
-export function matchesMask(input: string, mask: string | null | undefined): boolean {
+export function matchesMask(
+  input: string,
+  mask: string | null | undefined,
+): boolean {
   if (!mask) return false
   const phone = normalizePhone(input)
   if (!phone) return false

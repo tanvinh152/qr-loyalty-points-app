@@ -25,7 +25,7 @@ describe("calcBasePoints", () => {
     const unknown: ClaimItem[] = [{ sku: "NOPE", quantity: 3 }]
     expect(calcBasePoints(unknown, skuMap, rules)).toBe(0)
     expect(
-      calcBasePoints(unknown, skuMap, { ...rules, unmapped_sku_points: 5 })
+      calcBasePoints(unknown, skuMap, { ...rules, unmapped_sku_points: 5 }),
     ).toBe(15)
   })
 
@@ -38,8 +38,8 @@ describe("calcBasePoints", () => {
           { sku: "SP000001", quantity: -2 },
         ],
         skuMap,
-        rules
-      )
+        rules,
+      ),
     ).toBe(0)
   })
 })
@@ -56,13 +56,13 @@ describe("calcOrderPoints", () => {
 
   it("rounds when configured", () => {
     expect(
-      calcOrderPoints(items, skuMap, 1.234, { ...rules, rounding: "round" })
+      calcOrderPoints(items, skuMap, 1.234, { ...rules, rounding: "round" }),
     ).toBe(247)
   })
 
   it("ceils when configured", () => {
     expect(
-      calcOrderPoints(items, skuMap, 1.001, { ...rules, rounding: "ceil" })
+      calcOrderPoints(items, skuMap, 1.001, { ...rules, rounding: "ceil" }),
     ).toBe(201)
   })
 

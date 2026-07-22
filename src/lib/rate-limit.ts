@@ -27,7 +27,10 @@ function windowStart(): string {
 // True when the caller is over budget and should be refused before any Pancake
 // call happens. Fails OPEN on a DB error: losing the throttle beats taking the
 // whole claim flow down.
-export async function isRateLimited(ip: string, orderCode?: string): Promise<boolean> {
+export async function isRateLimited(
+  ip: string,
+  orderCode?: string,
+): Promise<boolean> {
   const supabase = createAdminClient()
   const since = windowStart()
 
@@ -58,8 +61,10 @@ export async function isRateLimited(ip: string, orderCode?: string): Promise<boo
 export async function recordAttempt(
   ip: string,
   orderCode: string | null,
-  succeeded: boolean
+  succeeded: boolean,
 ): Promise<void> {
   const supabase = createAdminClient()
-  await supabase.from("claim_attempts").insert({ ip, order_code: orderCode, succeeded })
+  await supabase
+    .from("claim_attempts")
+    .insert({ ip, order_code: orderCode, succeeded })
 }
