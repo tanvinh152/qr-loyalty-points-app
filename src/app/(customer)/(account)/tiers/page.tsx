@@ -1,9 +1,8 @@
 import {
   Award,
   Cake,
+  Gem,
   Gift,
-  Lock,
-  Medal,
   Percent,
   Sparkles,
   Truck,
@@ -13,9 +12,9 @@ import type { LucideIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { EmptyState } from "@/components/empty-state"
 import { PageHeader } from "@/components/page-header"
-import { cn } from "@/lib/utils"
+import { cn, formatVnd } from "@/lib/utils"
 import { getLocale, getMessages } from "@/lib/i18n/server"
-import { getTiers, tierProgress } from "@/lib/loyalty"
+import { getLatestTierAward, getTiers, tierProgress } from "@/lib/loyalty"
 import type { PerkIconKey } from "@/lib/tier-perks"
 import { getAccount } from "../account"
 import { tierAccentClass, tierRank } from "../tier-accent"
@@ -48,37 +47,51 @@ export default async function TiersPage() {
   const { customer } = await getAccount()
   if (!customer) return null
 
-  // Sorted by threshold, so the array index is the tier's rank.
+  // Sorted by spend threshold, so the array index is the tier's rank.
   const tiers = await getTiers()
   const {
     current,
     next,
     percent: progress,
     toNext,
-  } = tierProgress(tiers, customer.lifetime_points)
+  } = tierProgress(tiers, customer.lifetime_spend, customer)
+
+  // Only when the tier they hold now costs more than they have spent — i.e. the
+  // requirement moved after they earned it. Saying so is the difference between
+  // "kept for good" and looking like a bug.
+  const grandfathered =
+    current && current.spend_threshold > customer.lifetime_spend
+      ? await getLatestTierAward(customer.id, current.id)
+      : null
 
   const rank = tierRank(tiers, current?.id)
   const perks = current?.perks ?? []
   const heroPerks = perks.slice(0, HERO_PERKS)
 
   const locale = await getLocale()
-  const memberSince = new Intl.DateTimeFormat(
-    locale === "vi" ? "vi-VN" : "en-GB",
-    { month: "long", year: "numeric" },
-  ).format(new Date(customer.created_at))
+  const monthYear = new Intl.DateTimeFormat(locale === "vi" ? "vi-VN" : "en-GB", {
+    month: "long",
+    year: "numeric",
+  })
+  const memberSince = monthYear.format(new Date(customer.created_at))
   // The card is a screen the member shows in a shop, so the number stays masked
   // the same way Pancake masks it.
   const maskedPhone = customer.phone.replace(/^(\d{2})\d+(\d{2})$/, "$1••••$2")
 
   return (
-    <div className={cn("grid gap-6", tierAccentClass(rank))}>
+    <div
+      className={cn(
+        "grid gap-6 rounded-3xl p-6 md:p-10",
+        tierAccentClass(rank),
+      )}
+    >
       <PageHeader
         title={current ? ti.title(current.name) : ti.noTier}
         description={ti.subtitle}
         size="display"
         eyebrow={
           <span className="text-label-md text-tier border-tier/40 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 uppercase">
-            <Medal className="size-3.5" aria-hidden />
+            <Gem className="size-3.5" aria-hidden />
             {ti.eyebrow}
           </span>
         }
@@ -87,7 +100,7 @@ export default async function TiersPage() {
       {!current ? (
         <div className="border-border bg-card rounded-2xl border">
           <EmptyState
-            icon={Medal}
+            icon={Gem}
             title={ti.noTier}
             description={ti.noTierBody}
           />
@@ -101,26 +114,38 @@ export default async function TiersPage() {
               className="bg-tier/20 pointer-events-none absolute -top-16 -right-16 size-56 rounded-full blur-3xl"
             />
             <div className="relative grid gap-6">
-              <div className="flex items-start gap-4">
-                <span className="border-tier/40 bg-tier/10 text-tier grid size-20 shrink-0 place-items-center rounded-full border">
-                  <Medal className="size-9" aria-hidden />
-                </span>
+              {/* Status text leads on the left; the gem emblem sits top-right
+                  with its own glow, as in the member mockups. */}
+              <div className="flex items-start justify-between gap-4">
                 <div className="grid gap-1">
                   <span className="text-label-md text-tier uppercase">
                     {ti.statusActive(current.name)}
                   </span>
+                  {/* Spend leads here: it is what the ring below fills with and
+                      what the other tiers are priced in. */}
                   <div className="flex items-baseline gap-2">
                     <span className="text-headline-lg text-primary tabular-nums">
-                      {customer.lifetime_points.toLocaleString()}
+                      {formatVnd(customer.lifetime_spend)}
                     </span>
                     <span className="text-body-lg text-muted-foreground">
-                      {t.customer.dashboard.lifetimeLabel}
+                      {ti.spendLabel}
                     </span>
                   </div>
                   <Badge variant="secondary" className="w-fit">
                     {ti.multiplier(current.multiplier)}
                   </Badge>
+                  {grandfathered && (
+                    <p className="text-body-sm text-muted-foreground">
+                      {ti.grandfathered(
+                        current.name,
+                        monthYear.format(new Date(grandfathered.awarded_at)),
+                      )}
+                    </p>
+                  )}
                 </div>
+                <span className="border-tier/30 bg-tier/10 text-tier shadow-tier/30 grid size-20 shrink-0 place-items-center rounded-2xl border shadow-[0_0_30px_-6px]">
+                  <Gem className="size-9" aria-hidden />
+                </span>
               </div>
 
               {/* The hero repeats the top perks so the tier's value reads without
@@ -139,7 +164,7 @@ export default async function TiersPage() {
                           key={`${perk.title}-${index}`}
                           className="flex items-center gap-3"
                         >
-                          <span className="border-tier/40 text-tier grid size-9 shrink-0 place-items-center rounded-full border">
+                          <span className="border-tier/30 bg-tier/10 text-tier grid size-9 shrink-0 place-items-center rounded-xl border">
                             <Icon className="size-4" aria-hidden />
                           </span>
                           <span className="text-body-sm">{perk.title}</span>
@@ -170,7 +195,7 @@ export default async function TiersPage() {
                   caption={current.name}
                 />
                 <p className="text-body-sm text-muted-foreground">
-                  {ti.toNext(toNext, next.name)}
+                  {ti.spendToNext(formatVnd(toNext), next.name)}
                 </p>
               </>
             ) : (
@@ -209,7 +234,7 @@ export default async function TiersPage() {
                     key={`${perk.title}-${index}`}
                     className="border-border bg-surface-container flex gap-3 rounded-2xl border p-4"
                   >
-                    <span className="border-tier/40 bg-tier/10 text-tier grid size-10 shrink-0 place-items-center rounded-full border">
+                    <span className="border-tier/30 bg-tier/10 text-tier grid size-10 shrink-0 place-items-center rounded-xl border">
                       <Icon className="size-5" aria-hidden />
                     </span>
                     <div className="grid gap-0.5">
@@ -245,8 +270,8 @@ export default async function TiersPage() {
               )}
             >
               <div className="flex items-center gap-3">
-                <span className="border-tier/40 text-tier grid size-10 shrink-0 place-items-center rounded-full border">
-                  <Medal className="size-5" aria-hidden />
+                <span className="border-tier/30 bg-tier/10 text-tier grid size-10 shrink-0 place-items-center rounded-xl border">
+                  <Gem className="size-5" aria-hidden />
                 </span>
                 <span className="text-headline-md">{tier.name}</span>
               </div>
@@ -254,25 +279,11 @@ export default async function TiersPage() {
                 {ti.multiplier(tier.multiplier)}
               </span>
               <span className="text-body-xs text-muted-foreground tabular-nums">
-                {ti.thresholdAt(tier.threshold)}
+                {ti.thresholdAt(formatVnd(tier.spend_threshold))}
               </span>
             </li>
           ))}
         </ul>
-      </section>
-
-      {/* Teaser for the invite-only rank in the mockups. There is no such row in
-          membership_tiers yet, so it is deliberately static and inert. */}
-      <section className="border-border bg-surface-container flex items-center gap-4 rounded-3xl border border-dashed p-6">
-        <span className="bg-surface-high text-muted-foreground grid size-12 shrink-0 place-items-center rounded-full">
-          <Lock className="size-5" aria-hidden />
-        </span>
-        <div className="grid gap-0.5">
-          <span className="text-body-lg font-semibold">{ti.lockedTitle}</span>
-          <span className="text-body-sm text-muted-foreground">
-            {ti.lockedBody}
-          </span>
-        </div>
       </section>
     </div>
   )

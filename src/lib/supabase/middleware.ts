@@ -3,10 +3,10 @@ import { NextResponse, type NextRequest } from "next/server"
 
 // Refreshes the Supabase auth session cookie on each request and guards both
 // portals: /admin (staff, app_metadata.role === 'admin') and the customer
-// account area (/dashboard, /claim, /rewards, /history — any signed-in user).
+// account area (/dashboard, /rewards, /history — any signed-in user).
 
 // Kept in sync with the route group src/app/(customer)/(account)/.
-const ACCOUNT_PREFIXES = ["/dashboard", "/claim", "/rewards", "/history"]
+const ACCOUNT_PREFIXES = ["/dashboard", "/rewards", "/history"]
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 

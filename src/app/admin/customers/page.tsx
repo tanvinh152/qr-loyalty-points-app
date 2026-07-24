@@ -20,6 +20,7 @@ import { SectionCard } from "@/components/section-card"
 import { StatusDot } from "@/components/status-dot"
 import { createClient } from "@/lib/supabase/server"
 import { getMessages } from "@/lib/i18n/server"
+import { formatVnd } from "@/lib/utils"
 import type { CustomerRow } from "@/lib/db-types"
 
 export async function generateMetadata() {
@@ -50,7 +51,8 @@ export default async function CustomersPage({
   let query = supabase
     .from("customers")
     .select("*, membership_tiers(name)", { count: "exact" })
-    .order("lifetime_points", { ascending: false })
+    // Spend, not points: the list is ordered by what now decides the tier.
+    .order("lifetime_spend", { ascending: false })
     .range(from, to)
 
   if (search) {
@@ -91,6 +93,7 @@ export default async function CustomersPage({
         items={[
           { term: cm.currentPoints, hint: cm.currentPointsHint },
           { term: cm.lifetimePoints, hint: cm.lifetimePointsHint },
+          { term: cm.lifetimeSpend, hint: cm.lifetimeSpendHint },
         ]}
       />
 
@@ -118,6 +121,9 @@ export default async function CustomersPage({
                 <TableHead className="text-right">{cm.currentPoints}</TableHead>
                 <TableHead className="text-right">
                   {cm.lifetimePoints}
+                </TableHead>
+                <TableHead className="text-right">
+                  {cm.lifetimeSpend}
                 </TableHead>
                 <TableHead>{cm.profileStatus}</TableHead>
               </TableRow>
@@ -156,6 +162,9 @@ export default async function CustomersPage({
                   </TableCell>
                   <TableCell className="text-muted-foreground text-right tabular-nums">
                     {c.lifetime_points.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatVnd(c.lifetime_spend)}
                   </TableCell>
                   <TableCell>
                     <StatusDot

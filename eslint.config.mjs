@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Vendored skill packs — not our source.
     ".agents/**",
+    // The v8 HTML coverage reporter emits its own JS assets.
+    "coverage/**",
   ]),
 ]);
 

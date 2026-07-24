@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Gift, History, QrCode, Sparkles } from "lucide-react"
+import { Gift, History, Sparkles } from "lucide-react"
 
 import { EmptyState } from "@/components/empty-state"
 import { buttonVariants } from "@/components/ui/button"
@@ -66,16 +66,12 @@ export default async function RewardsPage({
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link
-            href="/claim"
-            className={cn(
-              buttonVariants({ variant: "muted" }),
-              "border-primary/30 bg-primary/15 text-primary rounded-full border",
-            )}
-          >
-            <QrCode className="size-4" aria-hidden />
-            {r.earnMoreCta}
-          </Link>
+          {/* Not a link any more: there is nothing to claim by hand — the
+              webhook credits each order as it settles. */}
+          <span className="border-primary/30 bg-primary/15 text-primary text-label-md inline-flex items-center gap-2 rounded-full border px-4 py-2">
+            <Sparkles className="size-4" aria-hidden />
+            {r.earnMoreHint}
+          </span>
           <Link
             href="/history"
             className={cn(buttonVariants({ variant: "muted" }), "rounded-full")}

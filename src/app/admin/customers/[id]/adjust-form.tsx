@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useT } from "@/lib/i18n/provider"
+import { formatVnd } from "@/lib/utils"
 import {
   makeAdjustSchema,
   type AdjustFormValues,
@@ -38,9 +39,12 @@ import { adjustPoints } from "./actions"
 const NO_TIER = ""
 
 /**
- * Staff grant of tier and points. "Grant tier" is a lifetime-points floor rather
- * than a tier assignment — see the header of 0008_adjust_rpc.sql for why writing
- * tier_id directly would be undone by the customer's next claim.
+ * Staff grant of tier and points.
+ *
+ * "Grant tier" writes `customers.tier_id` outright (0012). It deliberately does
+ * NOT move `lifetime_spend`: that column is money the shop actually took, and
+ * the percentile rules behind scheduled threshold raises rank the member base by
+ * it — inventing spend here would quietly bend every one of those.
  */
 export function AdjustForm({
   customer,
@@ -76,16 +80,20 @@ export function AdjustForm({
     control: form.control,
     name: ["grant_tier_id", "current_delta", "lifetime_delta"],
   })
-  const threshold = tiers.find((tier) => tier.id === grantId)?.threshold ?? 0
   const nextCurrent = customer.current_points + toInt(currentDelta)
-  const nextLifetime = Math.max(
-    customer.lifetime_points + toInt(lifetimeDelta),
-    grantId ? threshold : 0,
-  )
-  const nextTier = [...tiers]
-    .sort((a, b) => a.threshold - b.threshold)
-    .filter((tier) => tier.threshold <= nextLifetime)
-    .at(-1)
+  const nextLifetime = customer.lifetime_points + toInt(lifetimeDelta)
+
+  // Only tiers ABOVE the one held are offerable: the RPC refuses anything else,
+  // and the list used to be filtered by a points total that no longer decides
+  // anything. Thresholds, not sort_order — sort_order is free-form display order.
+  const heldThreshold =
+    tiers.find((tier) => tier.id === customer.tier_id)?.spend_threshold ?? null
+  const grantable = [...tiers]
+    .sort((a, b) => a.spend_threshold - b.spend_threshold)
+    .filter(
+      (tier) => heldThreshold == null || tier.spend_threshold > heldThreshold,
+    )
+  const nextTier = grantable.find((tier) => tier.id === grantId) ?? null
 
   function onSubmit(values: AdjustInput) {
     startTransition(async () => {
@@ -122,9 +130,9 @@ export function AdjustForm({
                 onValueChange={field.onChange}
                 items={[
                   { value: NO_TIER, label: m.noTierGrant },
-                  ...tiers.map((tier) => ({
+                  ...grantable.map((tier) => ({
                     value: tier.id,
-                    label: m.tierOption(tier.name, tier.threshold),
+                    label: m.tierOption(tier.name, formatVnd(tier.spend_threshold)),
                   })),
                 ]}
               >
@@ -135,9 +143,9 @@ export function AdjustForm({
                 </FormControl>
                 <SelectContent>
                   <SelectItem value={NO_TIER}>{m.noTierGrant}</SelectItem>
-                  {tiers.map((tier) => (
+                  {grantable.map((tier) => (
                     <SelectItem key={tier.id} value={tier.id}>
-                      {m.tierOption(tier.name, tier.threshold)}
+                      {m.tierOption(tier.name, formatVnd(tier.spend_threshold))}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -214,8 +222,12 @@ export function AdjustForm({
           <p className="text-body-sm font-semibold tabular-nums">
             {`${m.lifetimeDelta}: ${customer.lifetime_points.toLocaleString()} → ${nextLifetime.toLocaleString()}`}
           </p>
+          {/* The tier after this change: the granted one, or the one they
+              already hold — nothing else here can move it any more. */}
           <p className="text-body-sm text-muted-foreground">
-            {nextTier?.name ?? t.admin.customers.detail.noTier}
+            {nextTier?.name ??
+              tiers.find((tier) => tier.id === customer.tier_id)?.name ??
+              t.admin.customers.detail.noTier}
           </p>
         </div>
 

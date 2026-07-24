@@ -7,7 +7,6 @@ import {
   History,
   Info,
   Medal,
-  QrCode,
   Receipt,
   Sparkles,
   Wallet,
@@ -20,7 +19,7 @@ import { EmptyState } from "@/components/empty-state"
 import { PageHeader } from "@/components/page-header"
 import { SectionCard } from "@/components/section-card"
 import { StatCard } from "@/components/stat-card"
-import { cn } from "@/lib/utils"
+import { cn, formatVnd } from "@/lib/utils"
 import { getLocale, getMessages } from "@/lib/i18n/server"
 import {
   getActiveRewards,
@@ -70,7 +69,7 @@ export default async function DashboardPage() {
     floor,
     percent: progress,
     toNext,
-  } = tierProgress(tiers, customer.lifetime_points)
+  } = tierProgress(tiers, customer.lifetime_spend, customer)
 
   const teasers = rewards.slice(0, TEASER_COUNT)
 
@@ -80,15 +79,18 @@ export default async function DashboardPage() {
         title={d.greeting(customer.full_name ?? customer.phone)}
         description={d.eyebrow}
       >
-        <Link href="/claim" className={cn(buttonVariants({ size: "lg" }))}>
-          <QrCode className="size-5" aria-hidden />
-          {t.customer.nav.scan}
+        {/* Points arrive on their own now (webhook), so the header's action is
+            spending them rather than claiming them. */}
+        <Link href="/rewards" className={cn(buttonVariants({ size: "lg" }))}>
+          <Sparkles className="size-5" aria-hidden />
+          {t.customer.nav.rewards}
         </Link>
       </PageHeader>
 
-      {/* The mockup opens on two summary tiles — tier first, balance second —
-          and keeps the tier journey in its own centred card below them. */}
-      <div className="grid gap-6 sm:grid-cols-2">
+      {/* The mockup opens on summary tiles — tier first, balance second — and
+          keeps the tier journey in its own centred card below them. Spend earns
+          the tier and points buy the rewards, so both totals get a tile. */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           label={d.tierLabel}
           value={current ? current.name : d.noTier}
@@ -101,6 +103,12 @@ export default async function DashboardPage() {
           icon={Wallet}
           tone="secondary"
           highlight
+        />
+        <StatCard
+          label={d.lifetimeSpend}
+          value={formatVnd(customer.lifetime_spend)}
+          hint={d.lifetimeSpendHint}
+          icon={Receipt}
         />
       </div>
 
@@ -134,14 +142,14 @@ export default async function DashboardPage() {
               accent
             />
             <div className="text-muted-foreground text-body-xs flex items-center justify-between tabular-nums">
-              <span>{floor.toLocaleString()}</span>
-              {next && <span>{next.threshold.toLocaleString()}</span>}
+              <span>{formatVnd(floor)}</span>
+              {next && <span>{formatVnd(next.spend_threshold)}</span>}
             </div>
           </div>
 
           <p className="text-body-sm text-muted-foreground flex items-center justify-center gap-1.5">
             <Info className="size-4 shrink-0" aria-hidden />
-            {next ? d.pointsAway(toNext) : d.topTier}
+            {next ? d.spendAway(formatVnd(toNext)) : d.topTier}
           </p>
 
           <Link

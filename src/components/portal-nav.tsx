@@ -11,7 +11,6 @@ import {
   Medal,
   MessageSquare,
   Package,
-  QrCode,
   Receipt,
   Settings,
   UserRound,
@@ -27,7 +26,6 @@ import { cn } from "@/lib/utils"
 const ICONS = {
   // Customer
   home: Home,
-  scan: QrCode,
   history: History,
   help: HelpCircle,
   profile: UserRound,

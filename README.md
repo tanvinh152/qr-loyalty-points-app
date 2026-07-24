@@ -21,10 +21,13 @@ Pancake POS REST API · Tailwind + shadcn/ui (Base UI) · React Hook Form + Zod.
   the Server Action read from Pancake, so anon must not be able to call it with a
   forged list. `/claim` therefore calls it with the admin client after verifying
   the order itself.
-- **Ownership check**: Pancake masks phones as `0****70` (first digit + last two).
-  `matchesMask` in `src/lib/phone.ts` compares the entered number against that
-  mask; personal point data is only returned after it passes. If an API key ever
-  returns unmasked phones, the same function degrades to an exact comparison.
+- **Ownership check**: `matchesOrderPhones` in `src/lib/phone.ts`, against every
+  number the order carries. Pancake masks phones as `0****70` (first digit + last
+  two), but not what it has been told — a record it knows comes back as
+  `["0****52", "0376733152"]`. Whenever a real number is present it is the only
+  thing compared, exactly; the mask is the fallback for records that have none,
+  and signing up against one of those writes the real number back, so that record
+  moves to the exact-match path permanently.
 - **Rate limiting**: 5 failed attempts / 15 min per IP and per order code, counted
   in `claim_attempts` (`src/lib/rate-limit.ts`) — serverless-safe, no in-memory state.
 - **Restrictive RLS**: anon can read tiers, active rewards and active settings and
@@ -62,8 +65,33 @@ at `/admin/login`.
 ## Scripts
 - `npm run dev` — dev server
 - `npm run build` — production build
-- `npm test` — vitest unit tests (`calcOrderPoints`, phone masking)
+- `npm test` — vitest, both projects (see Testing below)
+- `npm run test:watch` — vitest in watch mode
+- `npm run test:coverage` — vitest with a v8 coverage report in `coverage/`
+- `npm run typecheck` — `tsc --noEmit`
 - `npm run lint` — ESLint
+
+## Testing
+`vitest.config.ts` defines two projects, split by file extension:
+
+- **`unit`** — `src/**/*.test.ts`, node environment. Pure logic only: points, phone
+  masking, tier resolution, the zod schema factories, and the pure half of the Pancake
+  client. No mocking anywhere.
+- **`component`** — `src/**/*.test.tsx`, jsdom. Client components rendered through
+  `renderWithProviders` (`src/test/render.tsx`), which wraps the i18n and theme
+  providers with the real message catalogs. `src/test/setup.ts` polyfills what jsdom
+  lacks (`matchMedia`, `IntersectionObserver`, …) and mocks `next/navigation` against
+  the shared router in `src/test/route.ts`.
+
+Server Components cannot be rendered by Testing Library, so only `"use client"` files
+are component-testable. Run one project with `npx vitest run --project=unit`.
+
+`tsconfig.json` includes test files, so a type error in a test fails `npm run build` —
+`npm run typecheck` is there to catch it first. It is also what enforces `vi.ts` staying
+in step with `en.ts`, since `vi` is declared as `Messages`.
+
+Three tests in `src/lib/schemas.test.ts` are marked `// BUG:`. They pin current,
+wrong behaviour so the suite stays green; see the comments for what each should do.
 
 ## Customer accounts (Phase 4)
 - **Auth is phone + password.** Supabase Auth's password provider is email-keyed, so
@@ -73,10 +101,11 @@ at `/admin/login`.
   public signup endpoint runs an email validator that rejects synthetic domains
   (`email_address_invalid`) and would queue a confirmation mail to an address nobody
   owns. No Supabase auth setting needs changing.
-- **Ownership proof**: `CUSTOMER_SIGNUP_REQUIRE_PROOF=true` makes `/register` demand an
-  order code whose masked phone matches (same `matchesMask` gate as `/claim`). With it
-  off — the testing default — anyone who knows a phone number inherits the points
-  already claimed against it. Keep it on in production until Zalo OTP replaces it.
+- **Ownership proof**: `/register` always demands a recent order code whose phone matches
+  the one being registered (`matchesOrderPhones` — see the ownership check above). It is
+  both the ownership gate and the only source of `pancake_customer_id`, so signup cannot
+  complete without it. It also auto-claims that order and fills in the member's real name
+  and phone on the POS record wherever Pancake holds only a mask.
 - **Roles**: admins are `app_metadata.role = 'admin'` (service-role writable only).
   `0005_roles_and_customer_rls.sql` backfills every existing auth user as an admin and
   rewrites the RLS policies around `public.is_admin()`; customers get self-scoped reads

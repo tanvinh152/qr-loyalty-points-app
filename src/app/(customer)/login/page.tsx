@@ -15,7 +15,7 @@ export default async function CustomerLoginPage() {
 
   return (
     <AuthSplit
-      brand={t.claim.brand.name}
+      brand={t.brand.name}
       headline={l.panelTitle}
       tagline={l.panelBody}
     >

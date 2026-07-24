@@ -25,7 +25,8 @@ export type TierPerk = {
 export type MembershipTierRow = {
   id: string
   name: string
-  threshold: number
+  /** Lifetime SPEND in đồng required to reach this tier — never points (0010). */
+  spend_threshold: number
   multiplier: number
   sort_order: number
   /** Legacy free text, still edited in admin. `perks` is what the UI renders. */
@@ -78,6 +79,9 @@ export type CustomerRow = {
   pancake_customer_id: string | null
   current_points: number
   lifetime_points: number
+  /** Money ever spent, in đồng. The tier ladder is measured against this. */
+  lifetime_spend: number
+  /** Highest tier ever held, not the tier the current spend earns. Sticky. */
   tier_id: string | null
   created_at: string
   updated_at: string
@@ -122,8 +126,57 @@ export type ClaimResult = {
   points_awarded: number
   current_points: number
   lifetime_points: number
+  lifetime_spend: number
   tier_name: string | null
   tier_upgraded: boolean
+}
+
+export type TierScheduleMode = "amount" | "percentile"
+
+/**
+ * A queued threshold raise (0010). At most one may be pending per tier.
+ * `resolved_amount` is written when it fires and is the audit trail of what a
+ * percentile rule meant on the day it applied.
+ */
+export type TierScheduleRow = {
+  id: string
+  tier_id: string
+  mode: TierScheduleMode
+  target_amount: number | null
+  target_percentile: number | null
+  resolved_amount: number | null
+  effective_at: string
+  applied_at: string | null
+  note: string | null
+  created_by: string | null
+  created_at: string
+}
+
+/**
+ * One tier award. `tier_name` and `threshold_amount` are SNAPSHOTS: they say
+ * what was true the day the tier was earned, which is the whole point — it is
+ * how a grandfathered member's tier can be explained after a raise.
+ */
+export type CustomerTierHistoryRow = {
+  id: string
+  customer_id: string
+  tier_id: string | null
+  tier_name: string
+  threshold_amount: number
+  spend_at_award: number
+  source: "claim" | "webhook" | "admin"
+  awarded_at: string
+}
+
+/** Return shape of the apply_due_tier_schedules RPC. */
+export type ApplyScheduleResult = {
+  applied: {
+    schedule_id: string
+    tier_id: string
+    tier_name: string | null
+    from: number
+    to: number
+  }[]
 }
 
 export type SupportRequestStatus = "open" | "closed"

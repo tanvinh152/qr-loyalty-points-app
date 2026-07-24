@@ -1,0 +1,25 @@
+meta {
+  name: Get Customer
+  type: http
+  seq: 6
+}
+
+get {
+  url: https://pos.pages.fm/api/v1/shops/:shop_id/customers?api_key=cc92fbd7c7315f36c69e1d04479c78d8&search=Vinh
+  body: none
+  auth: inherit
+}
+
+params:query {
+  api_key: cc92fbd7c7315f36c69e1d04479c78d8
+  search: Vinh
+}
+
+params:path {
+  shop_id: 1328315613
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

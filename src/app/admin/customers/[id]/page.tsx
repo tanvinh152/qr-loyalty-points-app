@@ -31,11 +31,12 @@ import { Pagination } from "@/components/pagination"
 import { SectionCard } from "@/components/section-card"
 import { StatCard } from "@/components/stat-card"
 import { StatusDot } from "@/components/status-dot"
-import { cn } from "@/lib/utils"
+import { cn, formatVnd } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/server"
 import { getLocale, getMessages } from "@/lib/i18n/server"
 import {
   adjustMeta,
+  getLatestTierAward,
   getTiers,
   getTransactionTotals,
   getTransactions,
@@ -106,8 +107,15 @@ export default async function CustomerDetailPage({
 
   const { current, next, floor, percent, toNext } = tierProgress(
     tiers,
-    customer.lifetime_points,
+    customer.lifetime_spend,
+    customer,
   )
+  // Only meaningful when the tier on the record outranks what the spend earns
+  // today — i.e. the threshold moved after they reached it.
+  const grandfathered =
+    current && current.spend_threshold > customer.lifetime_spend
+      ? await getLatestTierAward(customer.id, current.id)
+      : null
   const tickets = (support.data ?? []) as SupportRequestRow[]
   const hasNext = ledger.total > pageNum * PAGE_SIZE
   const name = customer.full_name?.trim() || customer.phone
@@ -169,7 +177,7 @@ export default async function CustomerDetailPage({
         }
       />
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard
           label={d.statAvailable}
           value={customer.current_points}
@@ -181,6 +189,12 @@ export default async function CustomerDetailPage({
           value={customer.lifetime_points}
           icon={TrendingUp}
           tone="secondary"
+        />
+        <StatCard
+          label={d.statSpend}
+          value={formatVnd(customer.lifetime_spend)}
+          icon={Wallet}
+          tone="neutral"
         />
         <StatCard
           label={d.statTransactions}
@@ -266,13 +280,22 @@ export default async function CustomerDetailPage({
         </div>
         <Progress value={percent / 100} label={d.tierTitle} />
         <div className="text-muted-foreground text-body-xs flex items-center justify-between tabular-nums">
-          <span>{floor.toLocaleString()}</span>
-          {next && <span>{next.threshold.toLocaleString()}</span>}
+          <span>{formatVnd(floor)}</span>
+          {next && <span>{formatVnd(next.spend_threshold)}</span>}
         </div>
         <p className="text-body-sm text-muted-foreground">
-          {next ? d.toNext(toNext, next.name) : d.topTier}
+          {next ? d.toNext(formatVnd(toNext), next.name) : d.topTier}
           {current ? ` · ${d.multiplier(current.multiplier)}` : ""}
         </p>
+        {grandfathered && current && (
+          <p className="text-body-sm text-muted-foreground">
+            {d.grandfathered(current.name)}{" "}
+            <span className="tabular-nums">
+              {formatVnd(grandfathered.threshold_amount)} ·{" "}
+              {dateOnly.format(new Date(grandfathered.awarded_at))}
+            </span>
+          </p>
+        )}
       </SectionCard>
 
       <SectionCard

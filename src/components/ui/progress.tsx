@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils"
 
 // Minimal determinate progress bar. Plain markup on purpose — the only consumer
-// is the tier gauge on /claim, and it needs no interaction.
+// is the tier gauge on the account screens, and it needs no interaction.
 export function Progress({
   value,
   className,

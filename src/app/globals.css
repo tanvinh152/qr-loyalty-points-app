@@ -162,8 +162,10 @@
   --tier-1: #cbd5e1;
   --tier-2: #fbbf24;
   --tier-3: #a5b4fc;
-  --tier-4: #f43f5e;
-  --tier-5: #67e8f9;
+  /* rank 4 = Kim cương (teal gem), rank 5 = Ruby (red gem) — matches the
+     member mockups; do not swap these two back. */
+  --tier-4: #67e8f9;
+  --tier-5: #f43f5e;
   --chart-1: #4d8eff;
   --chart-2: #4edea3;
   --chart-3: #ffb95f;
@@ -178,6 +180,128 @@
   --sidebar-accent-foreground: #d8e2ff;
   --sidebar-border: #44474f;
   --sidebar-ring: #4d8eff;
+}
+
+/* ── Light theme ──────────────────────────────────────────────────────────
+   The dark `:root` above is the baseline and is never touched, so the app is
+   unchanged for anyone on dark. Light is an OVERRIDE of the same token names,
+   derived from docs/color_palette_theme.md (Primary Blue #0049ed, Dark Navy
+   #00215b, off-white #f0f4f8, Teal #38c6bf). Colours the spec does not name —
+   neutrals, muted, and the tier/chart accents — are re-tuned here for contrast
+   on a light canvas (the dark tier hexes are near-invisible on off-white).
+
+   Two selectors carry the SAME values on purpose:
+     • :root[data-theme="light"]                       explicit choice / age-seed
+     • @media (prefers-color-scheme: light) :not([data-theme])   OS default, no-JS
+
+   Note the inversion of --primary: on dark it is a pale tint used both as the
+   filled-button background AND as `text-primary`; on light it becomes the
+   saturated blue so it still works in both roles (blue button + white text,
+   blue text on a light surface). Keep the two blocks in sync when editing. */
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    /* mirror of the explicit block below — see note above */
+    --background: #f0f4f8;
+    --foreground: #00215b;
+    --card: #ffffff;
+    --card-foreground: #00215b;
+    --popover: #ffffff;
+    --popover-foreground: #00215b;
+    --primary: #0049ed;
+    --primary-foreground: #ffffff;
+    --primary-container: #0049ed;
+    --secondary: #38c6bf;
+    --secondary-foreground: #00215b;
+    --secondary-container: #0e9e97;
+    --muted: #e6eef7;
+    --muted-foreground: #475569;
+    --accent: #d7e8fd;
+    --accent-foreground: #00215b;
+    --destructive: #b3261e;
+    --destructive-container: #f9dedc;
+    --success: #0e9e97;
+    --warning: #b45309;
+    --border: #c9d6e5;
+    --input: #c9d6e5;
+    --ring: #0049ed;
+    --outline: #64748b;
+    --surface-low: #f0f4f8;
+    --surface-container: #ffffff;
+    --surface-high: #e4edf7;
+    --surface-highest: #d3e3f5;
+    --chicha-blue: #001b8f;
+    --brand: #0049ed;
+    --tier-1: #94a3b8;
+    --tier-2: #d97706;
+    --tier-3: #6366f1;
+    --tier-4: #0891b2;
+    --tier-5: #e11d48;
+    --chart-1: #0049ed;
+    --chart-2: #0e9e97;
+    --chart-3: #d97706;
+    --chart-4: #6366f1;
+    --chart-5: #38c6bf;
+    --sidebar: #f5f9fd;
+    --sidebar-foreground: #00215b;
+    --sidebar-primary: #0049ed;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #d7e8fd;
+    --sidebar-accent-foreground: #00215b;
+    --sidebar-border: #c9d6e5;
+    --sidebar-ring: #0049ed;
+  }
+}
+
+:root[data-theme="light"] {
+  --background: #f0f4f8;
+  --foreground: #00215b;
+  --card: #ffffff;
+  --card-foreground: #00215b;
+  --popover: #ffffff;
+  --popover-foreground: #00215b;
+  --primary: #0049ed;
+  --primary-foreground: #ffffff;
+  --primary-container: #0049ed;
+  --secondary: #38c6bf;
+  --secondary-foreground: #00215b;
+  --secondary-container: #0e9e97;
+  --muted: #e6eef7;
+  --muted-foreground: #475569;
+  --accent: #d7e8fd;
+  --accent-foreground: #00215b;
+  --destructive: #b3261e;
+  --destructive-container: #f9dedc;
+  --success: #0e9e97;
+  --warning: #b45309;
+  --border: #c9d6e5;
+  --input: #c9d6e5;
+  --ring: #0049ed;
+  --outline: #64748b;
+  --surface-low: #f0f4f8;
+  --surface-container: #ffffff;
+  --surface-high: #e4edf7;
+  --surface-highest: #d3e3f5;
+  --chicha-blue: #001b8f;
+  --brand: #0049ed;
+  --tier-1: #94a3b8;
+  --tier-2: #d97706;
+  --tier-3: #6366f1;
+  --tier-4: #0891b2;
+  --tier-5: #e11d48;
+  --chart-1: #0049ed;
+  --chart-2: #0e9e97;
+  --chart-3: #d97706;
+  --chart-4: #6366f1;
+  --chart-5: #38c6bf;
+  --sidebar: #f5f9fd;
+  --sidebar-foreground: #00215b;
+  --sidebar-primary: #0049ed;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #d7e8fd;
+  --sidebar-accent-foreground: #00215b;
+  --sidebar-border: #c9d6e5;
+  --sidebar-ring: #0049ed;
 }
 
 /* The auth screens' canvas texture (`dangnhap.html`): a faint dot grid that

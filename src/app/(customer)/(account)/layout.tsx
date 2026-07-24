@@ -12,9 +12,10 @@ import {
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { EmptyState } from "@/components/empty-state"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { cn } from "@/lib/utils"
 import { getMessages } from "@/lib/i18n/server"
-import { getTiers, resolveTiers } from "@/lib/loyalty"
+import { getTiers, resolveDisplayTier } from "@/lib/loyalty"
 import { signOut } from "../auth/actions"
 import { PortalNav, type PortalNavItem } from "@/components/portal-nav"
 import { getAccount } from "./account"
@@ -30,7 +31,6 @@ export default async function AccountLayout({
 
   const items: PortalNavItem[] = [
     { href: "/dashboard", label: nav.home, icon: "home" },
-    { href: "/claim", label: nav.scan, icon: "scan" },
     { href: "/rewards", label: nav.rewards, icon: "rewards" },
     { href: "/tiers", label: nav.tiers, icon: "tiers" },
     { href: "/history", label: nav.history, icon: "history" },
@@ -48,9 +48,10 @@ export default async function AccountLayout({
 
   // The rail's brand block shows the tier, not the balance — the balance already
   // leads the dashboard and the phone header.
+  // The display tier, not the one the spend earns: a member kept on an old
+  // threshold must never see the rail quietly demote them.
   const tierName = customer
-    ? (resolveTiers(await getTiers(), customer.lifetime_points).current?.name ??
-      null)
+    ? (resolveDisplayTier(await getTiers(), customer)?.name ?? null)
     : null
 
   const signOutButton = (
@@ -81,7 +82,7 @@ export default async function AccountLayout({
           </span>
           <span className="grid">
             <span className="text-headline-md text-foreground leading-tight">
-              {t.claim.brand.name}
+              {t.brand.name}
             </span>
             {tierName && (
               <span className="text-label-md text-primary inline-flex items-center gap-1 uppercase">
@@ -95,13 +96,6 @@ export default async function AccountLayout({
         <PortalNav items={items} label={nav.mainLabel} variant="rail" />
 
         <div className="mt-auto grid gap-1 pt-4">
-          <Link
-            href="/tiers"
-            className={cn(buttonVariants({ variant: "default" }), "w-full")}
-          >
-            <Sparkles className="size-4" aria-hidden />
-            {nav.upgrade}
-          </Link>
           {/* Profile sits outside PortalNav: it is account settings, not one of
               the five primary destinations, and the phone tab bar has no room. */}
           <Link
@@ -114,6 +108,7 @@ export default async function AccountLayout({
             <UserRound className="size-4" aria-hidden />
             {nav.profile}
           </Link>
+          <ThemeToggle />
           {signOutButton}
         </div>
       </aside>
@@ -124,7 +119,7 @@ export default async function AccountLayout({
         <header className="bg-sidebar border-border sticky top-0 z-40 flex h-16 items-center gap-3 border-b px-4 md:hidden">
           <Link href="/dashboard" className="flex items-center gap-2">
             <PawPrint className="text-primary size-5" aria-hidden />
-            <span className="text-headline-md">{t.claim.brand.name}</span>
+            <span className="text-headline-md">{t.brand.name}</span>
           </Link>
           {customer && (
             <span className="bg-surface-high text-label-md text-primary ml-auto inline-flex items-center gap-1.5 rounded-full px-3 py-1.5">
@@ -151,6 +146,7 @@ export default async function AccountLayout({
           >
             <HelpCircle className="size-5" aria-hidden />
           </Link>
+          <ThemeToggle iconOnly />
         </header>
 
         {/* pb-24 keeps the last row clear of the phone tab bar. */}

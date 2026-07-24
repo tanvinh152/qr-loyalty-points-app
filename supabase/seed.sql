@@ -1,20 +1,27 @@
 -- Seed: tiers, active settings, a few real Pancake SKUs, sample rewards.
 -- Orders are NOT seeded — they come from Pancake POS live.
 
-insert into public.membership_tiers (name, threshold, multiplier, sort_order, benefits, perks) values
-  ('Thành viên', 0,    1.0, 1, 'Tích điểm mọi đơn hàng', '[
+-- Tier thresholds are LIFETIME SPEND in đồng, not points (see 0010_spend_tiers).
+-- 0010 already writes this exact ladder so an existing database converges on it;
+-- the same rows are repeated here so a fresh `db reset` reads as one story.
+insert into public.membership_tiers (name, spend_threshold, multiplier, sort_order, benefits, perks) values
+  ('Bạc',       0,        1.0, 1, 'Tích điểm mọi đơn hàng', '[
      {"icon":"percent","title":"Tích điểm mọi đơn","detail":"Áp dụng cho toàn bộ sản phẩm"}
    ]'::jsonb),
-  ('Bạc',        500,  1.2, 2, 'Nhân 1.2 điểm mỗi đơn', '[
+  ('Vàng',      3000000,  1.2, 2, 'Nhân 1.2 điểm mỗi đơn', '[
      {"icon":"percent","title":"Tích điểm 1.2×","detail":"Trên mọi đơn hàng"},
-     {"icon":"gift","title":"Quà chào hạng","detail":"Voucher khi lên hạng Bạc"}
+     {"icon":"gift","title":"Quà chào hạng","detail":"Voucher khi lên hạng Vàng"}
    ]'::jsonb),
-  ('Vàng',       2000, 1.5, 3, 'Nhân 1.5 điểm mỗi đơn', '[
+  ('Bạch kim',  8000000,  1.5, 3, 'Nhân 1.5 điểm mỗi đơn', '[
      {"icon":"percent","title":"Tích điểm 1.5×","detail":"Trên mọi đơn hàng"},
-     {"icon":"truck","title":"Miễn phí vận chuyển","detail":"3 mã mỗi tháng"},
+     {"icon":"truck","title":"Miễn phí vận chuyển","detail":"3 mã mỗi tháng"}
+   ]'::jsonb),
+  ('Kim cương', 20000000, 1.8, 4, 'Nhân 1.8 điểm + quà sinh nhật', '[
+     {"icon":"percent","title":"Tích điểm 1.8×","detail":"Trên mọi đơn hàng"},
+     {"icon":"truck","title":"Miễn phí vận chuyển","detail":"Không giới hạn"},
      {"icon":"cake","title":"Quà sinh nhật","detail":"Voucher 10% + quà tặng"}
    ]'::jsonb),
-  ('Kim cương',  5000, 2.0, 4, 'Nhân 2 điểm + quà sinh nhật', '[
+  ('Ruby',      50000000, 2.0, 5, 'Nhân 2 điểm + đặc quyền cao nhất', '[
      {"icon":"percent","title":"Tích điểm 2×","detail":"Trên mọi đơn hàng"},
      {"icon":"truck","title":"Miễn phí vận chuyển","detail":"Không giới hạn"},
      {"icon":"cake","title":"Quà sinh nhật","detail":"Quà cao cấp cho bé cưng"},

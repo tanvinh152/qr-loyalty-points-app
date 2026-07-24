@@ -5,9 +5,11 @@ import type { LoyaltyRules, SkuPointMap } from "@/lib/points"
 import type {
   AdjustMeta,
   CustomerRow,
+  CustomerTierHistoryRow,
   LoyaltySettingsRow,
   MembershipTierRow,
   RewardRow,
+  TierScheduleRow,
   TransactionRow,
   TransactionSource,
   TransactionType,
@@ -100,7 +102,7 @@ export async function getTiers(): Promise<MembershipTierRow[]> {
   const { data } = await supabase
     .from("membership_tiers")
     .select("*")
-    .order("threshold", { ascending: true })
+    .order("spend_threshold", { ascending: true })
   return (data ?? []) as MembershipTierRow[]
 }
 
@@ -170,6 +172,29 @@ export async function linkAuthUserToPhone(
 
   if (error || !data) return { ok: false, reason: "taken" }
   return { ok: true, customer: data }
+}
+
+/**
+ * Writes the Pancake link the webhook attributes orders by.
+ *
+ * `claim_points` sets it as a side effect of a successful claim, but signup must
+ * link even when the proof order was already claimed (or is not settled yet), so
+ * this is called unconditionally afterwards. Only fills a NULL — it must never
+ * repoint an existing link at another POS record.
+ */
+export async function linkPancakeCustomer(
+  customerId: string,
+  pancakeCustomerId: string,
+): Promise<void> {
+  const supabase = createAdminClient()
+  await supabase
+    .from("customers")
+    .update({
+      pancake_customer_id: pancakeCustomerId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", customerId)
+    .is("pancake_customer_id", null)
 }
 
 // Reward store listing. Out-of-stock rewards are still shown (greyed out in the
@@ -408,19 +433,42 @@ export async function getNextReward(
   return data ?? null
 }
 
-// Tier the customer sits in now, plus the next one up (null at the top tier).
+// Tier the spend alone earns, plus the next one up (null at the top tier).
+// Measured in đồng since 0010 — points no longer decide a tier.
 export function resolveTiers(
   tiers: MembershipTierRow[],
-  lifetimePoints: number,
+  lifetimeSpend: number,
 ): { current: MembershipTierRow | null; next: MembershipTierRow | null } {
-  const sorted = [...tiers].sort((a, b) => a.threshold - b.threshold)
+  const sorted = [...tiers].sort((a, b) => a.spend_threshold - b.spend_threshold)
   let current: MembershipTierRow | null = null
   let next: MembershipTierRow | null = null
   for (const tier of sorted) {
-    if (tier.threshold <= lifetimePoints) current = tier
+    if (tier.spend_threshold <= lifetimeSpend) current = tier
     else if (!next) next = tier
   }
   return { current, next }
+}
+
+/**
+ * The tier to SHOW: the higher of the one stored on the customer and the one
+ * their spend earns today.
+ *
+ * `customers.tier_id` is the highest tier ever held (0010) and thresholds only
+ * ever rise, so after a raise a member's stored tier can outrank what their
+ * spend would earn now. That is deliberate — they keep it — and the UI must
+ * never contradict the database by rendering the lower one. The reverse case
+ * (stored tier behind the spend) happens between an order landing and the RPC
+ * that promotes them, and resolves the same way.
+ */
+export function resolveDisplayTier(
+  tiers: MembershipTierRow[],
+  customer: Pick<CustomerRow, "tier_id" | "lifetime_spend">,
+): MembershipTierRow | null {
+  const stored = tiers.find((tier) => tier.id === customer.tier_id) ?? null
+  const earned = resolveTiers(tiers, customer.lifetime_spend).current
+  if (!stored) return earned
+  if (!earned) return stored
+  return earned.spend_threshold > stored.spend_threshold ? earned : stored
 }
 
 export type TierProgress = {
@@ -430,7 +478,7 @@ export type TierProgress = {
   floor: number
   /** 0-100. Always 100 at the top tier, where there is nothing to fill towards. */
   percent: number
-  /** Points still needed to reach `next`. 0 at the top tier. */
+  /** Đồng still needed to reach `next`. 0 at the top tier. */
   toNext: number
 }
 
@@ -438,23 +486,73 @@ export type TierProgress = {
  * Progress *inside* the current tier band rather than from zero — otherwise
  * every tier after the first opens on a misleadingly full bar. Shared by the
  * customer dashboard, the tier screen and the admin customer detail page.
+ *
+ * `current` is the DISPLAY tier when a customer is passed, so a grandfathered
+ * member's bar starts at the tier they hold rather than the one their spend
+ * currently reaches.
  */
 export function tierProgress(
   tiers: MembershipTierRow[],
-  lifetimePoints: number,
+  lifetimeSpend: number,
+  customer?: Pick<CustomerRow, "tier_id" | "lifetime_spend">,
 ): TierProgress {
-  const { current, next } = resolveTiers(tiers, lifetimePoints)
-  const floor = current?.threshold ?? 0
-  const span = next ? next.threshold - floor : 0
+  const earned = resolveTiers(tiers, lifetimeSpend)
+  const current = customer ? resolveDisplayTier(tiers, customer) : earned.current
+  // The next rung is the cheapest tier above whichever one is being shown, so a
+  // grandfathered member is not told to aim at a tier they already hold.
+  const floor = current?.spend_threshold ?? 0
+  const next =
+    [...tiers]
+      .sort((a, b) => a.spend_threshold - b.spend_threshold)
+      .find((tier) => tier.spend_threshold > floor) ?? null
+
+  const span = next ? next.spend_threshold - floor : 0
   const percent =
     span > 0
-      ? Math.min(100, Math.round(((lifetimePoints - floor) / span) * 100))
+      ? Math.min(100, Math.max(0, Math.round(((lifetimeSpend - floor) / span) * 100)))
       : 100
   return {
     current,
     next,
     floor,
     percent,
-    toNext: next ? Math.max(0, next.threshold - lifetimePoints) : 0,
+    toNext: next ? Math.max(0, next.spend_threshold - lifetimeSpend) : 0,
   }
+}
+
+/** Pending (unapplied) threshold raises, keyed by tier id, for /admin/tiers. */
+export async function getPendingTierSchedules(): Promise<
+  Record<string, TierScheduleRow>
+> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from("tier_threshold_schedules")
+    .select("*")
+    .is("applied_at", null)
+    .order("effective_at", { ascending: true })
+
+  const map: Record<string, TierScheduleRow> = {}
+  for (const row of (data ?? []) as TierScheduleRow[]) map[row.tier_id] = row
+  return map
+}
+
+/**
+ * The award that explains the tier a customer currently holds. Used to show
+ * "kept at the old threshold" when the ladder has moved on beneath them.
+ */
+export async function getLatestTierAward(
+  customerId: string,
+  tierId: string | null,
+): Promise<CustomerTierHistoryRow | null> {
+  if (!tierId) return null
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from("customer_tier_history")
+    .select("*")
+    .eq("customer_id", customerId)
+    .eq("tier_id", tierId)
+    .order("awarded_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<CustomerTierHistoryRow>()
+  return data ?? null
 }

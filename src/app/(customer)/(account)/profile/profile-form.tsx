@@ -1,6 +1,5 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 import {
   ArrowRight,
@@ -8,7 +7,6 @@ import {
   Cat,
   Dog,
   PawPrint,
-  Receipt,
   Sparkles,
   UserRound,
 } from "lucide-react"
@@ -36,20 +34,11 @@ const FIELD = "h-14 rounded-2xl"
 export function ProfileForm({ customer }: { customer: CustomerRow }) {
   const t = useT()
   const p = t.customer.profile
-  const router = useRouter()
   const [petType, setPetType] = useState<PetType | undefined>(
     customer.pet_type ?? undefined,
   )
-  const [orderCode, setOrderCode] = useState("")
   const [error, setError] = useState<string | undefined>()
   const [isPending, startTransition] = useTransition()
-
-  // The callout hands the code to /claim rather than claiming here: claim_points
-  // stays the single write path and the phone gate is not duplicated.
-  function goToClaim() {
-    const code = orderCode.trim()
-    router.push(code ? `/claim?code=${encodeURIComponent(code)}` : "/claim")
-  }
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -162,50 +151,15 @@ export function ProfileForm({ customer }: { customer: CustomerRow }) {
           <p className="text-body-xs text-muted-foreground">{p.petDobHint}</p>
         </div>
 
-        {/* The mockup puts the order-code callout here, right under the pet
-            fields, as the profile's one outbound action. */}
-        <section className="border-primary-container bg-primary-container/10 grid gap-3 rounded-3xl border-2 p-4">
+        {/* The mockup's order-code callout used to hand a code to /claim. There
+            is no manual claim any more — points land by webhook — so the slot
+            keeps only the reassurance. */}
+        <section className="border-primary-container bg-primary-container/10 grid gap-2 rounded-3xl border-2 p-4">
           <div className="flex items-center gap-2">
             <Sparkles className="text-primary size-5 shrink-0" aria-hidden />
             <span className="text-body-lg font-semibold">{p.orderSection}</span>
           </div>
-          <div className="grid gap-3">
-            <div>
-              {/* Deliberately unnamed: this must never ride along in the profile
-                  payload that `saveProfile` parses. */}
-              <Input
-                id="order_code"
-                aria-label={p.orderPlaceholder}
-                placeholder={p.orderPlaceholder}
-                value={orderCode}
-                onChange={(e) => setOrderCode(e.target.value)}
-                // The block sits inside the profile <form>, so Enter would
-                // submit the profile. It goes to /claim instead.
-                onKeyDown={(e) => {
-                  if (e.key !== "Enter") return
-                  e.preventDefault()
-                  goToClaim()
-                }}
-                icon={Receipt}
-                className={cn(
-                  FIELD,
-                  "border-primary-container/60 font-semibold",
-                )}
-              />
-            </div>
-            <Button
-              type="button"
-              variant="secondary"
-              size="xl"
-              onClick={goToClaim}
-            >
-              {p.orderCta}
-              <ArrowRight className="size-4" aria-hidden />
-            </Button>
-          </div>
-          <p className="text-body-sm text-muted-foreground italic">
-            {p.orderHint}
-          </p>
+          <p className="text-body-sm text-muted-foreground">{p.orderHint}</p>
         </section>
       </fieldset>
 

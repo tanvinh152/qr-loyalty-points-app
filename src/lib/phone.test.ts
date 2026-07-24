@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { matchesMask, normalizePhone } from "./phone"
+import {
+  isMasked,
+  matchesMask,
+  matchesOrderPhones,
+  normalizePhone,
+} from "./phone"
 
 describe("normalizePhone", () => {
   it("keeps a local number as-is", () => {
@@ -13,6 +18,23 @@ describe("normalizePhone", () => {
   it("strips separators", () => {
     expect(normalizePhone("090 123 45 94")).toBe("0901234594")
     expect(normalizePhone("090-123-4594")).toBe("0901234594")
+  })
+})
+
+describe("isMasked", () => {
+  it("spots the shapes Pancake actually returns", () => {
+    expect(isMasked("0****52")).toBe(true)
+    expect(isMasked("L******h")).toBe(true)
+    expect(isMasked("+84978****30")).toBe(true)
+  })
+  it("passes real values through", () => {
+    expect(isMasked("0376733152")).toBe(false)
+    expect(isMasked("Lê tấn Vinh")).toBe(false)
+  })
+  it("treats absent or blank values as masked", () => {
+    expect(isMasked(null)).toBe(true)
+    expect(isMasked(undefined)).toBe(true)
+    expect(isMasked("   ")).toBe(true)
   })
 })
 
@@ -42,5 +64,38 @@ describe("matchesMask", () => {
   it("compares exactly when the mask is unmasked", () => {
     expect(matchesMask("0901234594", "0901234594")).toBe(true)
     expect(matchesMask("0901234595", "0901234594")).toBe(false)
+  })
+})
+
+describe("matchesOrderPhones", () => {
+  // Shape of a real order: Pancake keeps the mask next to the number it knows.
+  const known = ["0****52", "0376733152"]
+  const maskedOnly = ["0****52"]
+
+  it("accepts the real number when the order carries one", () => {
+    expect(matchesOrderPhones("0376733152", known)).toBe(true)
+    expect(matchesOrderPhones("+84376733152", known)).toBe(true)
+  })
+  it("stops a mask-compatible impostor once the real number is known", () => {
+    // Passes matchesMask against "0****52" — that is exactly the hole.
+    expect(matchesOrderPhones("0999999952", known)).toBe(false)
+    expect(matchesOrderPhones("0999999952", maskedOnly)).toBe(true)
+  })
+  it("falls back to the mask when nothing better exists", () => {
+    expect(matchesOrderPhones("0376733152", maskedOnly)).toBe(true)
+    expect(matchesOrderPhones("0376733199", maskedOnly)).toBe(false)
+  })
+  it("checks every candidate, not just the first", () => {
+    expect(matchesOrderPhones("0376733152", ["0376733152", "0912000000"])).toBe(
+      true,
+    )
+    expect(matchesOrderPhones("0912000000", ["0376733152", "0912000000"])).toBe(
+      true,
+    )
+  })
+  it("fails closed on an empty or blank list", () => {
+    expect(matchesOrderPhones("0376733152", [])).toBe(false)
+    expect(matchesOrderPhones("0376733152", [null, undefined, "  "])).toBe(false)
+    expect(matchesOrderPhones("", known)).toBe(false)
   })
 })

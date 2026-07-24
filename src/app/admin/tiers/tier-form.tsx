@@ -38,33 +38,26 @@ import { saveTier } from "./actions"
 import type { MembershipTierRow } from "@/lib/db-types"
 
 /**
- * Create/edit dialog for a membership tier. Passing `row` makes it the edit
- * form for that tier; omitting it makes it the "add" form.
+ * Adjust dialog for one of the fixed membership tiers. The five tiers are a
+ * fixed ladder, so this is edit-only — there is no "add" form, and the tier's
+ * name and rank (`sort_order`) are shown read-only.
  */
-export function TierDialog({ row }: { row?: MembershipTierRow }) {
+export function TierDialog({ row }: { row: MembershipTierRow }) {
   const t = useT()
-  const m = t.admin.tiers
 
   return (
     <FormDialog
-      title={row ? `${t.common.edit} — ${row.name}` : m.addTitle}
-      description={m.helper}
+      title={`${t.common.edit} — ${row.name}`}
+      description={t.admin.tiers.helper}
       trigger={
-        row ? (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            type="button"
-            aria-label={`${t.common.edit} — ${row.name}`}
-          >
-            <Pencil aria-hidden />
-          </Button>
-        ) : (
-          <Button type="button">
-            <Plus aria-hidden />
-            {m.addTitle}
-          </Button>
-        )
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          type="button"
+          aria-label={`${t.common.edit} — ${row.name}`}
+        >
+          <Pencil aria-hidden />
+        </Button>
       }
     >
       {(close) => <TierFields row={row} onSaved={close} />}
@@ -76,7 +69,7 @@ function TierFields({
   row,
   onSaved,
 }: {
-  row?: MembershipTierRow
+  row: MembershipTierRow
   onSaved: () => void
 }) {
   const t = useT()
@@ -90,7 +83,7 @@ function TierFields({
     defaultValues: {
       id: row?.id,
       name: row?.name ?? "",
-      threshold: row?.threshold ?? 0,
+      spend_threshold: row?.spend_threshold ?? 0,
       multiplier: row?.multiplier ?? 1,
       sort_order: row?.sort_order ?? 0,
       benefits: row?.benefits ?? "",
@@ -134,8 +127,11 @@ function TierFields({
             <FormItem>
               <FormLabel>{m.name}</FormLabel>
               <FormControl>
-                <Input {...field} />
+                {/* The five tier names are fixed; only threshold, multiplier
+                    and perks are adjustable. */}
+                <Input {...field} readOnly className="text-muted-foreground" />
               </FormControl>
+              <FormDescription>{m.fixedField}</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -144,20 +140,22 @@ function TierFields({
         <div className="grid gap-6 sm:grid-cols-2">
           <FormField
             control={form.control}
-            name="threshold"
+            name="spend_threshold"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{m.threshold}</FormLabel>
+                <FormLabel>{m.spendThreshold}</FormLabel>
                 <FormControl>
+                  {/* Đồng: whole units, and a 1.000đ step because nobody sets a
+                      loyalty threshold to an odd number of đồng. */}
                   <Input
                     type="number"
                     min="0"
-                    step="1"
+                    step="1000"
                     {...field}
                     value={fieldValue(field.value)}
                   />
                 </FormControl>
-                <FormDescription>{m.thresholdHelper}</FormDescription>
+                <FormDescription>{m.spendThresholdHelper}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -191,15 +189,19 @@ function TierFields({
             <FormItem>
               <FormLabel>{m.sortOrder}</FormLabel>
               <FormControl>
+                {/* Rank drives the gem accent on the member screen and the
+                    fixed ladder order — read-only. */}
                 <Input
                   type="number"
                   min="0"
                   step="1"
                   {...field}
                   value={fieldValue(field.value)}
+                  readOnly
+                  className="text-muted-foreground"
                 />
               </FormControl>
-              <FormDescription>{m.sortOrderHelper}</FormDescription>
+              <FormDescription>{m.fixedField}</FormDescription>
               <FormMessage />
             </FormItem>
           )}

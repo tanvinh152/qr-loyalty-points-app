@@ -46,13 +46,19 @@ export type CustomerLoginInput = z.infer<
   ReturnType<typeof makeCustomerLoginSchema>
 >
 
-// Signup. `order_code` is only required when CUSTOMER_SIGNUP_REQUIRE_PROOF is on
-// (the server re-checks it against the order's masked phone), so it stays
-// optional here and the Server Action enforces it.
+// Signup. Every field is mandatory: the order code proves the phone is the
+// member's (the server re-checks it against the order's masked phone) AND is the
+// only source of the Pancake customer id the webhook later needs, and the
+// name/DOB are pushed onto the POS record so staff see a real customer.
 export function makeCustomerSignupSchema(v: V) {
   return makeCustomerLoginSchema(v).extend({
+    full_name: z.string().trim().min(1, v.nameRequired),
+    date_of_birth: z
+      .string()
+      .trim()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, v.invalidDate),
     terms: z.literal(true, { message: v.termsRequired }),
-    order_code: z.string().trim().max(64).optional().or(z.literal("")),
+    order_code: z.string().trim().min(1, v.orderRequired).max(64),
   })
 }
 export type CustomerSignupInput = z.infer<
@@ -85,7 +91,8 @@ export function makeTierSchema(v: V) {
   return z.object({
     id: z.string().uuid().optional(),
     name: z.string().trim().min(1, v.tierNameRequired),
-    threshold: z.coerce.number().int().min(0, v.nonNegative),
+    // Đồng, not points (0010). Whole units: Vietnamese currency has no minor unit.
+    spend_threshold: z.coerce.number().int().min(0, v.nonNegative),
     multiplier: z.coerce.number().gt(0, v.positive),
     sort_order: z.coerce.number().int().min(0, v.nonNegative),
     benefits: z.string().trim().optional().or(z.literal("")),
@@ -106,6 +113,49 @@ export function makeTierSchema(v: V) {
 export type TierInput = z.infer<ReturnType<typeof makeTierSchema>>
 // Pre-coercion shape — what the form fields actually hold while typing.
 export type TierFormValues = z.input<ReturnType<typeof makeTierSchema>>
+
+// Admin: a queued raise of one tier's spend threshold.
+//
+// The two modes are mutually exclusive and each requires its own field, which
+// is why this cannot be a flat object with two optional numbers — a percentile
+// with a stray amount beside it would be ambiguous at apply time.
+export function makeTierScheduleSchema(v: V) {
+  return z
+    .object({
+      id: z.string().uuid().optional(),
+      tier_id: z.string().uuid(v.tierRequired),
+      mode: z.enum(["amount", "percentile"]),
+      target_amount: z
+        .union([z.coerce.number().int().min(0, v.nonNegative), z.literal("")])
+        .optional(),
+      // "Top N%" — strictly inside (0, 100): 0 would select nobody and 100 the
+      // whole base, neither of which is a tier.
+      target_percentile: z
+        .union([
+          z.coerce.number().gt(0, v.percentileRange).lt(100, v.percentileRange),
+          z.literal(""),
+        ])
+        .optional(),
+      // datetime-local gives "YYYY-MM-DDTHH:mm"; the action turns it into an ISO
+      // instant in the server's zone.
+      effective_at: z.string().trim().min(1, v.effectiveAtRequired),
+      note: z.string().trim().max(200).optional().or(z.literal("")),
+    })
+    .refine(
+      (s) => s.mode !== "amount" || (s.target_amount !== "" && s.target_amount != null),
+      { message: v.amountRequired, path: ["target_amount"] },
+    )
+    .refine(
+      (s) =>
+        s.mode !== "percentile" ||
+        (s.target_percentile !== "" && s.target_percentile != null),
+      { message: v.percentileRequired, path: ["target_percentile"] },
+    )
+}
+export type TierScheduleInput = z.infer<ReturnType<typeof makeTierScheduleSchema>>
+export type TierScheduleFormValues = z.input<
+  ReturnType<typeof makeTierScheduleSchema>
+>
 
 // Admin: SKU -> points mapping.
 export function makeProductPointSchema(v: V) {
@@ -167,8 +217,8 @@ export type RewardInput = z.infer<ReturnType<typeof makeRewardSchema>>
 export type RewardFormValues = z.input<ReturnType<typeof makeRewardSchema>>
 
 // Admin: manual points/tier adjustment. Deltas are signed — the RPC is what
-// refuses to push a balance below zero. `grant_tier_id` is not a tier assignment:
-// the RPC turns it into a lifetime_points floor (see 0008_adjust_rpc.sql).
+// refuses to push a balance below zero. `grant_tier_id` IS a direct tier
+// assignment since 0012; it never invents spend or lifetime points.
 export function makeAdjustSchema(v: V) {
   const delta = z.coerce.number().int(v.wholeNumber).default(0)
 

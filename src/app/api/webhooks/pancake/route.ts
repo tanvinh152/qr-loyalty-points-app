@@ -1,7 +1,12 @@
 import { z } from "zod"
 
 import { createAdminClient } from "@/lib/supabase/admin"
-import { getOrder, canonicalOrderCode, toRpcItems } from "@/lib/pancake/client"
+import {
+  getOrder,
+  canonicalOrderCode,
+  orderSpendTotal,
+  toRpcItems,
+} from "@/lib/pancake/client"
 import { PancakeRequestError } from "@/lib/pancake/types"
 import {
   getActiveSettings,
@@ -11,13 +16,13 @@ import {
 import { verifyWebhookSecret } from "@/lib/webhook-auth"
 import type { ClaimResult } from "@/lib/db-types"
 
-// Pancake order webhook — auto-claim for RETURNING customers.
+// Pancake order webhook — the ONLY way points are earned after signup.
 //
 // Pancake masks phone numbers ("0****70"), so this endpoint can never mint a new
 // customer: there is no real phone to key on. It attributes an order only when
 // `customer.customer_id` already matches a customers row, i.e. someone who
-// completed the manual /claim flow before and passed the masked-phone gate then.
-// First-time buyers still claim by QR.
+// registered and passed the masked-phone gate on their proof order. A buyer who
+// never registered earns nothing until they do.
 //
 // Pancake retries on any non-2xx, so every *business* outcome (not eligible,
 // already claimed, unknown customer) answers 200. Only auth failures, malformed
@@ -115,6 +120,9 @@ export async function POST(req: Request) {
     p_pancake_customer_id: pancakeCustomerId,
     p_items: toRpcItems(order),
     p_source: "webhook",
+    // Points and money are credited from the same call but land in different
+    // columns: points buy rewards, this decides the tier.
+    p_order_total: orderSpendTotal(order),
   })
 
   if (error) {

@@ -3,6 +3,7 @@ import { Gift, LogOut, Medal, Package, Settings } from "lucide-react"
 
 import { InitialsAvatar } from "@/components/initials-avatar"
 import { PortalNav, type PortalNavItem } from "@/components/portal-nav"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { buttonVariants } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/server"
 import { getMessages } from "@/lib/i18n/server"
@@ -93,6 +94,7 @@ export default async function AdminLayout({
               <Settings className="size-5" aria-hidden />
               {nav.settings}
             </Link>
+            <ThemeToggle className="text-muted-foreground gap-3 rounded-lg px-3" />
             <form action={logout}>
               <button
                 type="submit"
@@ -122,14 +124,17 @@ export default async function AdminLayout({
         <div className="grid gap-2 px-4 py-3">
           <div className="flex items-center justify-between gap-4">
             {brand}
-            <form action={logout}>
-              <button
-                type="submit"
-                className="text-destructive text-body-sm font-semibold"
-              >
-                {nav.signOut}
-              </button>
-            </form>
+            <div className="flex items-center gap-2">
+              <ThemeToggle iconOnly />
+              <form action={logout}>
+                <button
+                  type="submit"
+                  className="text-destructive text-body-sm font-semibold"
+                >
+                  {nav.signOut}
+                </button>
+              </form>
+            </div>
           </div>
           <nav aria-label={nav.mobileLabel} className="flex gap-1">
             {headerLinks.map((link) => (

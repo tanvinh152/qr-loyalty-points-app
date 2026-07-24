@@ -3,7 +3,7 @@
 // Pancake masks phones as "0****70" — first digit plus the last two, length
 // hidden. So the strongest check available is prefix + suffix. Combined with
 // needing the order code and the rate limiter, that is the ownership gate for
-// /claim. If an API key ever returns UNMASKED phones, `matchesMask` degrades
+// registration. If an API key ever returns UNMASKED phones, `matchesMask` degrades
 // naturally into an exact comparison (no `*` -> full string equality).
 
 const MASK_CHAR = "*"
@@ -27,6 +27,18 @@ const EMAIL_DOMAIN =
 
 export function phoneToEmail(phone: string): string {
   return `${normalizePhone(phone)}@${EMAIL_DOMAIN}`
+}
+
+/**
+ * True when a value coming back from Pancake tells us nothing real — it is
+ * absent, blank, or still carries the mask ("0****52", "L******h").
+ *
+ * Fails closed on purpose: an unreadable value counts as masked, so callers err
+ * towards "Pancake is missing this" rather than towards writing a mask onwards.
+ */
+export function isMasked(value: string | null | undefined): boolean {
+  const trimmed = value?.trim()
+  return !trimmed || trimmed.includes(MASK_CHAR)
 }
 
 // Fails closed: an empty or all-masked value never matches.
@@ -56,4 +68,36 @@ export function matchesMask(
   if (phone.length <= prefix.length + suffix.length) return false
 
   return phone.startsWith(prefix) && phone.endsWith(suffix)
+}
+
+/**
+ * The registration ownership gate, against every number an order carries.
+ *
+ * A mask reveals one digit and the last two, so on its own it accepts about one
+ * random Vietnamese number in ten thousand. But Pancake does not mask what it
+ * has been told: a record written by us (or typed by staff) comes back as
+ * ["0****52", "0376733152"]. Whenever such a real number is there, it is the
+ * only thing compared — the masks alongside it are ignored, because accepting
+ * them would keep the weak test alive next to a strong one.
+ *
+ * The mask fallback therefore applies only to records where nothing better
+ * exists. Signing up against one of those writes the real number back (see
+ * updateCustomer), which promotes that record to the exact-match path for good.
+ *
+ * Fails closed: no candidates, or nothing but blanks, never matches.
+ */
+export function matchesOrderPhones(
+  input: string,
+  candidates: (string | null | undefined)[],
+): boolean {
+  const phone = normalizePhone(input)
+  if (!phone) return false
+
+  const known = candidates.filter((c): c is string => Boolean(c?.trim()))
+  const real = known.filter((c) => !isMasked(c))
+
+  if (real.length > 0) {
+    return real.some((c) => normalizePhone(c) === phone)
+  }
+  return known.some((mask) => matchesMask(phone, mask))
 }

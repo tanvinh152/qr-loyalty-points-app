@@ -59,99 +59,18 @@ export const en = {
     code: (n: number) => `code ${n}`,
     unknown: (n: number) => `Status #${n}`,
   },
-  claim: {
-    metaTitle: "Claim Loyalty Points",
-    brand: {
-      name: "Chicha Label",
-      tagline: "Shop for your pet, collect points for their next treat 🐾",
-    },
-    help: {
-      instantTitle: "Points land instantly",
-      instantBody: "Points are added to your balance the moment you confirm.",
-      supportTitle: "Need a hand?",
-      supportBody:
-        "If your order code isn't working, double-check your invoice or contact support.",
-    },
-    hero: {
-      overline: "Member rewards",
-      title: "Earn points on every order",
-      subtitle:
-        "Enter your order code — we match it against the phone number on your account.",
-    },
-    profileHint: {
-      title: "Add your name",
-      body: "Your account has no name yet. It only takes a moment and makes rewards easier to hand over.",
-      cta: "Go to profile",
-    },
-    order: {
-      title: "Order details",
-      placeholder: "e.g. 8661 or 2607180W78FJH6",
-      checking: "Checking…",
-      continue: "Check my points",
-      orderLabel: "Order code",
-      hintToggle: "Where do I find my order code?",
-      hintBody:
-        "It's printed on the shipping label on your parcel and on the invoice inside. Either the short number (e.g. 8661) or the long code (e.g. 2607180W78FJH6) works.",
-    },
-    summary: {
-      orderLabel: (code: string) => `Order ${code}`,
-      quantity: (n: number) => `× ${n}`,
-      itemPoints: (n: number) => `${n} pts`,
-      unmapped: "No points yet",
-      unmappedHint: "This item hasn't been set up to earn points.",
-      itemsLabel: (n: number) => `${n} item${n === 1 ? "" : "s"}`,
-      totalLabel: "Order total",
-      heading: "Order summary",
-      basePoints: "Base points (1:1)",
-      tierBonus: (multiplier: string) => `Tier multiplier (${multiplier}×)`,
-      totalPoints: "Total points earned",
-      pointsUnit: "points",
-      itemsToggle: "Item breakdown",
-      confirm: "Confirm claim",
-      confirming: "Claiming…",
-      terms: "By confirming, you agree to the terms of the loyalty programme.",
-    },
-    progress: {
-      balance: (points: number) => `${points} points available`,
-      tier: (name: string) => `Tier: ${name}`,
-      noTier: "Not a member yet",
-      toNextTier: (points: number, name: string) =>
-        `${points} points away from ${name}`,
-      topTier: "You're at the highest tier 🎉",
-      toNextReward: (points: number, name: string) =>
-        `${points} points away from ${name}`,
-      rewardReady: (name: string) => `You can redeem ${name} now`,
-      currentTierLabel: "Current",
-      tierProgressLabel: "Progress to the next tier",
-    },
-    done: {
-      title: "Points claimed 🎉",
-      description: "Thanks for shopping for your furry friend.",
-      awarded: (points: number) => `+${points} points`,
-      awardedLabel: "added to your account",
-      balance: (total: number) => `Your balance is now ${total} points.`,
-      tierUpgraded: (name: string) => `You've reached ${name}!`,
-      rewardsCta: "Browse rewards",
-      dashboardCta: "Back to dashboard",
-      whatNextTitle: "What can I do with these points?",
-      whatNextBody:
-        "Points stack up with every order and can be swapped for treats, toys and discounts. The more you collect, the higher your membership tier — and higher tiers earn points faster.",
-      claimAnother: "Claim another order",
-    },
-    errors: {
-      invalidInput: "Invalid input",
-      lookupFailed: "Lookup failed. Try again.",
-      orderNotFound: "Order not found. Check the code and try again.",
-      orderNotEligible: "This order isn't eligible for points yet.",
-      alreadyClaimed: "This order has already been claimed.",
-      notConfigured: "Points are not configured yet.",
-      phoneMismatch:
-        "This order was placed with a different phone number than your account.",
-      noAccount: "No points account is linked to this login yet.",
-      rateLimited: "Too many attempts. Please try again in 15 minutes.",
-      pancakeUnavailable: "Can't reach the order system. Try again shortly.",
-      claimFailed: "Claim failed. Please try again.",
-    },
+  // The programme's name and one-line pitch. Shown on the auth split and the
+  // account rail; it is all that survived the removal of the manual claim screen.
+  brand: {
+    name: "Chicha Label",
+    tagline: "Shop for your pet, collect points for their next treat 🐾",
+  },
+  // Light/dark switch. The label shows the theme the button switches TO.
+  theme: {
+    light: "Light",
+    dark: "Dark",
+    switchToLight: "Switch to light theme",
+    switchToDark: "Switch to dark theme",
   },
   admin: {
     metaTitle: "Admin",
@@ -255,11 +174,12 @@ export const en = {
       metaTitle: "Membership Tiers",
       title: "Membership Tiers",
       helper:
-        "A customer's tier is the highest one their lifetime points reach. The multiplier applies to every future claim.",
+        "A tier is reached on total money spent, and once reached it is kept for good — raising a threshold never demotes anyone. The multiplier applies to every future order.",
       name: "Name",
-      threshold: "Lifetime points required",
-      thresholdHelper:
-        "Total points ever earned to reach this tier. 0 = starting tier.",
+      fixedField: "Fixed for the five-tier ladder — cannot be changed.",
+      spendThreshold: "Spend required",
+      spendThresholdHelper:
+        "Total money ever spent to reach this tier, in đồng. 0 = starting tier.",
       multiplier: "Multiplier",
       multiplierHelper: "1 = normal. 1.5 = every claim earns 1.5× points.",
       sortOrder: "Order",
@@ -294,6 +214,40 @@ export const en = {
       deleted: "Tier deleted.",
       saveFailed: "Save failed.",
       deleteFailed: "Delete failed.",
+      // ---- scheduled threshold raises ----
+      pendingThreshold: "Upcoming threshold",
+      pendingNone: "No change queued",
+      scheduleTitle: "Schedule a raise",
+      scheduleHelper:
+        "Raise a tier's threshold on a date you choose. Members who already reached the tier keep it — a raise only affects who can still get there.",
+      scheduleTier: "Tier",
+      scheduleMode: "New threshold set by",
+      amountMode: "A fixed amount",
+      percentileMode: "A share of members",
+      amountModeHelper: "The exact spend the tier will require.",
+      percentileModeHelper:
+        "For example 5 means “the top 5% of spenders”. It is turned into a đồng amount on the effective date and stays fixed after that.",
+      targetAmount: "New spend required",
+      targetPercentile: "Top % of members",
+      effectiveAt: "Applies from",
+      effectiveAtHelper:
+        "Nothing changes before this moment. Leave it in the future to announce the raise first.",
+      scheduleNote: "Note",
+      scheduleNoteHelper: "Your own reminder of why. Not shown to customers.",
+      schedulePreviewHint: (amount: string) =>
+        `Right now the top slice starts at ${amount}. The figure is recalculated on the effective date.`,
+      schedulePreviewEmpty: "No members have spent anything yet.",
+      scheduleSubmit: "Queue the raise",
+      scheduleSaved: "Raise scheduled.",
+      scheduleSaveFailed: "Could not schedule that raise.",
+      scheduleCancel: "Cancel the queued raise",
+      scheduleCanceled: "Queued raise cancelled.",
+      scheduleCancelFailed: "Could not cancel it.",
+      scheduleDuplicate:
+        "This tier already has a raise queued. Cancel it before adding another.",
+      scheduleForbidden: "Only staff accounts can schedule tier changes.",
+      effectiveOn: (date: string) => `from ${date}`,
+      percentileLabel: (pct: number) => `top ${pct}%`,
     },
     products: {
       metaTitle: "Product Points",
@@ -387,7 +341,9 @@ export const en = {
       currentPoints: "Available",
       currentPointsHint: "Points left to spend",
       lifetimePoints: "Lifetime",
-      lifetimePointsHint: "Total ever earned — decides the tier",
+      lifetimePointsHint: "Total points ever earned",
+      lifetimeSpend: "Spend",
+      lifetimeSpendHint: "Total money ever spent — decides the tier",
       empty: "No customers yet — they appear here after their first claim.",
       search: "Search by phone or name",
       totalMembers: "Total members",
@@ -400,6 +356,7 @@ export const en = {
         backToList: "Back to customers",
         statAvailable: "Available points",
         statLifetime: "Lifetime points",
+        statSpend: "Lifetime spend",
         statTransactions: "Transactions",
         statMemberSince: "Member since",
         ownerTitle: "Owner",
@@ -414,9 +371,10 @@ export const en = {
         tierTitle: "Tier progress",
         noTier: "No tier yet",
         topTier: "Top tier reached",
-        toNext: (points: number, tier: string) =>
-          `${points.toLocaleString()} points to ${tier}`,
-        multiplier: (value: number) => `×${value} on every claim`,
+        toNext: (amount: string, tier: string) => `${amount} more to ${tier}`,
+        grandfathered: (tier: string) =>
+          `Keeps ${tier} from the threshold in force when they reached it.`,
+        multiplier: (value: number) => `×${value} on every order`,
         historyTitle: "Transaction history",
         historyEmpty: "No transactions yet.",
         supportTitle: "Support requests",
@@ -430,16 +388,16 @@ export const en = {
             "For customers who shopped with us before the app existed. Pancake hides phone numbers, so their history can't be imported — grant it here instead.",
           grantTier: "Grant tier",
           grantTierHelper:
-            "Raises lifetime points to that tier's threshold so the tier sticks through future claims. Never lowers them.",
+            "Assigns the tier outright and keeps it for good. No spend is invented, so the member's real spend figure stays honest. Only tiers above the one they hold are listed.",
           noTierGrant: "Don't change the tier",
-          tierOption: (name: string, threshold: number) =>
-            `${name} — ${threshold.toLocaleString()} lifetime points`,
+          tierOption: (name: string, threshold: string) =>
+            `${name} — normally ${threshold}`,
           currentDelta: "Spendable points",
           currentDeltaHelper:
             "Added to the balance they can redeem with. Use a minus sign to take points back.",
           lifetimeDelta: "Lifetime points",
           lifetimeDeltaHelper:
-            "Counts towards their tier only. Leave at 0 for a goodwill gift that shouldn't promote them.",
+            "The running total shown on their profile. It no longer affects the tier — use “Grant tier” for that.",
           reason: "Reason",
           reasonHelper: "Stored on the ledger entry alongside your account.",
           preview: "After this change",
@@ -537,7 +495,6 @@ export const en = {
       help: "Help",
       profile: "Profile",
       signOut: "Sign out",
-      scan: "Scan code",
       upgrade: "Upgrade tier",
       pointsUnit: "points",
       mainLabel: "Main",
@@ -567,10 +524,14 @@ export const en = {
       metaTitle: "Sign up",
       brandTagline: "Collect points and unlock member perks",
       title: "Create your account",
-      orderCode: "Order code",
+      fullName: "Full name",
+      fullNamePlaceholder: "e.g. Nguyen Van A",
+      dob: "Date of birth",
+      dobHint: "So we can send you a little something on your birthday.",
+      orderCode: "Most recent order code",
       orderCodePlaceholder: "e.g. 8661",
       orderCodeHint:
-        "Enter the code of an order placed with this phone number so we can confirm it's yours.",
+        "Enter the code of an order placed with this phone number. It confirms the number is yours, links your account to the shop, and earns you that order's points.",
       terms: "I agree to the ",
       termsLink: "Terms",
       termsAnd: " and ",
@@ -595,6 +556,9 @@ export const en = {
       tierLabel: "Current tier",
       lifetimeHint: (points: number) =>
         `${points.toLocaleString()} lifetime points`,
+      lifetimeSpend: "Total spent",
+      lifetimeSpendHint: "What moves you up the tiers",
+      spendAway: (amount: string) => `${amount} more to go`,
       journeyTitle: "Your tier journey",
       percentComplete: (pct: number) => `${pct}% complete`,
       recentTitle: "Recent activity",
@@ -625,7 +589,7 @@ export const en = {
       hotChip: "Hot",
       lowStock: "Almost gone",
       eyebrow: "Reward store",
-      earnMoreCta: "Earn more points",
+      earnMoreHint: "Points added automatically",
       historyCta: "Redemption history",
       wasCost: (points: number) => `Was ${points.toLocaleString()} points`,
       filterLabel: "Filter by category",
@@ -675,7 +639,7 @@ export const en = {
       eyebrow: "Current status",
       title: (name: string) => `${name} member`,
       subtitle:
-        "Every point you collect moves you up. Higher tiers earn faster and unlock more.",
+        "Every đồng you spend moves you up. Higher tiers earn points faster and unlock more.",
       noTier: "No tier yet",
       noTierBody: "Claim your first order to join the programme.",
       statusActive: (name: string) => `${name} status active`,
@@ -683,14 +647,17 @@ export const en = {
       maxLabel: "MAX",
       maxLevel: "Level",
       atTop: (name: string) => `You're at the top tier, ${name}.`,
-      toNext: (points: number, name: string) =>
-        `${points.toLocaleString()} points to ${name}`,
+      spendToNext: (amount: string, name: string) =>
+        `${amount} more to reach ${name}`,
+      spendLabel: "Total spent",
+      // Shown when a raised threshold would otherwise read as a demotion.
+      grandfathered: (name: string, date: string) =>
+        `You reached ${name} in ${date} and it's yours to keep, whatever the requirement becomes.`,
       perksTitle: (name: string) => `${name} privileges`,
       noPerks: "Benefits for this tier are being finalised.",
       multiplier: (value: number) => `${value}× points`,
       othersTitle: "Other membership tiers",
-      thresholdAt: (points: number) =>
-        `From ${points.toLocaleString()} lifetime points`,
+      thresholdAt: (amount: string) => `From ${amount} spent`,
       levelLabel: (level: number) => `LV.${level}`,
       heroPerksLabel: "Exclusive benefits",
       cardCta: "View digital card",
@@ -752,10 +719,9 @@ export const en = {
       petTypes: { dog: "Dog", cat: "Cat", other: "Other" },
       petDob: "Adoption or birth date",
       petDobHint: "We'll send a treat when the big day comes around.",
-      orderSection: "Add an order code to earn points",
-      orderPlaceholder: "Latest order code",
-      orderHint: "The code is on your receipt and in your order confirmation.",
-      orderCta: "Go to the claim page",
+      orderSection: "Points arrive on their own",
+      orderHint:
+        "Every order placed with this phone number is added to your balance automatically once it is delivered.",
       submit: "Complete profile",
       submitting: "Saving…",
       success: "Profile saved.",
@@ -767,7 +733,10 @@ export const en = {
       signupFailed: "Sign-up failed. Please try again.",
       signInFailed: "Sign-in failed. Please try again.",
       rateLimited: "Too many attempts. Please try again in 15 minutes.",
-      proofRequired: "Enter an order code placed with this phone number.",
+      orderNotLinkable:
+        "That order has no customer record in the shop system, so we cannot link your account. Try another order or contact support.",
+      orderAlreadyLinked:
+        "That order already belongs to a member account. Sign in with the phone number you used before, or contact support.",
       proofFailed: "That order code doesn't match this phone number.",
       sessionExpired: "Your session expired. Please sign in again.",
       noCustomer: "No points account is linked to this login yet.",
@@ -804,6 +773,11 @@ export const en = {
     reasonRequired: "A reason is required",
     reasonTooLong: "Please keep it under 500 characters",
     adjustEmpty: "Enter a points change or pick a tier to grant",
+    tierRequired: "Pick a tier",
+    amountRequired: "Enter the new amount",
+    percentileRequired: "Enter a percentage",
+    percentileRange: "Must be between 0 and 100",
+    effectiveAtRequired: "Pick a date and time",
   },
 }
 

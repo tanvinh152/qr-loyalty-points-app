@@ -108,6 +108,28 @@ export type CatalogVariation = {
   remain: number | null
 }
 
+// ---- CRM customer (GET/PUT /shops/:id/customers/:customer_id) ----
+//
+// Only the two fields registration writes back are parsed. Note that for
+// customers created from a marketplace order the API returns `name` and
+// `phone_numbers` MASKED ("K******h", "0****83") — see matchesMask in
+// src/lib/phone.ts. Nothing here may be treated as a real phone number.
+
+export const pancakeCustomerSchema = z.object({
+  id: z.string().nullish(),
+  customer_id: z.string().nullish(),
+  name: z.string().nullish(),
+  phone_numbers: z.array(z.string()).nullish(),
+})
+
+export type PancakeCustomer = z.infer<typeof pancakeCustomerSchema>
+
+export const pancakeCustomerResponseSchema = z.object({
+  success: z.boolean().optional(),
+  data: pancakeCustomerSchema.nullish(),
+  message: z.string().nullish(),
+})
+
 export type PancakeError =
   "not_found" | "unauthorized" | "unavailable" | "malformed"
 

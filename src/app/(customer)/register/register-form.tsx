@@ -1,7 +1,7 @@
 "use client"
 
 import { useActionState } from "react"
-import { ArrowRight, Lock, Receipt, Smartphone } from "lucide-react"
+import { ArrowRight, Cake, Lock, Receipt, Smartphone, UserRound } from "lucide-react"
 
 import { FormError } from "@/components/form-error"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { useT } from "@/lib/i18n/provider"
 import { signUp, type AuthState } from "../auth/actions"
 
-export function RegisterForm({ requireProof }: { requireProof: boolean }) {
+export function RegisterForm() {
   const t = useT()
   const r = t.customer.register
   const l = t.customer.login
@@ -22,6 +22,33 @@ export function RegisterForm({ requireProof }: { requireProof: boolean }) {
 
   return (
     <form action={formAction} className="grid gap-6">
+      <div className="grid gap-2">
+        <Label htmlFor="full_name">{r.fullName}</Label>
+        <Input
+          id="full_name"
+          name="full_name"
+          icon={UserRound}
+          placeholder={r.fullNamePlaceholder}
+          autoComplete="name"
+          className="rounded-full"
+          required
+        />
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="date_of_birth">{r.dob}</Label>
+        <Input
+          id="date_of_birth"
+          name="date_of_birth"
+          type="date"
+          icon={Cake}
+          autoComplete="bday"
+          className="rounded-full"
+          required
+        />
+        <p className="text-body-sm text-muted-foreground">{r.dobHint}</p>
+      </div>
+
       <div className="grid gap-2">
         <Label htmlFor="phone">{l.phone}</Label>
         <Input
@@ -52,22 +79,19 @@ export function RegisterForm({ requireProof }: { requireProof: boolean }) {
         />
       </div>
 
-      {requireProof && (
-        <div className="grid gap-2">
-          <Label htmlFor="order_code">{r.orderCode}</Label>
-          <Input
-            id="order_code"
-            name="order_code"
-            icon={Receipt}
-            placeholder={r.orderCodePlaceholder}
-            className="rounded-full"
-            required
-          />
-          <p className="text-body-sm text-muted-foreground">
-            {r.orderCodeHint}
-          </p>
-        </div>
-      )}
+      {/* Both the ownership proof and the Pancake link — see signUp(). */}
+      <div className="grid gap-2">
+        <Label htmlFor="order_code">{r.orderCode}</Label>
+        <Input
+          id="order_code"
+          name="order_code"
+          icon={Receipt}
+          placeholder={r.orderCodePlaceholder}
+          className="rounded-full"
+          required
+        />
+        <p className="text-body-sm text-muted-foreground">{r.orderCodeHint}</p>
+      </div>
 
       <div className="flex items-start gap-3">
         <Checkbox id="terms" name="terms" required className="mt-1" />

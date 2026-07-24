@@ -1,7 +1,7 @@
 // Single source of truth for point calculation on the TS side.
 // MUST match the SQL logic in supabase/migrations/0003_claim_rpc.sql.
-// The RPC recomputes server-side and is authoritative; this is for the /claim
-// preview and admin UI only.
+// The RPC recomputes server-side and is authoritative; this is for the admin
+// UI only.
 
 export type Rounding = "floor" | "round" | "ceil"
 

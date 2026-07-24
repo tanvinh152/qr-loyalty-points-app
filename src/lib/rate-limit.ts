@@ -4,7 +4,7 @@ import { headers } from "next/headers"
 
 import { createAdminClient } from "@/lib/supabase/admin"
 
-// Brute-force guard for /claim. Order codes are partly sequential (Pancake
+// Brute-force guard for signup and sign-in. Order codes are partly sequential (Pancake
 // system_id) and the masked-phone check only reveals 3 digits, so throttling is
 // what keeps guessing expensive. Counters live in Postgres — serverless
 // instances share nothing in memory.

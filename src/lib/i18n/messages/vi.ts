@@ -63,99 +63,15 @@ export const vi: Messages = {
     code: (n) => `mã ${n}`,
     unknown: (n) => `Trạng thái #${n}`,
   },
-  claim: {
-    metaTitle: "Tích Điểm Thưởng",
-    brand: {
-      name: "Chicha Label",
-      tagline: "Mua sắm cho boss, tích điểm đổi quà cho boss 🐾",
-    },
-    help: {
-      instantTitle: "Cộng điểm tức thì",
-      instantBody: "Điểm được cộng thẳng vào tài khoản ngay sau khi xác nhận.",
-      supportTitle: "Cần hỗ trợ?",
-      supportBody:
-        "Nếu mã đơn hàng không hoạt động, vui lòng kiểm tra lại hoá đơn hoặc liên hệ CSKH.",
-    },
-    hero: {
-      overline: "Phần thưởng thành viên",
-      title: "Tích luỹ điểm cho mỗi đơn hàng của bạn",
-      subtitle:
-        "Nhập mã đơn hàng — hệ thống tự đối chiếu với số điện thoại của tài khoản bạn.",
-    },
-    profileHint: {
-      title: "Bổ sung họ tên",
-      body: "Tài khoản của bạn chưa có tên. Cập nhật nhanh để việc trao quà thuận tiện hơn.",
-      cta: "Tới trang hồ sơ",
-    },
-    order: {
-      title: "Thông tin đơn hàng",
-      placeholder: "ví dụ 8661 hoặc 2607180W78FJH6",
-      checking: "Đang kiểm tra…",
-      continue: "Kiểm tra điểm thưởng",
-      orderLabel: "Mã đơn hàng",
-      hintToggle: "Mã đơn hàng nằm ở đâu?",
-      hintBody:
-        "Mã được in trên tem dán ngoài kiện hàng và trên hoá đơn bên trong. Bạn có thể nhập số ngắn (ví dụ 8661) hoặc mã dài (ví dụ 2607180W78FJH6) đều được.",
-    },
-    summary: {
-      orderLabel: (code) => `Đơn hàng ${code}`,
-      quantity: (n) => `× ${n}`,
-      itemPoints: (n) => `${n} điểm`,
-      unmapped: "Chưa có điểm",
-      unmappedHint: "Sản phẩm này chưa được cấu hình để tích điểm.",
-      itemsLabel: (n) => `${n} sản phẩm`,
-      totalLabel: "Tổng giá trị đơn hàng",
-      heading: "Tóm tắt đơn hàng",
-      basePoints: "Điểm cơ bản (1:1)",
-      tierBonus: (multiplier) => `Hệ số hạng thẻ (${multiplier}×)`,
-      totalPoints: "Tổng điểm tích luỹ",
-      pointsUnit: "điểm",
-      itemsToggle: "Chi tiết sản phẩm",
-      confirm: "Xác nhận tích điểm",
-      confirming: "Đang tích điểm…",
-      terms:
-        "Bằng việc nhấn xác nhận, bạn đồng ý với các điều khoản của chương trình khách hàng thân thiết.",
-    },
-    progress: {
-      balance: (points) => `${points} điểm khả dụng`,
-      tier: (name) => `Hạng: ${name}`,
-      noTier: "Bạn chưa có hạng thành viên",
-      toNextTier: (points, name) =>
-        `Còn ${points} điểm nữa để lên hạng ${name}`,
-      topTier: "Bạn đang ở hạng cao nhất 🎉",
-      toNextReward: (points, name) => `Còn ${points} điểm nữa để đổi ${name}`,
-      rewardReady: (name) => `Bạn có thể đổi ${name} ngay`,
-      currentTierLabel: "Hiện tại",
-      tierProgressLabel: "Tiến độ lên hạng tiếp theo",
-    },
-    done: {
-      title: "Đã tích điểm 🎉",
-      description: "Cảm ơn bạn đã chăm sóc boss cùng shop.",
-      awarded: (points) => `+${points} điểm`,
-      awardedLabel: "đã cộng vào tài khoản của bạn",
-      balance: (total) => `Điểm khả dụng của bạn hiện là ${total}.`,
-      tierUpgraded: (name) => `Bạn đã lên hạng ${name}!`,
-      rewardsCta: "Xem quà đổi điểm",
-      dashboardCta: "Về trang chính",
-      whatNextTitle: "Điểm này dùng để làm gì?",
-      whatNextBody:
-        "Điểm cộng dồn qua mỗi đơn hàng và dùng để đổi pate, đồ chơi hoặc mã giảm giá. Càng tích nhiều điểm, hạng thành viên càng cao — hạng cao thì mỗi đơn lại được nhân thêm điểm.",
-      claimAnother: "Tích điểm đơn khác",
-    },
-    errors: {
-      invalidInput: "Dữ liệu không hợp lệ",
-      lookupFailed: "Tra cứu thất bại. Vui lòng thử lại.",
-      orderNotFound: "Không tìm thấy đơn hàng. Vui lòng kiểm tra lại mã.",
-      orderNotEligible: "Đơn hàng này chưa đủ điều kiện tích điểm.",
-      alreadyClaimed: "Đơn hàng này đã được tích điểm.",
-      notConfigured: "Điểm thưởng chưa được cấu hình.",
-      phoneMismatch:
-        "Đơn hàng này đặt bằng số điện thoại khác với tài khoản của bạn.",
-      noAccount: "Tài khoản đăng nhập này chưa được liên kết với hồ sơ điểm.",
-      rateLimited: "Bạn đã thử quá nhiều lần. Vui lòng thử lại sau 15 phút.",
-      pancakeUnavailable: "Không kết nối được hệ thống đơn hàng. Thử lại sau.",
-      claimFailed: "Tích điểm thất bại. Vui lòng thử lại.",
-    },
+  brand: {
+    name: "Chicha Label",
+    tagline: "Mua sắm cho thú cưng, tích điểm cho phần thưởng kế tiếp 🐾",
+  },
+  theme: {
+    light: "Sáng",
+    dark: "Tối",
+    switchToLight: "Chuyển sang giao diện sáng",
+    switchToDark: "Chuyển sang giao diện tối",
   },
   admin: {
     metaTitle: "Quản trị",
@@ -256,11 +172,12 @@ export const vi: Messages = {
       metaTitle: "Hạng Thành Viên",
       title: "Hạng Thành Viên",
       helper:
-        "Hạng của khách là hạng cao nhất mà điểm tích luỹ đạt tới. Hệ số áp dụng cho mọi lần tích điểm sau đó.",
+        "Hạng được xét theo tổng tiền đã chi tiêu, và đã đạt là giữ vĩnh viễn — nâng mốc không làm ai tụt hạng. Hệ số áp dụng cho mọi đơn sau đó.",
       name: "Tên hạng",
-      threshold: "Điểm tích luỹ cần đạt",
-      thresholdHelper:
-        "Tổng điểm tích luỹ trọn đời để đạt hạng này. Để 0 cho hạng khởi điểm.",
+      fixedField: "Cố định theo bậc thang 5 hạng — không thể thay đổi.",
+      spendThreshold: "Mốc chi tiêu",
+      spendThresholdHelper:
+        "Tổng tiền đã chi tiêu để đạt hạng này (đồng). Để 0 cho hạng khởi điểm.",
       multiplier: "Hệ số nhân",
       multiplierHelper:
         "1 = bình thường. 1.5 = mỗi lần tích được nhân 1,5 lần điểm.",
@@ -296,6 +213,39 @@ export const vi: Messages = {
       deleted: "Đã xoá hạng.",
       saveFailed: "Lưu thất bại.",
       deleteFailed: "Xoá thất bại.",
+      pendingThreshold: "Mốc sắp áp dụng",
+      pendingNone: "Chưa hẹn thay đổi",
+      scheduleTitle: "Hẹn nâng mốc",
+      scheduleHelper:
+        "Nâng mốc của một hạng vào ngày bạn chọn. Khách đã đạt hạng vẫn giữ nguyên — nâng mốc chỉ ảnh hưởng tới người chưa đạt.",
+      scheduleTier: "Hạng",
+      scheduleMode: "Đặt mốc mới theo",
+      amountMode: "Số tiền cố định",
+      percentileMode: "Tỷ lệ thành viên",
+      amountModeHelper: "Số tiền chi tiêu mà hạng sẽ yêu cầu.",
+      percentileModeHelper:
+        "Ví dụ 5 nghĩa là “top 5% khách chi tiêu nhiều nhất”. Đến ngày áp dụng, con số này được chốt thành số tiền cụ thể và giữ nguyên sau đó.",
+      targetAmount: "Mốc chi tiêu mới",
+      targetPercentile: "Top % thành viên",
+      effectiveAt: "Áp dụng từ",
+      effectiveAtHelper:
+        "Trước thời điểm này không có gì thay đổi. Đặt ở tương lai để thông báo trước cho khách.",
+      scheduleNote: "Ghi chú",
+      scheduleNoteHelper: "Ghi chú nội bộ. Không hiển thị cho khách.",
+      schedulePreviewHint: (amount: string) =>
+        `Ở thời điểm này nhóm top đó bắt đầu từ ${amount}. Con số sẽ được tính lại vào ngày áp dụng.`,
+      schedulePreviewEmpty: "Chưa có thành viên nào phát sinh chi tiêu.",
+      scheduleSubmit: "Đặt lịch nâng mốc",
+      scheduleSaved: "Đã đặt lịch nâng mốc.",
+      scheduleSaveFailed: "Không đặt được lịch nâng mốc.",
+      scheduleCancel: "Huỷ lịch nâng mốc",
+      scheduleCanceled: "Đã huỷ lịch nâng mốc.",
+      scheduleCancelFailed: "Không huỷ được.",
+      scheduleDuplicate:
+        "Hạng này đã có một lịch nâng mốc đang chờ. Hãy huỷ lịch cũ trước.",
+      scheduleForbidden: "Chỉ tài khoản nhân viên mới được đổi mốc hạng.",
+      effectiveOn: (date: string) => `từ ${date}`,
+      percentileLabel: (pct: number) => `top ${pct}%`,
     },
     products: {
       metaTitle: "Điểm Sản Phẩm",
@@ -389,7 +339,9 @@ export const vi: Messages = {
       currentPoints: "Khả dụng",
       currentPointsHint: "Điểm còn lại có thể dùng",
       lifetimePoints: "Tích luỹ",
-      lifetimePointsHint: "Tổng điểm từng nhận — dùng để xét hạng",
+      lifetimePointsHint: "Tổng điểm từng nhận",
+      lifetimeSpend: "Chi tiêu",
+      lifetimeSpendHint: "Tổng tiền đã chi tiêu — dùng để xét hạng",
       empty:
         "Chưa có khách hàng nào — khách xuất hiện sau lần tích điểm đầu tiên.",
       search: "Tìm theo số điện thoại hoặc tên",
@@ -403,6 +355,7 @@ export const vi: Messages = {
         backToList: "Về danh sách khách hàng",
         statAvailable: "Điểm khả dụng",
         statLifetime: "Điểm trọn đời",
+        statSpend: "Chi tiêu tích luỹ",
         statTransactions: "Giao dịch",
         statMemberSince: "Thành viên từ",
         ownerTitle: "Chủ nuôi",
@@ -417,9 +370,11 @@ export const vi: Messages = {
         tierTitle: "Tiến độ hạng",
         noTier: "Chưa có hạng",
         topTier: "Đã đạt hạng cao nhất",
-        toNext: (points: number, tier: string) =>
-          `Còn ${points.toLocaleString()} điểm để lên ${tier}`,
-        multiplier: (value: number) => `×${value} cho mỗi lần tích điểm`,
+        toNext: (amount: string, tier: string) =>
+          `Còn ${amount} để lên ${tier}`,
+        grandfathered: (tier: string) =>
+          `Giữ hạng ${tier} theo mốc tại thời điểm đạt được.`,
+        multiplier: (value: number) => `×${value} cho mỗi đơn hàng`,
         historyTitle: "Lịch sử giao dịch",
         historyEmpty: "Chưa có giao dịch nào.",
         supportTitle: "Yêu cầu hỗ trợ",
@@ -431,16 +386,16 @@ export const vi: Messages = {
             "Dành cho khách đã mua hàng từ trước khi có app. Pancake che số điện thoại nên không nhập lại được lịch sử — hãy cấp trực tiếp ở đây.",
           grantTier: "Cấp hạng",
           grantTierHelper:
-            "Nâng điểm tích luỹ lên đúng mốc của hạng đó để hạng không bị tụt ở những lần tích điểm sau. Không bao giờ làm giảm điểm.",
+            "Gán thẳng hạng và giữ vĩnh viễn. Không bơm chi tiêu ảo nên số liệu chi tiêu của khách vẫn đúng thực tế. Chỉ liệt kê các hạng cao hơn hạng đang giữ.",
           noTierGrant: "Giữ nguyên hạng",
-          tierOption: (name: string, threshold: number) =>
-            `${name} — ${threshold.toLocaleString()} điểm tích luỹ`,
+          tierOption: (name: string, threshold: string) =>
+            `${name} — thường cần ${threshold}`,
           currentDelta: "Điểm khả dụng",
           currentDeltaHelper:
             "Cộng vào số điểm khách đổi quà được. Nhập số âm để thu lại điểm.",
           lifetimeDelta: "Điểm tích luỹ",
           lifetimeDeltaHelper:
-            "Chỉ dùng để tính hạng. Để 0 nếu tặng tri ân mà không muốn nâng hạng.",
+            "Tổng điểm hiển thị trên hồ sơ khách. Không còn ảnh hưởng tới hạng — muốn nâng hạng thì dùng “Cấp hạng”.",
           reason: "Lý do",
           reasonHelper: "Được lưu vào dòng giao dịch kèm tài khoản của bạn.",
           preview: "Sau khi áp dụng",
@@ -535,7 +490,6 @@ export const vi: Messages = {
       help: "Hỗ trợ",
       profile: "Hồ sơ",
       signOut: "Đăng xuất",
-      scan: "Quét mã",
       upgrade: "Nâng cấp hạng",
       pointsUnit: "điểm",
       mainLabel: "Điều hướng chính",
@@ -565,10 +519,14 @@ export const vi: Messages = {
       metaTitle: "Đăng ký",
       brandTagline: "Tích lũy điểm và tận hưởng ưu đãi đặc quyền",
       title: "Tạo tài khoản mới",
-      orderCode: "Mã đơn hàng",
+      fullName: "Họ và tên",
+      fullNamePlaceholder: "VD: Nguyễn Văn A",
+      dob: "Ngày sinh",
+      dobHint: "Để chúng mình gửi bạn một món quà nhỏ vào ngày sinh nhật.",
+      orderCode: "Mã đơn hàng gần nhất",
       orderCodePlaceholder: "VD: 8661",
       orderCodeHint:
-        "Nhập mã của một đơn hàng đã đặt bằng số điện thoại này để xác minh đây là số của bạn.",
+        "Nhập mã của một đơn hàng đã đặt bằng số điện thoại này. Mã dùng để xác minh số điện thoại, liên kết tài khoản với cửa hàng và cộng luôn điểm của đơn đó.",
       terms: "Tôi đồng ý với các ",
       termsLink: "Điều khoản",
       termsAnd: " và ",
@@ -593,6 +551,9 @@ export const vi: Messages = {
       tierLabel: "Hạng hiện tại",
       lifetimeHint: (points: number) =>
         `${points.toLocaleString()} điểm tích lũy`,
+      lifetimeSpend: "Chi tiêu tích lũy",
+      lifetimeSpendHint: "Số tiền quyết định hạng của bạn",
+      spendAway: (amount: string) => `Còn ${amount}`,
       journeyTitle: "Hành trình thăng hạng",
       percentComplete: (pct: number) => `Hoàn thành ${pct}%`,
       recentTitle: "Hoạt động gần đây",
@@ -623,7 +584,7 @@ export const vi: Messages = {
       hotChip: "Hot",
       lowStock: "Sắp hết",
       eyebrow: "Cửa hàng đổi thưởng",
-      earnMoreCta: "Kiếm thêm điểm",
+      earnMoreHint: "Điểm được cộng tự động",
       historyCta: "Lịch sử đổi",
       wasCost: (points: number) => `Giá cũ ${points.toLocaleString()} điểm`,
       filterLabel: "Lọc theo danh mục",
@@ -670,7 +631,7 @@ export const vi: Messages = {
       eyebrow: "Hạng hiện tại",
       title: (name: string) => `Thành viên hạng ${name}`,
       subtitle:
-        "Mỗi điểm tích lũy đưa bạn tiến gần hạng cao hơn. Hạng càng cao, điểm càng nhanh và ưu đãi càng nhiều.",
+        "Mỗi đồng chi tiêu đưa bạn tiến gần hạng cao hơn. Hạng càng cao, tích điểm càng nhanh và ưu đãi càng nhiều.",
       noTier: "Chưa có hạng",
       noTierBody: "Tích điểm đơn hàng đầu tiên để tham gia chương trình.",
       statusActive: (name: string) => `Hạng ${name} đang hoạt động`,
@@ -678,14 +639,16 @@ export const vi: Messages = {
       maxLabel: "MAX",
       maxLevel: "Cấp độ",
       atTop: (name: string) => `Bạn đang ở hạng cao nhất — ${name}.`,
-      toNext: (points: number, name: string) =>
-        `Còn ${points.toLocaleString()} điểm để lên hạng ${name}`,
+      spendToNext: (amount: string, name: string) =>
+        `Còn ${amount} để lên hạng ${name}`,
+      spendLabel: "Chi tiêu tích lũy",
+      grandfathered: (name: string, date: string) =>
+        `Bạn đạt hạng ${name} từ ${date} và sẽ giữ vĩnh viễn, dù mốc có thay đổi.`,
       perksTitle: (name: string) => `Đặc quyền hạng ${name}`,
       noPerks: "Ưu đãi của hạng này đang được hoàn thiện.",
       multiplier: (value: number) => `Tích điểm ${value}×`,
       othersTitle: "Các hạng thành viên khác",
-      thresholdAt: (points: number) =>
-        `Từ ${points.toLocaleString()} điểm tích lũy`,
+      thresholdAt: (amount: string) => `Từ ${amount} chi tiêu`,
       levelLabel: (level: number) => `LV.${level}`,
       heroPerksLabel: "Đặc quyền của hạng",
       cardCta: "Xem thẻ thành viên",
@@ -747,10 +710,9 @@ export const vi: Messages = {
       petTypes: { dog: "Chó", cat: "Mèo", other: "Khác" },
       petDob: "Ngày sinh hoặc ngày nhận nuôi",
       petDobHint: "Chúng tôi sẽ gửi quà khi ngày đặc biệt tới.",
-      orderSection: "Nhập mã đơn hàng để được tích điểm",
-      orderPlaceholder: "Mã đơn hàng gần nhất",
-      orderHint: "Mã nằm trên hoá đơn và trong tin nhắn xác nhận đơn hàng.",
-      orderCta: "Tới trang tích điểm",
+      orderSection: "Điểm tự động được cộng",
+      orderHint:
+        "Mọi đơn hàng đặt bằng số điện thoại này sẽ được cộng điểm tự động sau khi giao thành công.",
       submit: "Hoàn tất hồ sơ",
       submitting: "Đang lưu…",
       success: "Đã lưu hồ sơ.",
@@ -762,7 +724,10 @@ export const vi: Messages = {
       signupFailed: "Đăng ký không thành công. Vui lòng thử lại.",
       signInFailed: "Đăng nhập không thành công. Vui lòng thử lại.",
       rateLimited: "Quá nhiều lần thử. Vui lòng thử lại sau 15 phút.",
-      proofRequired: "Nhập mã đơn hàng đã đặt bằng số điện thoại này.",
+      orderNotLinkable:
+        "Đơn hàng này chưa có hồ sơ khách hàng trên hệ thống cửa hàng nên chưa thể liên kết tài khoản. Vui lòng thử đơn khác hoặc liên hệ hỗ trợ.",
+      orderAlreadyLinked:
+        "Đơn hàng này đã thuộc về một tài khoản thành viên. Vui lòng đăng nhập bằng số điện thoại đã dùng trước đó hoặc liên hệ hỗ trợ.",
       proofFailed: "Mã đơn hàng không khớp với số điện thoại này.",
       sessionExpired: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
       noCustomer: "Chưa có tài khoản điểm nào được liên kết với đăng nhập này.",
@@ -799,5 +764,10 @@ export const vi: Messages = {
     reasonRequired: "Cần nhập lý do",
     reasonTooLong: "Vui lòng viết ngắn hơn 500 ký tự",
     adjustEmpty: "Nhập số điểm thay đổi hoặc chọn hạng để cấp",
+    tierRequired: "Hãy chọn một hạng",
+    amountRequired: "Nhập số tiền mới",
+    percentileRequired: "Nhập tỷ lệ phần trăm",
+    percentileRange: "Phải nằm trong khoảng 0 đến 100",
+    effectiveAtRequired: "Chọn ngày giờ áp dụng",
   },
 }
