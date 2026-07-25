@@ -21,24 +21,12 @@ export async function saveReward(input: RewardInput): Promise<SaveState> {
     }
   }
 
-  const {
-    id: rowId,
-    description,
-    image_url,
-    category,
-    original_points_cost,
-    ...rest
-  } = parsed.data
+  const { id: rowId, description, image_url, category, ...rest } = parsed.data
   const payload = {
     ...rest,
     description: description || null,
     image_url: image_url || null,
     category: category || null,
-    // "" means no discount. Sending 0 would render a struck-through "0 pts".
-    original_points_cost:
-      original_points_cost === "" || original_points_cost == null
-        ? null
-        : original_points_cost,
   }
 
   const supabase = await createClient()

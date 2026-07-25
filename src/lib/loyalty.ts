@@ -76,7 +76,10 @@ export async function getActiveSettings(): Promise<ActiveSettings | null> {
   return {
     rounding: data.rounding,
     unmapped_sku_points: data.unmapped_sku_points,
-    claimable_statuses: data.claimable_statuses ?? [3],
+    // No fallback: the column is `not null`, and a third default sitting here
+    // would only be a third answer to disagree with the DB default and with
+    // DEFAULT_CLAIMABLE_STATUSES.
+    claimable_statuses: data.claimable_statuses,
   }
 }
 
@@ -121,15 +124,25 @@ export async function getCustomerByPhone(
 // Reverse of the link the RPC writes on a manual claim. The webhook has no real
 // phone to go on (Pancake masks it), so this is the ONLY way it can attribute an
 // order — and it only resolves for a customer who already proved ownership once.
+//
+// THROWS on a database error rather than answering null. "Nobody is linked" and
+// "we could not find out" are opposite answers here: the first is a conclusion
+// the signup gate and the webhook are allowed to act on, the second is an
+// outage. Conflating them let a blip open the account-takeover gate and made the
+// webhook reply 200 unknown_customer — which Pancake never retries, so the
+// points were gone for good.
 export async function getCustomerByPancakeId(
   pancakeCustomerId: string,
 ): Promise<CustomerRow | null> {
   const supabase = createAdminClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("customers")
     .select("*")
     .eq("pancake_customer_id", pancakeCustomerId)
     .maybeSingle<CustomerRow>()
+  if (error) {
+    throw new Error(`getCustomerByPancakeId failed: ${error.message}`)
+  }
   return data ?? null
 }
 
@@ -148,9 +161,17 @@ export async function getCustomerByAuthUserId(
 // Links a fresh auth user to the (possibly pre-existing) customer row for that
 // phone, so points claimed anonymously before signup carry over. Refuses to
 // steal a row that already belongs to a different account.
+//
+// `email` is what sign-in later resolves this phone to, so it is written here
+// rather than left to `claim_points` — that RPC is skipped entirely when the
+// proof order is not settled yet, and its upsert only ever FILLS a null. A row
+// whose email disagrees with `auth.users.email` cannot be signed into at all,
+// so this write has to happen on the unconditional path. Omitted when blank so
+// no caller can blank a column that is the account's way back in.
 export async function linkAuthUserToPhone(
   authUserId: string,
   phone: string,
+  email?: string | null,
 ): Promise<
   { ok: true; customer: CustomerRow } | { ok: false; reason: "taken" }
 > {
@@ -164,7 +185,12 @@ export async function linkAuthUserToPhone(
   const { data, error } = await supabase
     .from("customers")
     .upsert(
-      { phone, auth_user_id: authUserId, updated_at: new Date().toISOString() },
+      {
+        phone,
+        auth_user_id: authUserId,
+        ...(email ? { email } : {}),
+        updated_at: new Date().toISOString(),
+      },
       { onConflict: "phone" },
     )
     .select("*")
@@ -174,6 +200,16 @@ export async function linkAuthUserToPhone(
   return { ok: true, customer: data }
 }
 
+/** Why a link write did not happen. */
+export type LinkFailure =
+  /** Another account already holds this POS customer (unique index, 23505). */
+  | "conflict"
+  /** This customer is already linked to a DIFFERENT POS customer. */
+  | "mismatch"
+  | "error"
+
+export type LinkResult = { ok: true } | { ok: false; reason: LinkFailure }
+
 /**
  * Writes the Pancake link the webhook attributes orders by.
  *
@@ -181,20 +217,63 @@ export async function linkAuthUserToPhone(
  * link even when the proof order was already claimed (or is not settled yet), so
  * this is called unconditionally afterwards. Only fills a NULL — it must never
  * repoint an existing link at another POS record.
+ *
+ * Reports its outcome instead of returning void. An account that finishes signup
+ * unlinked is invisible to the webhook forever, and that used to happen without
+ * a single log line: `.is(..., null)` simply matched no rows and the update
+ * "succeeded".
+ *
+ * Idempotent. Matching no rows is the NORMAL result when the proof order was
+ * claimable, because `claim_points` has already written the same link on its way
+ * through; only a row pointing at a *different* POS customer is a failure.
  */
 export async function linkPancakeCustomer(
   customerId: string,
   pancakeCustomerId: string,
-): Promise<void> {
+): Promise<LinkResult> {
   const supabase = createAdminClient()
-  await supabase
+  const { error, count } = await supabase
     .from("customers")
-    .update({
-      pancake_customer_id: pancakeCustomerId,
-      updated_at: new Date().toISOString(),
-    })
+    .update(
+      {
+        pancake_customer_id: pancakeCustomerId,
+        updated_at: new Date().toISOString(),
+      },
+      { count: "exact" },
+    )
     .eq("id", customerId)
     .is("pancake_customer_id", null)
+
+  if (error) {
+    // 23505 = customers_pancake_idx. Somebody else won the race for this POS
+    // customer between the signup gate and here.
+    const reason: LinkFailure = error.code === "23505" ? "conflict" : "error"
+    console.error("[loyalty] link failed", customerId, reason, error)
+    return { ok: false, reason }
+  }
+
+  if (count !== 0) return { ok: true }
+
+  // Nothing to fill means the column was already set. Read it back rather than
+  // guess which of the two reasons applies.
+  const { data, error: readError } = await supabase
+    .from("customers")
+    .select("pancake_customer_id")
+    .eq("id", customerId)
+    .maybeSingle<{ pancake_customer_id: string | null }>()
+
+  if (readError) {
+    console.error("[loyalty] link read-back failed", customerId, readError)
+    return { ok: false, reason: "error" }
+  }
+  if (data?.pancake_customer_id === pancakeCustomerId) return { ok: true }
+
+  console.error(
+    "[loyalty] link refused: customer already points at another POS record",
+    customerId,
+    { want: pancakeCustomerId, have: data?.pancake_customer_id ?? null },
+  )
+  return { ok: false, reason: "mismatch" }
 }
 
 // Reward store listing. Out-of-stock rewards are still shown (greyed out in the
@@ -406,13 +485,17 @@ export async function getTransactionTotals(
   return { count: data?.length ?? 0, earned, spent }
 }
 
+// THROWS on a database error, like getCustomerByPancakeId and for the same
+// reason: this runs on the webhook path, where a swallowed error reads as "not
+// claimed yet" and the caller has no way to tell an answer from an outage.
 export async function isOrderClaimed(orderCode: string): Promise<boolean> {
   const supabase = createAdminClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("transactions")
     .select("id")
     .eq("order_code", orderCode)
     .maybeSingle()
+  if (error) throw new Error(`isOrderClaimed failed: ${error.message}`)
   return Boolean(data)
 }
 

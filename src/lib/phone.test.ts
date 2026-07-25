@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   isMasked,
+  isValidVnPhone,
   matchesMask,
   matchesOrderPhones,
   normalizePhone,
@@ -18,6 +19,52 @@ describe("normalizePhone", () => {
   it("strips separators", () => {
     expect(normalizePhone("090 123 45 94")).toBe("0901234594")
     expect(normalizePhone("090-123-4594")).toBe("0901234594")
+  })
+})
+
+// The normalized phone is the account key — it becomes the email alias and the
+// unique column in `customers`. Everything that normalizes to the same string
+// must be accepted, and everything that does not must be refused, or one person
+// ends up with several accounts and their points split across them.
+describe("isValidVnPhone", () => {
+  it("accepts every spelling that normalizes to the same number", () => {
+    for (const spelling of [
+      "0901234567",
+      "+84901234567",
+      "84901234567",
+      "090 123 4567",
+      "090-123-4567",
+    ]) {
+      expect(isValidVnPhone(spelling), spelling).toBe(true)
+    }
+  })
+
+  it("accepts each live mobile prefix", () => {
+    for (const prefix of ["03", "05", "07", "08", "09"]) {
+      expect(isValidVnPhone(`${prefix}01234567`), prefix).toBe(true)
+    }
+  })
+
+  it("refuses a number missing its leading zero", () => {
+    // This is the duplicate-account case: "901234567" would otherwise become a
+    // second alias for the holder of "0901234567".
+    expect(isValidVnPhone("901234567")).toBe(false)
+  })
+
+  it("refuses landline and other non-mobile prefixes", () => {
+    expect(isValidVnPhone("0201234567")).toBe(false)
+    expect(isValidVnPhone("0401234567")).toBe(false)
+    expect(isValidVnPhone("0601234567")).toBe(false)
+  })
+
+  it("refuses the wrong length", () => {
+    expect(isValidVnPhone("090123456")).toBe(false)
+    expect(isValidVnPhone("09012345678")).toBe(false)
+  })
+
+  it("refuses separator-only and empty input", () => {
+    expect(isValidVnPhone("")).toBe(false)
+    expect(isValidVnPhone("() - ")).toBe(false)
   })
 })
 

@@ -3,6 +3,7 @@ import { Gem } from "lucide-react"
 import { EmptyState } from "@/components/empty-state"
 import { SectionCard } from "@/components/section-card"
 import { PageHeader } from "@/components/page-header"
+import { TruncatedText } from "@/components/truncated-text"
 import { Badge } from "@/components/ui/badge"
 import {
   Table,
@@ -46,10 +47,13 @@ export default async function TiersPage() {
   ])
 
   const tiers = (data ?? []) as MembershipTierRow[]
-  const dateTime = new Intl.DateTimeFormat(locale === "vi" ? "vi-VN" : "en-GB", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  })
+  const dateTime = new Intl.DateTimeFormat(
+    locale === "vi" ? "vi-VN" : "en-GB",
+    {
+      dateStyle: "medium",
+      timeStyle: "short",
+    },
+  )
 
   return (
     <div className="grid gap-6">
@@ -66,87 +70,97 @@ export default async function TiersPage() {
         {tiers.length === 0 ? (
           <EmptyState title={m.empty} icon={Gem} />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{m.name}</TableHead>
-                <TableHead className="text-right">{m.spendThreshold}</TableHead>
-                <TableHead>{m.pendingThreshold}</TableHead>
-                <TableHead className="text-right">{m.multiplier}</TableHead>
-                <TableHead>{m.perks}</TableHead>
-                <TableHead className="text-right">{t.common.actions}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tiers.map((tier) => {
-                const queued = pending[tier.id]
-                return (
-                <TableRow key={tier.id}>
-                  <TableCell>
-                    <p className="text-body-sm leading-tight font-semibold">
-                      {tier.name}
-                    </p>
-                    <p className="text-muted-foreground text-label-md">
-                      {m.sortOrder} {tier.sort_order}
-                    </p>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatVnd(tier.spend_threshold)}
-                  </TableCell>
-                  <TableCell>
-                    {queued ? (
-                      <div className="flex items-center gap-1">
-                        <div className="grid gap-0.5">
-                          {/* A percentile has no amount until it fires, so the
-                              rule itself is what the column shows. */}
-                          <span className="text-body-sm tabular-nums">
-                            {queued.mode === "amount"
-                              ? formatVnd(queued.target_amount ?? 0)
-                              : m.percentileLabel(queued.target_percentile ?? 0)}
-                          </span>
-                          <span className="text-muted-foreground text-body-xs">
-                            {m.effectiveOn(
-                              dateTime.format(new Date(queued.effective_at)),
-                            )}
-                          </span>
-                        </div>
-                        <CancelSchedule id={queued.id} />
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-body-xs">
-                        {m.pendingNone}
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-primary text-right font-bold tabular-nums">
-                    ×{tier.multiplier}
-                  </TableCell>
-                  <TableCell>
-                    {/* `perks` is what the customer screen renders, so the list
-                        reports on it rather than on the legacy free text. */}
-                    {tier.perks?.length ? (
-                      <div className="grid gap-1">
-                        <Badge variant="secondary">
-                          {m.perkCount(tier.perks.length)}
-                        </Badge>
-                        <span className="text-muted-foreground text-body-xs">
-                          {tier.perks[0].title}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-end gap-1">
-                      <TierDialog row={tier} />
-                    </div>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table className="min-w-[860px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{m.name}</TableHead>
+                  <TableHead className="text-right">
+                    {m.spendThreshold}
+                  </TableHead>
+                  <TableHead>{m.pendingThreshold}</TableHead>
+                  <TableHead className="text-right">{m.multiplier}</TableHead>
+                  <TableHead>{m.perks}</TableHead>
+                  <TableHead className="text-right">
+                    {t.common.actions}
+                  </TableHead>
                 </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {tiers.map((tier) => {
+                  const queued = pending[tier.id]
+                  return (
+                    <TableRow key={tier.id}>
+                      <TableCell>
+                        <p className="text-body-sm leading-tight font-semibold">
+                          {tier.name}
+                        </p>
+                        <p className="text-muted-foreground text-label-md">
+                          {m.sortOrder} {tier.sort_order}
+                        </p>
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatVnd(tier.spend_threshold)}
+                      </TableCell>
+                      <TableCell>
+                        {queued ? (
+                          <div className="flex items-center gap-1">
+                            <div className="grid gap-0.5">
+                              {/* A percentile has no amount until it fires, so the
+                              rule itself is what the column shows. */}
+                              <span className="text-body-sm tabular-nums">
+                                {queued.mode === "amount"
+                                  ? formatVnd(queued.target_amount ?? 0)
+                                  : m.percentileLabel(
+                                      queued.target_percentile ?? 0,
+                                    )}
+                              </span>
+                              <span className="text-muted-foreground text-body-xs">
+                                {m.effectiveOn(
+                                  dateTime.format(
+                                    new Date(queued.effective_at),
+                                  ),
+                                )}
+                              </span>
+                            </div>
+                            <CancelSchedule id={queued.id} />
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-body-xs">
+                            {m.pendingNone}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-primary text-right font-bold tabular-nums">
+                        ×{tier.multiplier}
+                      </TableCell>
+                      <TableCell className="max-w-[260px]">
+                        {/* `perks` is what the customer screen renders, so the list
+                        reports on it rather than on the legacy free text. */}
+                        {tier.perks?.length ? (
+                          <div className="grid gap-1">
+                            <Badge variant="secondary">
+                              {m.perkCount(tier.perks.length)}
+                            </Badge>
+                            <TruncatedText className="text-muted-foreground text-body-xs">
+                              {tier.perks[0].title}
+                            </TruncatedText>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-1">
+                          <TierDialog row={tier} />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </SectionCard>
     </div>

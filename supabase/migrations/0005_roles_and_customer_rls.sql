@@ -34,12 +34,17 @@ $$;
 grant execute on function public.is_admin() to anon, authenticated, service_role;
 
 -- ---- membership_tiers ----
-drop policy if exists "anon read tiers"   on public.membership_tiers;
+drop policy if exists "anon read tiers"    on public.membership_tiers;
 drop policy if exists "admin manage tiers" on public.membership_tiers;
+drop policy if exists "admin update tiers" on public.membership_tiers;
 create policy "read tiers"
   on public.membership_tiers for select to anon, authenticated using (true);
-create policy "admin manage tiers"
-  on public.membership_tiers for all to authenticated
+-- UPDATE only, deliberately. The ladder is a fixed five, so there is no insert
+-- path, and a DELETE would demote every member holding that tier at once —
+-- the one thing the whole tier design promises can never happen. Seeding and
+-- reshaping the ladder belong to migrations, which run as owner and bypass RLS.
+create policy "admin update tiers"
+  on public.membership_tiers for update to authenticated
   using (public.is_admin()) with check (public.is_admin());
 
 -- ---- rewards ----
@@ -53,10 +58,13 @@ create policy "admin manage rewards"
   using (public.is_admin()) with check (public.is_admin());
 
 -- ---- loyalty_settings ----
+-- No public read: rounding, the unmapped-SKU fallback and the claimable status
+-- set are business config, exactly like product_points below. Nothing outside
+-- the admin screens reads this table — the claim path goes through the
+-- service-role client (getActiveSettings in src/lib/loyalty.ts).
 drop policy if exists "anon read active settings" on public.loyalty_settings;
+drop policy if exists "read active settings"      on public.loyalty_settings;
 drop policy if exists "admin manage settings"     on public.loyalty_settings;
-create policy "read active settings"
-  on public.loyalty_settings for select to anon, authenticated using (is_active);
 create policy "admin manage settings"
   on public.loyalty_settings for all to authenticated
   using (public.is_admin()) with check (public.is_admin());

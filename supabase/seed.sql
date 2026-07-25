@@ -30,7 +30,9 @@ insert into public.membership_tiers (name, spend_threshold, multiplier, sort_ord
 on conflict (name) do nothing;
 
 insert into public.loyalty_settings (rounding, claimable_statuses, unmapped_sku_points, is_active)
-values ('floor', '{3}', 0, true)
+-- 3 = delivered, 16 = received_money. Same set as the column default and as
+-- DEFAULT_CLAIMABLE_STATUSES in src/lib/pancake/order-status.ts.
+values ('floor', '{3,16}', 0, true)
 on conflict do nothing;
 
 -- Real SKUs from the shop (items[].variation_info.display_id).
@@ -41,8 +43,8 @@ on conflict (product_code) do nothing;
 
 -- `category` drives the shop's tab bar; at most one row may be is_featured.
 insert into public.rewards
-  (name, description, points_cost, original_points_cost, quantity, category, is_exclusive, is_featured) values
-  ('Voucher 50.000đ', 'Giảm 50.000đ cho đơn kế tiếp', 500,  null, 100, 'Voucher',        false, false),
-  ('Túi cát 2,5kg',   'Tặng 1 túi cát sắn Chicha',   1500, 1800, 20,  'Sản phẩm',       false, true),
-  ('Combo chăm sóc',  'Bộ quà tặng thú cưng',        4000, null, 5,   'Phong cách sống', true,  false)
+  (name, description, points_cost, quantity, category, is_exclusive, is_featured) values
+  ('Voucher 50.000đ', 'Giảm 50.000đ cho đơn kế tiếp', 500,  100, 'Voucher',        false, false),
+  ('Túi cát 2,5kg',   'Tặng 1 túi cát sắn Chicha',   1500, 20,  'Sản phẩm',       false, true),
+  ('Combo chăm sóc',  'Bộ quà tặng thú cưng',        4000, 5,   'Phong cách sống', true,  false)
 on conflict do nothing;

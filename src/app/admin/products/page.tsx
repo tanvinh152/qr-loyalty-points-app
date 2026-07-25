@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/empty-state"
 import { SectionCard } from "@/components/section-card"
 import { PageHeader } from "@/components/page-header"
 import { StatusDot } from "@/components/status-dot"
+import { TruncatedText } from "@/components/truncated-text"
 import {
   Table,
   TableBody,
@@ -44,7 +45,7 @@ export default async function ProductsPage() {
 
   return (
     <div className="grid gap-6">
-      <PageHeader title={m.title} description={m.helper} />
+      <PageHeader title={m.title} />
 
       <SectionCard
         title={m.listTitle}
@@ -53,53 +54,68 @@ export default async function ProductsPage() {
         {products.length === 0 ? (
           <EmptyState title={m.empty} icon={Package} />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{m.productCode}</TableHead>
-                <TableHead>{m.label}</TableHead>
-                <TableHead className="text-right">{m.pointsAwarded}</TableHead>
-                <TableHead>{m.status}</TableHead>
-                <TableHead className="text-right">{t.common.actions}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {products.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell className="font-mono text-body-xs">
-                    {product.product_code}
-                  </TableCell>
-                  <TableCell className="text-body-sm font-semibold">
-                    {product.label ?? "—"}
-                  </TableCell>
-                  <TableCell className="text-primary text-right font-bold tabular-nums">
-                    {product.points_awarded.toLocaleString()}
-                  </TableCell>
-                  <TableCell>
-                    <StatusDot
-                      label={
-                        product.is_active ? t.common.active : t.common.inactive
-                      }
-                      tone={product.is_active ? "success" : "neutral"}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-end gap-1">
-                      <ProductDialog
-                        row={product}
-                        catalog={catalog}
-                        mappedSkus={mappedSkus}
-                      />
-                      <ConfirmDelete
-                        name={product.label || product.product_code}
-                        onConfirm={deleteProductPoint.bind(null, product.id)}
-                      />
-                    </div>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table className="min-w-[720px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{m.productCode}</TableHead>
+                  <TableHead>{m.label}</TableHead>
+                  <TableHead className="text-right">
+                    {m.pointsAwarded}
+                  </TableHead>
+                  <TableHead>{m.status}</TableHead>
+                  <TableHead className="text-right">
+                    {t.common.actions}
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {products.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell className="font-mono text-body-xs">
+                      {product.product_code}
+                    </TableCell>
+                    <TableCell className="text-body-sm max-w-[320px] font-semibold">
+                      {/* A Pancake variation name carries the size, topping and
+                        sweetness, so the label an admin saves here is regularly
+                        longer than the column. */}
+                      {product.label ? (
+                        <TruncatedText>{product.label}</TruncatedText>
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
+                    <TableCell className="text-primary text-right font-bold tabular-nums">
+                      {product.points_awarded.toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      <StatusDot
+                        label={
+                          product.is_active
+                            ? t.common.active
+                            : t.common.inactive
+                        }
+                        tone={product.is_active ? "success" : "neutral"}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1">
+                        <ProductDialog
+                          row={product}
+                          catalog={catalog}
+                          mappedSkus={mappedSkus}
+                        />
+                        <ConfirmDelete
+                          name={product.label || product.product_code}
+                          onConfirm={deleteProductPoint.bind(null, product.id)}
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </SectionCard>
     </div>

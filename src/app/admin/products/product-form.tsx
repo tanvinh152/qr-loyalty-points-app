@@ -49,7 +49,6 @@ export function ProductDialog({ row, catalog, mappedSkus }: Props) {
   return (
     <FormDialog
       title={row ? `${t.common.edit} — ${name}` : m.addTitle}
-      description={m.helper}
       trigger={
         row ? (
           <Button
@@ -141,7 +140,6 @@ function ProductFields({
                   onSelect={suggestLabel}
                 />
               </FormControl>
-              <FormDescription>{m.productCodeHelper}</FormDescription>
               <FormMessage />
             </FormItem>
           )}

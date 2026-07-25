@@ -59,12 +59,21 @@ create table if not exists public.customers (
   pancake_customer_id text,
   current_points      integer not null default 0 check (current_points  >= 0),
   lifetime_points     integer not null default 0 check (lifetime_points >= 0),
-  tier_id             uuid references public.membership_tiers(id) on delete set null,
+  -- restrict, not set null: tier_id is the highest tier ever held and nothing in
+  -- the app may lower it. Deleting a tier out from under its members would do
+  -- exactly that, silently, and take their multiplier with it.
+  tier_id             uuid references public.membership_tiers(id) on delete restrict,
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now()
 );
 
-create index if not exists customers_pancake_idx on public.customers (pancake_customer_id);
+-- Unique: one POS customer backs exactly one account. Without this, two
+-- concurrent signups both clear the "already claimed?" gate in auth/actions.ts
+-- and both write, after which getCustomerByPancakeId().maybeSingle() errors on
+-- multiple rows and the webhook can never attribute that customer again.
+create unique index if not exists customers_pancake_idx
+  on public.customers (pancake_customer_id)
+  where pancake_customer_id is not null;
 
 -- Immutable ledger. EARN is positive, REDEEM negative, ADJUST either way.
 create table if not exists public.transactions (
@@ -92,7 +101,10 @@ create index if not exists transactions_phone_idx    on public.transactions (pho
 create table if not exists public.loyalty_settings (
   id                  uuid primary key default gen_random_uuid(),
   rounding            text    not null default 'floor' check (rounding in ('floor','round','ceil')),
-  claimable_statuses  integer[] not null default '{3}',   -- Pancake status: 3 = delivered
+  -- Pancake status: 3 = delivered, 16 = received_money. Must match
+  -- DEFAULT_CLAIMABLE_STATUSES in src/lib/pancake/order-status.ts — a default of
+  -- just {3} drops every order that has already moved on to "received money".
+  claimable_statuses  integer[] not null default '{3,16}',
   unmapped_sku_points integer not null default 0 check (unmapped_sku_points >= 0),
   is_active           boolean not null default false,
   updated_at          timestamptz not null default now()

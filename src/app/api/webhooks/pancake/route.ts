@@ -85,6 +85,21 @@ export async function POST(req: Request) {
     if (err instanceof PancakeRequestError && err.kind === "not_found") {
       return skip("order_not_found", orderId)
     }
+    // A bad API key or a payload shape we cannot read will look exactly the
+    // same on the next delivery, so 503 would only buy an endless retry storm
+    // against a bug nobody is being paged about. Answer 200 and shout in the
+    // logs; `unavailable` is the one kind retrying can actually fix.
+    if (
+      err instanceof PancakeRequestError &&
+      (err.kind === "unauthorized" || err.kind === "malformed")
+    ) {
+      console.error(
+        `[pancake-webhook] CONFIG ERROR (${err.kind}) — points are being dropped`,
+        orderId,
+        err,
+      )
+      return skip("pancake_misconfigured", orderId)
+    }
     console.error("[pancake-webhook] order fetch failed", orderId, err)
     // Retryable on Pancake's side.
     return Response.json({ error: "pancake_unavailable" }, { status: 503 })
@@ -103,13 +118,27 @@ export async function POST(req: Request) {
   }
 
   const orderCode = canonicalOrderCode(order)
-  if (await isOrderClaimed(orderCode)) return skip("already_claimed", orderCode)
-
   const pancakeCustomerId = order.customer?.customer_id
-  if (!pancakeCustomerId) return skip("unknown_customer", orderCode)
 
-  const customer = await getCustomerByPancakeId(pancakeCustomerId)
-  if (!customer) return skip("unknown_customer", orderCode)
+  // Both lookups THROW on a database error rather than answering "no". That
+  // distinction is the whole point: `unknown_customer` is a 200, and Pancake
+  // never retries a 200, so a blip that returned it silently burned the points.
+  // A 503 gets the same delivery again once the database is back.
+  let customer
+  try {
+    if (await isOrderClaimed(orderCode)) return skip("already_claimed", orderCode)
+    customer = pancakeCustomerId
+      ? await getCustomerByPancakeId(pancakeCustomerId)
+      : null
+  } catch (err) {
+    console.error("[pancake-webhook] customer lookup failed", orderCode, err)
+    return Response.json({ error: "db_unavailable" }, { status: 503 })
+  }
+
+  // Genuinely nobody to credit — a conclusion, not a fault. Nothing to retry.
+  if (!pancakeCustomerId || !customer) {
+    return skip("unknown_customer", orderCode)
+  }
 
   const supabase = createAdminClient()
   const { data, error } = await supabase.rpc("claim_points", {

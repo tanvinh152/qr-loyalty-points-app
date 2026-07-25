@@ -18,15 +18,15 @@ export function normalizePhone(input: string): string {
   return digitsOnly.replace(/^\+/, "")
 }
 
-// Customer accounts are phone + password, but Supabase Auth's password provider
-// is keyed by email — so the phone becomes a synthetic address. Normalizing
-// first is what keeps the alias 1:1 with `customers.phone`, whatever format the
-// customer typed. The domain is never mailed to; email confirmation is off.
-const EMAIL_DOMAIN =
-  process.env.CUSTOMER_EMAIL_DOMAIN ?? "customer.chicha-label.app"
+// Vietnamese mobile: ten digits, leading 0, then one of the live mobile
+// prefixes. This is deliberately strict because the normalized phone IS the
+// account key — the unique column in `customers` and what sign-in looks the
+// member's auth email up by. Accepting "901234567" and "0901234567" as separate
+// strings hands the same person two accounts and splits their points across both.
+export const VN_MOBILE_RE = /^0[35789]\d{8}$/
 
-export function phoneToEmail(phone: string): string {
-  return `${normalizePhone(phone)}@${EMAIL_DOMAIN}`
+export function isValidVnPhone(input: string): boolean {
+  return VN_MOBILE_RE.test(normalizePhone(input))
 }
 
 /**

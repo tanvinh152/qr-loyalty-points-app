@@ -107,8 +107,12 @@ export async function saveTierSchedule(
     .insert({
       tier_id,
       mode,
-      target_amount: mode === "amount" ? Number(target_amount) : null,
-      target_percentile: mode === "percentile" ? Number(target_percentile) : null,
+      // Already numbers — the schema coerced them and its refinements guarantee
+      // the field matching `mode` is present. No second Number() pass, which is
+      // what used to turn a blank into 0.
+      target_amount: mode === "amount" ? (target_amount ?? null) : null,
+      target_percentile:
+        mode === "percentile" ? (target_percentile ?? null) : null,
       effective_at: new Date(effective_at).toISOString(),
       note: note || null,
     })

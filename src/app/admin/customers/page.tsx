@@ -18,6 +18,7 @@ import { FieldLegend } from "@/components/field-legend"
 import { SearchInput } from "@/components/search-input"
 import { SectionCard } from "@/components/section-card"
 import { StatusDot } from "@/components/status-dot"
+import { TruncatedText } from "@/components/truncated-text"
 import { createClient } from "@/lib/supabase/server"
 import { getMessages } from "@/lib/i18n/server"
 import { formatVnd } from "@/lib/utils"
@@ -112,74 +113,89 @@ export default async function CustomersPage({
         {customers.length === 0 ? (
           <EmptyState title={cm.empty} icon={Users} />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{cm.name}</TableHead>
-                <TableHead>{cm.phone}</TableHead>
-                <TableHead>{cm.tier}</TableHead>
-                <TableHead className="text-right">{cm.currentPoints}</TableHead>
-                <TableHead className="text-right">
-                  {cm.lifetimePoints}
-                </TableHead>
-                <TableHead className="text-right">
-                  {cm.lifetimeSpend}
-                </TableHead>
-                <TableHead>{cm.profileStatus}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {customers.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <InitialsAvatar name={c.full_name?.trim() || c.phone} />
-                      <div>
-                        <Link
-                          href={`/admin/customers/${c.id}`}
-                          className="text-body-sm leading-tight font-semibold hover:underline"
-                        >
-                          {c.full_name ?? c.phone}
-                        </Link>
-                        <p className="text-muted-foreground text-body-xs">
-                          {c.email ?? "—"}
-                        </p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{c.phone}</TableCell>
-                  <TableCell>
-                    {c.membership_tiers ? (
-                      <Badge variant="secondary">
-                        {c.membership_tiers.name}
-                      </Badge>
-                    ) : (
-                      "—"
-                    )}
-                  </TableCell>
-                  <TableCell className="text-primary text-right font-bold tabular-nums">
-                    {c.current_points.toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-right tabular-nums">
-                    {c.lifetime_points.toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatVnd(c.lifetime_spend)}
-                  </TableCell>
-                  <TableCell>
-                    <StatusDot
-                      label={
-                        c.profile_completed_at
-                          ? cm.profileComplete
-                          : cm.profileIncomplete
-                      }
-                      tone={c.profile_completed_at ? "success" : "neutral"}
-                    />
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table className="min-w-[880px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{cm.name}</TableHead>
+                  <TableHead>{cm.phone}</TableHead>
+                  <TableHead>{cm.tier}</TableHead>
+                  <TableHead className="text-right">
+                    {cm.currentPoints}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {cm.lifetimePoints}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {cm.lifetimeSpend}
+                  </TableHead>
+                  <TableHead>{cm.profileStatus}</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {customers.map((c) => (
+                  <TableRow key={c.id}>
+                    <TableCell className="max-w-[280px]">
+                      <div className="flex items-center gap-3">
+                        <InitialsAvatar name={c.full_name?.trim() || c.phone} />
+                        <div className="min-w-0">
+                          {/* Both lines are free text the member typed, and the
+                            synthetic auth email is long by construction. */}
+                          <TruncatedText
+                            lines={1}
+                            focusable={false}
+                            tooltip={c.full_name ?? c.phone}
+                          >
+                            <Link
+                              href={`/admin/customers/${c.id}`}
+                              className="text-body-sm leading-tight font-semibold hover:underline"
+                            >
+                              {c.full_name ?? c.phone}
+                            </Link>
+                          </TruncatedText>
+                          <TruncatedText
+                            lines={1}
+                            className="text-muted-foreground text-body-xs"
+                          >
+                            {c.email ?? "—"}
+                          </TruncatedText>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{c.phone}</TableCell>
+                    <TableCell>
+                      {c.membership_tiers ? (
+                        <Badge variant="secondary">
+                          {c.membership_tiers.name}
+                        </Badge>
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
+                    <TableCell className="text-primary text-right font-bold tabular-nums">
+                      {c.current_points.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-right tabular-nums">
+                      {c.lifetime_points.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatVnd(c.lifetime_spend)}
+                    </TableCell>
+                    <TableCell>
+                      <StatusDot
+                        label={
+                          c.profile_completed_at
+                            ? cm.profileComplete
+                            : cm.profileIncomplete
+                        }
+                        tone={c.profile_completed_at ? "success" : "neutral"}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </SectionCard>
     </div>

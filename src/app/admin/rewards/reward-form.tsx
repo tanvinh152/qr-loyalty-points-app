@@ -94,7 +94,6 @@ function RewardFields({
       name: row?.name ?? "",
       description: row?.description ?? "",
       points_cost: row?.points_cost ?? 0,
-      original_points_cost: row?.original_points_cost ?? "",
       quantity: row?.quantity ?? 0,
       image_url: row?.image_url ?? "",
       category: row?.category ?? "",
@@ -165,26 +164,6 @@ function RewardFields({
                   />
                 </FormControl>
                 <FormDescription>{m.pointsCostHelper}</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="original_points_cost"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{m.originalPointsCost}</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="1"
-                    {...field}
-                    value={fieldValue(field.value)}
-                  />
-                </FormControl>
-                <FormDescription>{m.originalPointsCostHelper}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}

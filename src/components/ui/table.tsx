@@ -7,6 +7,11 @@ import { cn } from "@/lib/utils"
 // Stitch tables: tinted header row, `label-md` uppercase headers, hairline row
 // dividers at 30% and a faint hover tint. No outer border — the SectionCard
 // that wraps the table owns it.
+//
+// Cells default to `whitespace-nowrap` on purpose: most of them hold a number, a
+// date or a badge, none of which may ever break mid-value. A column of free text
+// opts out per cell with `max-w-[…]` + `<TruncatedText>`
+// (`src/components/truncated-text.tsx`), which resets the whitespace itself.
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div
@@ -76,7 +81,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "text-label-md text-muted-foreground px-6 py-3.5 text-left align-middle tracking-wider whitespace-nowrap uppercase [&:has([role=checkbox])]:pr-0",
+        "text-label-md text-muted-foreground px-4 py-3.5 text-left align-middle tracking-wider whitespace-nowrap uppercase sm:px-6 [&:has([role=checkbox])]:pr-0",
         className,
       )}
       {...props}
@@ -89,7 +94,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "text-body-sm px-6 py-4 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0",
+        "text-body-sm px-4 py-4 align-middle whitespace-nowrap sm:px-6 [&:has([role=checkbox])]:pr-0",
         className,
       )}
       {...props}

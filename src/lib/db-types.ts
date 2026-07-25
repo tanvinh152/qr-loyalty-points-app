@@ -49,8 +49,6 @@ export type RewardRow = {
   name: string
   description: string | null
   points_cost: number
-  /** Struck-through "was" price on the shop card. Null = no discount. */
-  original_points_cost: number | null
   quantity: number
   image_url: string | null
   /** Free-text slug; the shop's tab bar is built from the distinct values. */

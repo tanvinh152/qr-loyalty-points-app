@@ -4,6 +4,7 @@ import { useMemo, useState } from "react"
 import Image from "next/image"
 import { AlertTriangle, Package, Search } from "lucide-react"
 
+import { TruncatedText } from "@/components/truncated-text"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -122,16 +123,27 @@ export function SkuPicker({
                   onValueChange?.(v.sku)
                   onSelect?.(v)
                 }}
-                className="border-border/40 hover:bg-accent flex w-full items-center gap-3 border-b p-2 text-left transition-colors last:border-b-0"
+                className="border-border/40 hover:bg-accent flex w-full items-start gap-3 border-b p-2 text-left transition-colors last:border-b-0"
               >
                 <Thumb src={v.image} alt={v.name} />
-                <span className="grid min-w-0 gap-0.5">
-                  <span className="text-body-sm truncate font-medium">
+                <span className="grid min-w-0 flex-1 gap-0.5">
+                  {/* Variation names carry size, topping and sweetness, so two
+                      lines plus a tooltip is what keeps them readable. */}
+                  <TruncatedText
+                    focusable={false}
+                    className="text-body-sm font-medium"
+                  >
                     {v.name}
-                  </span>
-                  <span className="text-muted-foreground truncate text-body-xs">
-                    {[v.attrs, v.sku].filter(Boolean).join(" · ")}
-                  </span>
+                  </TruncatedText>
+                  <TruncatedText
+                    lines={1}
+                    focusable={false}
+                    className="text-muted-foreground text-body-xs"
+                  >
+                    {[v.price ? formatVnd(v.price) : "", v.attrs, v.sku]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </TruncatedText>
                 </span>
               </button>
             ))}
@@ -158,13 +170,16 @@ function SelectedCard({
     <div className="border-border/60 bg-surface-container/40 flex items-start gap-3 rounded-lg border p-3">
       <Thumb src={variation?.image ?? null} alt={variation?.name ?? sku} />
       <div className="grid min-w-0 flex-1 gap-1">
-        <p className="text-body-sm truncate font-medium">
+        <TruncatedText className="text-body-sm font-medium">
           {variation?.name ?? sku}
-        </p>
+        </TruncatedText>
         {variation?.attrs && (
-          <p className="text-muted-foreground truncate text-body-xs">
+          <TruncatedText
+            lines={1}
+            className="text-muted-foreground text-body-xs"
+          >
             {variation.attrs}
-          </p>
+          </TruncatedText>
         )}
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge variant="muted">{sku}</Badge>

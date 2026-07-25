@@ -5,7 +5,7 @@ import { redirect } from "next/navigation"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { getMessages } from "@/lib/i18n/server"
-import { matchesOrderPhones, normalizePhone, phoneToEmail } from "@/lib/phone"
+import { matchesOrderPhones, normalizePhone } from "@/lib/phone"
 import { getClientIp, isRateLimited, recordAttempt } from "@/lib/rate-limit"
 import {
   canonicalOrderCode,
@@ -15,10 +15,12 @@ import {
   toRpcItems,
   updateCustomer,
 } from "@/lib/pancake/client"
+import { PancakeRequestError } from "@/lib/pancake/types"
 import {
   getActiveSettings,
   getCustomerByAuthUserId,
   getCustomerByPancakeId,
+  getCustomerByPhone,
   linkAuthUserToPhone,
   linkPancakeCustomer,
 } from "@/lib/loyalty"
@@ -30,12 +32,14 @@ import {
   makeCustomerSignupSchema,
 } from "@/lib/schemas"
 
-// Customer accounts are phone + password. Supabase Auth's password provider is
-// email-keyed, so the phone is turned into a synthetic address by phoneToEmail()
-// — no SMS provider, no OTP cost. Signup goes through the admin API so neither
-// Supabase's email validator nor its confirmation mail is in the way (verified:
-// the public /auth/v1/signup endpoint answers `email_address_invalid` for a
-// synthetic domain).
+// Customer accounts are phone + password — no SMS provider, no OTP cost.
+// Supabase Auth's password provider is email-keyed, so signup collects the
+// member's REAL address and sign-in resolves the phone to it through
+// `customers.email`; the phone is the lookup key, never the credential Supabase
+// sees. (It used to be a synthetic `<phone>@…` alias — see 0014 for the switch.)
+// Signup still goes through the admin API so no confirmation mail is queued:
+// this project sends none, and `email_confirm: true` is what keeps that true
+// however the project's email settings are configured.
 //
 // Registration is also the LINKING step: it demands a recent order code, proves
 // the phone against that order's masked number, claims the order's points, and
@@ -43,6 +47,18 @@ import {
 // the webhook. There is no manual claim screen any more.
 
 export type AuthState = { error: string } | null
+
+// Supabase reports a duplicate address as `email_exists`; older releases only
+// said "…has already been registered".
+function isEmailTaken(
+  error: { code?: string; message?: string } | null,
+): boolean {
+  if (!error) return false
+  return (
+    error.code === "email_exists" ||
+    Boolean(error.message?.toLowerCase().includes("already"))
+  )
+}
 
 export async function signIn(
   _prev: AuthState,
@@ -64,13 +80,24 @@ export async function signIn(
   const ip = await getClientIp()
   if (await isRateLimited(ip)) return { error: e.rateLimited }
 
+  // The form asks for a phone; Supabase wants the address that phone registered
+  // with. An unknown phone is answered with the SAME generic message as a wrong
+  // password, and from behind the same rate limiter, so this lookup cannot be
+  // used to ask whether a number is a member.
+  const customer = await getCustomerByPhone(parsed.data.phone)
+  if (!customer?.email) {
+    await recordAttempt(ip, null, false)
+    return { error: e.invalidCredentials }
+  }
+
   const supabase = await createClient()
   const { data, error } = await supabase.auth.signInWithPassword({
-    email: phoneToEmail(parsed.data.phone),
+    email: customer.email,
     password: parsed.data.password,
   })
 
   if (error) {
+    // Sign-in carries no order code, so this counts against the IP budget only.
     await recordAttempt(ip, null, false)
     return { error: e.invalidCredentials }
   }
@@ -95,6 +122,7 @@ export async function signUp(
   const parsed = makeCustomerSignupSchema(t.validation).safeParse({
     phone: String(formData.get("phone") ?? ""),
     password: String(formData.get("password") ?? ""),
+    email: String(formData.get("email") ?? ""),
     full_name: String(formData.get("full_name") ?? ""),
     date_of_birth: String(formData.get("date_of_birth") ?? ""),
     terms: formData.get("terms") === "on" || formData.get("terms") === "true",
@@ -104,19 +132,30 @@ export async function signUp(
     return { error: parsed.error.issues[0]?.message ?? e.signupFailed }
   }
 
+  const typedCode = parsed.data.order_code
+
+  // Both budgets, not just the IP one: order codes are partly sequential
+  // (Pancake system_id), so a guesser spread across addresses is throttled by
+  // the code they keep hammering.
   const ip = await getClientIp()
-  if (await isRateLimited(ip)) return { error: e.rateLimited }
+  if (await isRateLimited(ip, typedCode)) return { error: e.rateLimited }
 
   const phone = normalizePhone(parsed.data.phone)
   const fullName = parsed.data.full_name
 
   // Everything that can legitimately reject the signup happens BEFORE the auth
   // user exists, so a business failure leaves nothing behind to roll back.
-  const typedCode = parsed.data.order_code
   let order
   try {
     order = await getOrder(typedCode)
-  } catch {
+  } catch (err) {
+    // Only a genuine "no such order" is the customer's mistake. A bad API key or
+    // a Pancake outage looks identical to them, and charging it to their five
+    // attempts locks out a real member over our own misconfiguration.
+    if (err instanceof PancakeRequestError && err.kind !== "not_found") {
+      console.error("[signup] pancake unavailable", err.kind, err)
+      return { error: e.serviceUnavailable }
+    }
     await recordAttempt(ip, typedCode, false)
     return { error: e.proofFailed }
   }
@@ -140,76 +179,100 @@ export async function signUp(
   // That POS customer may already back somebody else's account. Refuse loudly
   // rather than let linkPancakeCustomer's fill-if-NULL quietly leave this account
   // unlinked — an unlinked account is invisible to the webhook forever.
-  const alreadyLinked = await getCustomerByPancakeId(pancakeCustomerId)
+  //
+  // A DB error here must NOT read as "nobody is linked": that is the gate
+  // failing open. Stop instead, and do not charge the attempt — the customer did
+  // nothing wrong.
+  let alreadyLinked
+  try {
+    alreadyLinked = await getCustomerByPancakeId(pancakeCustomerId)
+  } catch (err) {
+    console.error("[signup] link lookup failed", pancakeCustomerId, err)
+    return { error: e.serviceUnavailable }
+  }
   if (alreadyLinked && alreadyLinked.phone !== phone) {
+    await recordAttempt(ip, typedCode, false)
     return { error: e.orderAlreadyLinked }
   }
 
   const orderCode = canonicalOrderCode(order)
-  const email = phoneToEmail(phone)
+  const email = parsed.data.email
 
-  // Created with the admin API rather than auth.signUp() on purpose: the public
-  // endpoint runs Supabase's email validator (it rejects synthetic domains) and
-  // queues a confirmation mail to an address that does not exist. admin.createUser
-  // skips both and marks the address confirmed, so signup works no matter how the
-  // project's email settings are configured. Nothing here sets app_metadata —
-  // customers must never carry the admin role claim (see is_admin() in 0005).
   const admin = createAdminClient()
-  const { data, error } = await admin.auth.admin.createUser({
-    email,
-    password: parsed.data.password,
-    email_confirm: true,
-    user_metadata: { phone },
-  })
 
-  let authUserId = data?.user?.id ?? null
-  // Only what THIS call created may be rolled back below.
-  let created = Boolean(authUserId)
+  // A signup that died between createUser and linkAuthUserToPhone leaves an auth
+  // user with no customers row; without a way to adopt it the member could never
+  // register again — see 0009_orphan_signup.sql for why adopting it is safe (a
+  // real account ALWAYS has that row).
+  //
+  // Asked BEFORE anything is created, and keyed by PHONE rather than by address
+  // (0014): the member retrying may well be fixing a typo in the email they gave
+  // last time, and the phone is what the order code above just proved.
+  const { data: orphanId, error: orphanError } = await admin.rpc(
+    "find_orphan_auth_user",
+    { p_phone: phone },
+  )
+  if (orphanError) console.error("[signup] orphan lookup failed", orphanError)
 
-  if (error || !authUserId) {
-    // Supabase answers "already been registered" for a taken alias.
-    const taken = error?.message?.toLowerCase().includes("already")
-    if (!taken) {
-      console.error("[signup] createUser failed", error)
-      await recordAttempt(ip, null, false)
-      return { error: e.signupFailed }
-    }
+  let authUserId: string | null = null
+  // Only what THIS action created may be rolled back below.
+  let created = false
 
-    // The alias may be the corpse of a signup that died before it linked a
-    // customers row — see 0009_orphan_signup.sql for why adopting it is safe.
-    // A real account always has that row, and still gets phoneTaken.
-    const { data: orphanId, error: orphanError } = await admin.rpc(
-      "find_orphan_auth_user",
-      { p_email: email },
-    )
-    if (orphanError) console.error("[signup] orphan lookup failed", orphanError)
-    if (!orphanId) {
-      await recordAttempt(ip, null, false)
-      return { error: e.phoneTaken }
-    }
-
+  if (orphanId) {
     const { error: adoptError } = await admin.auth.admin.updateUserById(
       orphanId as string,
       {
+        email,
         password: parsed.data.password,
         email_confirm: true,
         user_metadata: { phone },
       },
     )
     if (adoptError) {
+      // The corpse is provably this phone's, so the only thing that can be taken
+      // here is the address the member just typed.
       console.error("[signup] orphan adoption failed", orphanId, adoptError)
-      await recordAttempt(ip, null, false)
-      return { error: e.signupFailed }
+      await recordAttempt(ip, typedCode, false)
+      return {
+        error: isEmailTaken(adoptError) ? e.emailTaken : e.signupFailed,
+      }
     }
 
     console.info("[signup] adopted orphaned auth user", orphanId)
     authUserId = orphanId as string
-    created = false
+  } else {
+    // Created with the admin API rather than auth.signUp() on purpose: the public
+    // endpoint queues a confirmation mail, and this project sends none.
+    // admin.createUser marks the address confirmed instead, so signup works no
+    // matter how the project's email settings are configured. Nothing here sets
+    // app_metadata — customers must never carry the admin role claim (see
+    // is_admin() in 0005).
+    const { data, error } = await admin.auth.admin.createUser({
+      email,
+      password: parsed.data.password,
+      email_confirm: true,
+      user_metadata: { phone },
+    })
+
+    authUserId = data?.user?.id ?? null
+    created = Boolean(authUserId)
+
+    if (error || !authUserId) {
+      // "Already registered" no longer means "this phone is taken": the phone had
+      // no auth user at all, or the lookup above would have adopted it. It means
+      // the EMAIL belongs to somebody else. Phone collisions are caught below by
+      // linkAuthUserToPhone, which owns that check because `customers.phone` is
+      // the unique column.
+      const taken = isEmailTaken(error)
+      if (!taken) console.error("[signup] createUser failed", error)
+      await recordAttempt(ip, typedCode, false)
+      return { error: taken ? e.emailTaken : e.signupFailed }
+    }
   }
 
   // Carries over points credited against this phone before signup (a webhook can
   // have created the row already).
-  const linked = await linkAuthUserToPhone(authUserId, phone)
+  const linked = await linkAuthUserToPhone(authUserId, phone, email)
   if (!linked.ok) {
     // Roll the account back rather than leaving a login with no points behind it.
     if (created) await admin.auth.admin.deleteUser(authUserId)
@@ -228,7 +291,7 @@ export async function signUp(
       p_order_code: orderCode,
       p_phone: phone,
       p_full_name: fullName,
-      p_email: null,
+      p_email: email,
       p_pancake_customer_id: pancakeCustomerId,
       p_items: toRpcItems(order),
       p_source: "claim",
@@ -243,7 +306,21 @@ export async function signUp(
 
   // Unconditional: the claim above may have been skipped, and the link is what
   // the webhook attributes every FUTURE order by.
-  await linkPancakeCustomer(linked.customer.id, pancakeCustomerId)
+  //
+  // This is the one "best-effort" step that is not optional. Without the link
+  // the account is invisible to the webhook forever, so a failure here has to
+  // end the signup rather than hand back a working login that never earns.
+  const link = await linkPancakeCustomer(linked.customer.id, pancakeCustomerId)
+  if (!link.ok) {
+    // `conflict` means another signup won the race for this POS customer between
+    // the gate above and here — the unique index caught what the gate could not.
+    if (created) await admin.auth.admin.deleteUser(authUserId)
+    await recordAttempt(ip, typedCode, false)
+    return {
+      error:
+        link.reason === "error" ? e.serviceUnavailable : e.orderAlreadyLinked,
+    }
+  }
 
   // Name + DOB. Same RPC the profile screen uses; the pet fields are empty at
   // signup, so passing null blanks nothing.

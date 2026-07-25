@@ -1,7 +1,15 @@
 "use client"
 
 import { useActionState } from "react"
-import { ArrowRight, Cake, Lock, Receipt, Smartphone, UserRound } from "lucide-react"
+import {
+  ArrowRight,
+  Cake,
+  Lock,
+  Mail,
+  Receipt,
+  Smartphone,
+  UserRound,
+} from "lucide-react"
 
 import { FormError } from "@/components/form-error"
 import { Button } from "@/components/ui/button"
@@ -33,6 +41,24 @@ export function RegisterForm() {
           className="rounded-full"
           required
         />
+      </div>
+
+      {/* The account's auth identity, and the only address support can answer
+          on — see signUp(). */}
+      <div className="grid gap-2">
+        <Label htmlFor="email">{r.email}</Label>
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          inputMode="email"
+          icon={Mail}
+          placeholder={r.emailPlaceholder}
+          autoComplete="email"
+          className="rounded-full"
+          required
+        />
+        <p className="text-body-sm text-muted-foreground">{r.emailHint}</p>
       </div>
 
       <div className="grid gap-2">

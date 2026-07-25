@@ -1,6 +1,8 @@
 import { z } from "zod"
 
 import type { Messages } from "@/lib/i18n/messages"
+import { PANCAKE_ORDER_STATUSES } from "@/lib/pancake/order-status"
+import { normalizePhone, VN_MOBILE_RE } from "@/lib/phone"
 import { MAX_PERKS, PERK_ICON_KEYS } from "@/lib/tier-perks"
 
 // Validation messages are locale-dependent, so schemas are built per-request
@@ -8,6 +10,19 @@ import { MAX_PERKS, PERK_ICON_KEYS } from "@/lib/tier-perks"
 // useT()). Types are inferred from the factory return, so callers keep the same
 // static types regardless of locale.
 type V = Messages["validation"]
+
+// An empty number input posts "" — not undefined. `z.coerce.number()` turns
+// that into 0, and since a union tries its branches in order, pairing it with
+// `z.literal("")` never reaches the literal: the blank simply becomes a valid
+// zero. That is how a cleared "amount" field once queued a 0đ tier threshold.
+// Strip the blank BEFORE any coercion so "absent" stays absent and the
+// required-field refinements below actually see it.
+function blankable<T extends z.ZodType>(inner: T) {
+  return z.preprocess(
+    (val) => (val === "" || val === null ? undefined : val),
+    inner.optional(),
+  )
+}
 
 // The whole claim payload: the phone comes from the session, not the form.
 // Accepts either Pancake identifier (short numeric system_id or the
@@ -24,19 +39,27 @@ export function makeOrderCodeSchema(v: V) {
 export type OrderCodeInput = z.infer<ReturnType<typeof makeOrderCodeSchema>>
 
 // Phone, as typed on the sign-in and sign-up forms.
+//
+// Output is the NORMALIZED number, not what was typed: "+84 90 123 4567",
+// "8490 123 4567" and "0901234567" all parse to "0901234567". Callers may still
+// run normalizePhone on the result — it is idempotent — but they no longer have
+// to, and three spellings can no longer become three accounts.
 export function makePhoneSchema(v: V) {
   return z.object({
     phone: z
       .string()
       .trim()
-      .min(6, v.phoneRequired)
-      .regex(/^[0-9+\-\s()]+$/, v.invalidPhone),
+      .min(1, v.phoneRequired)
+      .transform(normalizePhone)
+      .refine((p) => VN_MOBILE_RE.test(p), v.invalidPhone),
   })
 }
 export type PhoneInput = z.infer<ReturnType<typeof makePhoneSchema>>
 
-// Customer account: login is phone + password (the phone becomes a synthetic
-// email alias server-side, see phoneToEmail in src/lib/phone.ts).
+// Customer account: login is phone + password. Supabase's password provider is
+// email-keyed, so the server looks the member's real address up by phone
+// (customers.email) before signing in — the phone is the lookup key, never the
+// credential Supabase sees.
 export function makeCustomerLoginSchema(v: V) {
   return makePhoneSchema(v).extend({
     password: z.string().min(8, v.passwordTooShort),
@@ -50,8 +73,19 @@ export type CustomerLoginInput = z.infer<
 // member's (the server re-checks it against the order's masked phone) AND is the
 // only source of the Pancake customer id the webhook later needs, and the
 // name/DOB are pushed onto the POS record so staff see a real customer.
+//
+// The email is the account's auth identity AND the only address support can
+// reach a member at, so it is collected here and nowhere else. Lower-cased so
+// the address on auth.users, the one in customers.email and the unique index
+// over it can never disagree about the same mailbox.
 export function makeCustomerSignupSchema(v: V) {
   return makeCustomerLoginSchema(v).extend({
+    email: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .min(1, v.emailRequired)
+      .email(v.invalidEmail),
     full_name: z.string().trim().min(1, v.nameRequired),
     date_of_birth: z
       .string()
@@ -71,13 +105,28 @@ export function makeLoyaltySettingsSchema(v: V) {
     rounding: z.enum(["floor", "round", "ceil"]),
     unmapped_sku_points: z.coerce.number().int().min(0, v.nonNegative),
     // Free text in the form ("3, 16") -> int[].
+    //
+    // Empty segments are dropped, not parsed: `Number("")` is 0 and 0 is
+    // Pancake's "new", so a stray trailing comma used to make brand-new unpaid
+    // orders claimable. Values are then checked against the real status list —
+    // a typo'd 999 is a silent no-op, not a setting.
     claimable_statuses: z
       .string()
       .trim()
       .min(1, v.invalidStatuses)
-      .transform((s) => s.split(",").map((part) => Number(part.trim())))
+      .transform((s) =>
+        s
+          .split(",")
+          .map((part) => part.trim())
+          .filter(Boolean)
+          .map(Number),
+      )
       .refine(
-        (arr) => arr.length > 0 && arr.every((n) => Number.isInteger(n)),
+        (arr) =>
+          arr.length > 0 &&
+          arr.every((n) =>
+            (PANCAKE_ORDER_STATUSES as readonly number[]).includes(n),
+          ),
         v.invalidStatuses,
       ),
   })
@@ -125,32 +174,27 @@ export function makeTierScheduleSchema(v: V) {
       id: z.string().uuid().optional(),
       tier_id: z.string().uuid(v.tierRequired),
       mode: z.enum(["amount", "percentile"]),
-      target_amount: z
-        .union([z.coerce.number().int().min(0, v.nonNegative), z.literal("")])
-        .optional(),
+      // Strictly positive, matching the CHECK on tier_threshold_schedules:
+      // a 0đ threshold is not a tier, it is every member at once.
+      target_amount: blankable(z.coerce.number().int().gt(0, v.positive)),
       // "Top N%" — strictly inside (0, 100): 0 would select nobody and 100 the
       // whole base, neither of which is a tier.
-      target_percentile: z
-        .union([
-          z.coerce.number().gt(0, v.percentileRange).lt(100, v.percentileRange),
-          z.literal(""),
-        ])
-        .optional(),
+      target_percentile: blankable(
+        z.coerce.number().gt(0, v.percentileRange).lt(100, v.percentileRange),
+      ),
       // datetime-local gives "YYYY-MM-DDTHH:mm"; the action turns it into an ISO
       // instant in the server's zone.
       effective_at: z.string().trim().min(1, v.effectiveAtRequired),
       note: z.string().trim().max(200).optional().or(z.literal("")),
     })
-    .refine(
-      (s) => s.mode !== "amount" || (s.target_amount !== "" && s.target_amount != null),
-      { message: v.amountRequired, path: ["target_amount"] },
-    )
-    .refine(
-      (s) =>
-        s.mode !== "percentile" ||
-        (s.target_percentile !== "" && s.target_percentile != null),
-      { message: v.percentileRequired, path: ["target_percentile"] },
-    )
+    .refine((s) => s.mode !== "amount" || s.target_amount != null, {
+      message: v.amountRequired,
+      path: ["target_amount"],
+    })
+    .refine((s) => s.mode !== "percentile" || s.target_percentile != null, {
+      message: v.percentileRequired,
+      path: ["target_percentile"],
+    })
 }
 export type TierScheduleInput = z.infer<ReturnType<typeof makeTierScheduleSchema>>
 export type TierScheduleFormValues = z.input<
@@ -176,42 +220,20 @@ export type ProductPointFormValues = z.input<
 
 // Admin: reward store item.
 export function makeRewardSchema(v: V) {
-  return (
-    z
-      .object({
-        id: z.string().uuid().optional(),
-        name: z.string().trim().min(1, v.rewardNameRequired),
-        description: z.string().trim().optional().or(z.literal("")),
-        points_cost: z.coerce.number().int().min(0, v.nonNegative),
-        // Struck-through "was" price on the shop card. Blank means no discount,
-        // so it stays a string until the action maps it to null.
-        original_points_cost: z
-          .union([z.coerce.number().int().min(0, v.nonNegative), z.literal("")])
-          .optional(),
-        quantity: z.coerce.number().int().min(0, v.nonNegative),
-        image_url: z
-          .string()
-          .trim()
-          .url(v.invalidUrl)
-          .optional()
-          .or(z.literal("")),
-        // Free-text slug: the shop's tab bar is built from the distinct values, so
-        // a new category needs no migration.
-        category: z.string().trim().max(40).optional().or(z.literal("")),
-        is_exclusive: z.coerce.boolean(),
-        is_featured: z.coerce.boolean(),
-        is_active: z.coerce.boolean(),
-      })
-      // Mirrors the `rewards_original_cost_check` constraint, so the form reports
-      // it instead of the database rejecting the write.
-      .refine(
-        (r) =>
-          r.original_points_cost === "" ||
-          r.original_points_cost == null ||
-          r.original_points_cost >= r.points_cost,
-        { message: v.originalCostTooLow, path: ["original_points_cost"] },
-      )
-  )
+  return z.object({
+    id: z.string().uuid().optional(),
+    name: z.string().trim().min(1, v.rewardNameRequired),
+    description: z.string().trim().optional().or(z.literal("")),
+    points_cost: z.coerce.number().int().min(0, v.nonNegative),
+    quantity: z.coerce.number().int().min(0, v.nonNegative),
+    image_url: z.string().trim().url(v.invalidUrl).optional().or(z.literal("")),
+    // Free-text slug: the shop's tab bar is built from the distinct values, so
+    // a new category needs no migration.
+    category: z.string().trim().max(40).optional().or(z.literal("")),
+    is_exclusive: z.coerce.boolean(),
+    is_featured: z.coerce.boolean(),
+    is_active: z.coerce.boolean(),
+  })
 }
 export type RewardInput = z.infer<ReturnType<typeof makeRewardSchema>>
 export type RewardFormValues = z.input<ReturnType<typeof makeRewardSchema>>

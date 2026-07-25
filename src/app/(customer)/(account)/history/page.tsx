@@ -27,6 +27,7 @@ import { PageHeader } from "@/components/page-header"
 import { Pagination } from "@/components/pagination"
 import { SectionCard } from "@/components/section-card"
 import { StatCard } from "@/components/stat-card"
+import { TruncatedText } from "@/components/truncated-text"
 import { cn } from "@/lib/utils"
 import { getLocale, getMessages } from "@/lib/i18n/server"
 import { getTransactionTotals, getTransactions } from "@/lib/loyalty"
@@ -207,7 +208,7 @@ export default async function HistoryPage({
                     .toUpperCase()}`
                   return (
                     <TableRow key={row.id}>
-                      <TableCell>
+                      <TableCell className="max-w-[280px]">
                         <div className="flex items-center gap-3">
                           <span
                             className={cn(
@@ -218,13 +219,16 @@ export default async function HistoryPage({
                             <Icon className="size-5" aria-hidden />
                           </span>
                           <div className="min-w-0">
-                            <p className="font-semibold">
+                            {/* A reward name is admin free text and the order
+                                label carries a POS code — both outrun the
+                                column on a phone. */}
+                            <TruncatedText className="font-semibold">
                               {row.type === "EARN"
                                 ? h.earn(row.order_code)
                                 : row.type === "REDEEM"
                                   ? (row.reward?.name ?? h.redeem)
                                   : h.adjust}
-                            </p>
+                            </TruncatedText>
                             <p className="text-label-sm text-muted-foreground font-mono">
                               {code}
                             </p>

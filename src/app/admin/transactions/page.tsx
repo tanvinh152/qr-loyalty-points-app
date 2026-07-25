@@ -24,6 +24,7 @@ import { PageHeader } from "@/components/page-header"
 import { Pagination } from "@/components/pagination"
 import { SectionCard } from "@/components/section-card"
 import { StatCard } from "@/components/stat-card"
+import { TruncatedText } from "@/components/truncated-text"
 import { cn } from "@/lib/utils"
 import { adjustMeta, getAdminTransactions } from "@/lib/loyalty"
 import { getLocale, getMessages } from "@/lib/i18n/server"
@@ -261,62 +262,78 @@ export default async function TransactionsPage({
                   // note is the only thing that explains why it exists.
                   const adjust = adjustMeta(row)
                   return (
-                  <TableRow key={row.id}>
-                    <TableCell className="text-muted-foreground whitespace-nowrap">
-                      {dateFormat.format(new Date(row.created_at))}
-                    </TableCell>
-                    <TableCell className="font-semibold">
-                      {/* The ledger keeps its own copy of the phone, so a row
+                    <TableRow key={row.id}>
+                      <TableCell className="text-muted-foreground whitespace-nowrap">
+                        {dateFormat.format(new Date(row.created_at))}
+                      </TableCell>
+                      <TableCell className="max-w-[220px] font-semibold">
+                        {/* The ledger keeps its own copy of the phone, so a row
                           whose customer row is gone still names someone. */}
-                      <Link
-                        href={`/admin/customers/${row.customer_id}`}
-                        className="hover:underline"
+                        <TruncatedText
+                          lines={1}
+                          focusable={false}
+                          tooltip={
+                            row.customers?.full_name ??
+                            row.customers?.phone ??
+                            row.phone
+                          }
+                        >
+                          <Link
+                            href={`/admin/customers/${row.customer_id}`}
+                            className="hover:underline"
+                          >
+                            {row.customers?.full_name ??
+                              row.customers?.phone ??
+                              row.phone}
+                          </Link>
+                        </TruncatedText>
+                      </TableCell>
+                      <TableCell className="text-body-xs max-w-[280px]">
+                        {adjust ? (
+                          <div className="grid gap-0.5">
+                            {/* Staff free text, capped at nothing on the way in. */}
+                            <TruncatedText className="text-body-sm">
+                              {adjust.reason}
+                            </TruncatedText>
+                            <TruncatedText
+                              lines={1}
+                              className="text-muted-foreground"
+                            >
+                              {[
+                                adjust.actor?.email &&
+                                  tx.adjustBy(adjust.actor.email),
+                                adjust.lifetime_delta !== 0 &&
+                                  tx.adjustLifetime(adjust.lifetime_delta),
+                              ]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </TruncatedText>
+                          </div>
+                        ) : (
+                          <TruncatedText lines={1} className="font-mono">
+                            {row.order_code ?? row.reward?.name ?? "—"}
+                          </TruncatedText>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={TYPE_VARIANT[row.type]}>
+                          {tx.types[row.type]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {tx.sources[row.source]}
+                      </TableCell>
+                      <TableCell
+                        className={cn(
+                          "text-right font-bold tabular-nums",
+                          row.amount > 0
+                            ? "text-primary"
+                            : "text-muted-foreground",
+                        )}
                       >
-                        {row.customers?.full_name ??
-                          row.customers?.phone ??
-                          row.phone}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-body-xs">
-                      {adjust ? (
-                        <div className="grid gap-0.5">
-                          <span className="text-body-sm">{adjust.reason}</span>
-                          <span className="text-muted-foreground">
-                            {[
-                              adjust.actor?.email &&
-                                tx.adjustBy(adjust.actor.email),
-                              adjust.lifetime_delta !== 0 &&
-                                tx.adjustLifetime(adjust.lifetime_delta),
-                            ]
-                              .filter(Boolean)
-                              .join(" · ")}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="font-mono">
-                          {row.order_code ?? row.reward?.name ?? "—"}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={TYPE_VARIANT[row.type]}>
-                        {tx.types[row.type]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {tx.sources[row.source]}
-                    </TableCell>
-                    <TableCell
-                      className={cn(
-                        "text-right font-bold tabular-nums",
-                        row.amount > 0
-                          ? "text-primary"
-                          : "text-muted-foreground",
-                      )}
-                    >
-                      {row.amount > 0 ? `+${row.amount}` : row.amount}
-                    </TableCell>
-                  </TableRow>
+                        {row.amount > 0 ? `+${row.amount}` : row.amount}
+                      </TableCell>
+                    </TableRow>
                   )
                 })}
               </TableBody>

@@ -95,12 +95,13 @@ wrong behaviour so the suite stays green; see the comments for what each should 
 
 ## Customer accounts (Phase 4)
 - **Auth is phone + password.** Supabase Auth's password provider is email-keyed, so
-  `phoneToEmail()` (`src/lib/phone.ts`) turns the normalized phone into a synthetic
-  address at `CUSTOMER_EMAIL_DOMAIN`. No SMS provider, no OTP cost. Signup calls
-  `auth.admin.createUser({ email_confirm: true })` with the service-role client: the
-  public signup endpoint runs an email validator that rejects synthetic domains
-  (`email_address_invalid`) and would queue a confirmation mail to an address nobody
-  owns. No Supabase auth setting needs changing.
+  `/register` requires the member's real email and stores it in both `auth.users.email`
+  and `customers.email`; `signIn` takes a phone, looks that address up, and hands it to
+  `signInWithPassword`. The login form still has one field, and there is no SMS provider,
+  no OTP cost. (Before `0014` the address was a synthetic `<phone>@CUSTOMER_EMAIL_DOMAIN`
+  alias.) Signup calls `auth.admin.createUser({ email_confirm: true })` with the
+  service-role client: nothing is ever mailed — no confirmation, no password reset — and
+  no Supabase auth setting needs changing.
 - **Ownership proof**: `/register` always demands a recent order code whose phone matches
   the one being registered (`matchesOrderPhones` — see the ownership check above). It is
   both the ownership gate and the only source of `pancake_customer_id`, so signup cannot

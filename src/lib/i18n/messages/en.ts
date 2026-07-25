@@ -252,11 +252,7 @@ export const en = {
     products: {
       metaTitle: "Product Points",
       title: "Product Points",
-      helper:
-        "Map a Pancake SKU (variation display ID) to the points one unit earns.",
       productCode: "SKU",
-      productCodeHelper:
-        "Pancake → Products → a variation's display ID. Must match exactly.",
       label: "Label",
       labelHelper: "Your own note. Not shown to customers.",
       pointsAwarded: "Points per unit",
@@ -291,9 +287,6 @@ export const en = {
       description: "Description",
       pointsCost: "Points cost",
       pointsCostHelper: "Points deducted when a customer redeems this.",
-      originalPointsCost: "Old price",
-      originalPointsCostHelper:
-        "Shown struck through beside the cost. Leave empty for no discount.",
       category: "Category",
       categoryHelper:
         "Groups the reward into a shop tab. Reuse an existing name or type a new one.",
@@ -307,7 +300,6 @@ export const en = {
         "Another reward is already featured. Turn that one off first.",
       featuredChip: "Featured",
       exclusiveChip: "Exclusive",
-      discountFrom: (points: number) => `was ${points.toLocaleString()} pts`,
       quantity: "Quantity",
       quantityHelper: "Stock left. 0 = out of stock.",
       imageUrl: "Image URL",
@@ -526,6 +518,9 @@ export const en = {
       title: "Create your account",
       fullName: "Full name",
       fullNamePlaceholder: "e.g. Nguyen Van A",
+      email: "Email",
+      emailPlaceholder: "you@email.com",
+      emailHint: "We use it to reach you about your account and your requests.",
       dob: "Date of birth",
       dobHint: "So we can send you a little something on your birthday.",
       orderCode: "Most recent order code",
@@ -591,7 +586,6 @@ export const en = {
       eyebrow: "Reward store",
       earnMoreHint: "Points added automatically",
       historyCta: "Redemption history",
-      wasCost: (points: number) => `Was ${points.toLocaleString()} points`,
       filterLabel: "Filter by category",
       outOfStock: "Out of stock",
       notEnough: "Not enough points",
@@ -730,6 +724,7 @@ export const en = {
     errors: {
       invalidCredentials: "Wrong phone number or password.",
       phoneTaken: "This phone number is already registered.",
+      emailTaken: "This email is already used by another account.",
       signupFailed: "Sign-up failed. Please try again.",
       signInFailed: "Sign-in failed. Please try again.",
       rateLimited: "Too many attempts. Please try again in 15 minutes.",
@@ -738,6 +733,11 @@ export const en = {
       orderAlreadyLinked:
         "That order already belongs to a member account. Sign in with the phone number you used before, or contact support.",
       proofFailed: "That order code doesn't match this phone number.",
+      // Deliberately distinct from proofFailed: our own outage must not be
+      // reported as the customer's mistake, and it must not reveal anything
+      // about whether the order or the phone number exists.
+      serviceUnavailable:
+        "Something went wrong on our side. Please try again in a few minutes.",
       sessionExpired: "Your session expired. Please sign in again.",
       noCustomer: "No points account is linked to this login yet.",
       rewardNotFound: "This reward is no longer available.",
@@ -750,6 +750,7 @@ export const en = {
   validation: {
     orderRequired: "Order code is required",
     nameRequired: "Name is required",
+    emailRequired: "Email is required",
     invalidEmail: "Invalid email",
     phoneRequired: "Phone is required",
     invalidPhone: "Invalid phone number",
@@ -766,7 +767,6 @@ export const en = {
     messageRequired: "Please describe the problem",
     messageTooLong: "Please keep it under 2000 characters",
     invalidDate: "Invalid date",
-    originalCostTooLow: "The old price must be at least the current cost",
     perkTitleRequired: "Perk title is required",
     tooManyPerks: "At most 6 perks",
     wholeNumber: "Must be a whole number",

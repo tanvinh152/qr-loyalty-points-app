@@ -33,8 +33,8 @@ export default async function HelpPage() {
         >
           <HelpForm
             defaultName={customer.full_name ?? ""}
-            // The auth email is synthetic (phoneToEmail), so only a real address
-            // the customer already gave us is worth pre-filling.
+            // Both are the address given at signup; the auth one is the fallback
+            // in case the customers row was written before that became the rule.
             defaultEmail={customer.email ?? email ?? ""}
           />
         </SectionCard>

@@ -17,6 +17,7 @@ import { Pagination } from "@/components/pagination"
 import { SectionCard } from "@/components/section-card"
 import { StatCard } from "@/components/stat-card"
 import { StatusDot } from "@/components/status-dot"
+import { TruncatedText } from "@/components/truncated-text"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/server"
 import { getLocale, getMessages } from "@/lib/i18n/server"
@@ -179,7 +180,7 @@ export default async function SupportPage({
                       <TableCell className="text-muted-foreground whitespace-nowrap">
                         {dateFormat.format(new Date(row.created_at))}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="max-w-[240px]">
                         <div className="flex items-center gap-3">
                           <InitialsAvatar name={name} />
                           <div className="min-w-0">
@@ -187,20 +188,32 @@ export default async function SupportPage({
                                 accepts a name and email of the customer's
                                 choosing, so the account is the only sure link. */}
                             {row.customer_id ? (
-                              <Link
-                                href={`/admin/customers/${row.customer_id}`}
-                                className="text-body-sm font-semibold hover:underline"
+                              <TruncatedText
+                                lines={1}
+                                focusable={false}
+                                tooltip={name}
+                              >
+                                <Link
+                                  href={`/admin/customers/${row.customer_id}`}
+                                  className="text-body-sm font-semibold hover:underline"
+                                >
+                                  {name}
+                                </Link>
+                              </TruncatedText>
+                            ) : (
+                              <TruncatedText
+                                lines={1}
+                                className="text-body-sm font-semibold"
                               >
                                 {name}
-                              </Link>
-                            ) : (
-                              <p className="text-body-sm font-semibold">
-                                {name}
-                              </p>
+                              </TruncatedText>
                             )}
-                            <p className="text-muted-foreground text-body-xs">
+                            <TruncatedText
+                              lines={1}
+                              className="text-muted-foreground text-body-xs"
+                            >
                               {row.customer_id ? row.email : s.guest}
-                            </p>
+                            </TruncatedText>
                           </div>
                         </div>
                       </TableCell>
@@ -212,7 +225,9 @@ export default async function SupportPage({
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground max-w-xs">
-                        <span className="line-clamp-2">{row.message}</span>
+                        {/* Free text up to 2000 characters — the clamp is the
+                            only thing keeping a row one row tall. */}
+                        <TruncatedText>{row.message}</TruncatedText>
                       </TableCell>
                       <TableCell>
                         <StatusDot

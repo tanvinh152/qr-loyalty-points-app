@@ -1,6 +1,7 @@
 import { Flame, Gift, Sparkles } from "lucide-react"
 
 import { ConfirmDelete } from "@/components/confirm-delete"
+import { TruncatedText } from "@/components/truncated-text"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { getMessages } from "@/lib/i18n/server"
@@ -30,9 +31,6 @@ export async function RewardCard({
   const t = await getMessages()
   const m = t.admin.rewards
   const soldOut = reward.quantity === 0
-  const discounted =
-    reward.original_points_cost != null &&
-    reward.original_points_cost > reward.points_cost
 
   return (
     <article className="border-border bg-card grid overflow-hidden rounded-xl border">
@@ -53,11 +51,6 @@ export async function RewardCard({
           </span>
         )}
         <span className="bg-card absolute top-3 right-3 grid justify-items-end rounded-md px-2 py-1 shadow-[0_4px_6px_-1px_rgba(0,0,0,.05)]">
-          {discounted && (
-            <span className="text-muted-foreground text-body-xs tabular-nums line-through">
-              {m.discountFrom(reward.original_points_cost!)}
-            </span>
-          )}
           <span className="text-primary text-label-md font-bold">
             {m.cost(reward.points_cost)}
           </span>
@@ -87,11 +80,15 @@ export async function RewardCard({
             {reward.is_active ? t.common.active : t.common.inactive}
             {reward.category ? ` · ${reward.category}` : ""}
           </p>
-          <h3 className="text-headline-md">{reward.name}</h3>
+          {/* Both are admin free text: the name has to stay legible at two
+              lines, the blurb reveals the rest on hover. */}
+          <TruncatedText className="text-headline-md">
+            {reward.name}
+          </TruncatedText>
           {reward.description && (
-            <p className="text-body-sm text-muted-foreground line-clamp-2">
+            <TruncatedText className="text-body-sm text-muted-foreground">
               {reward.description}
-            </p>
+            </TruncatedText>
           )}
         </div>
 

@@ -52,11 +52,18 @@ comment on column public.membership_tiers.spend_threshold is
 -- ---- the five-tier ladder ----
 -- The old set was four point-based tiers headed by "Thành viên" at 0 points.
 -- "Bạc" takes over the 0đ entry tier, so the old row is removed rather than
--- renamed — `customers.tier_id` is `on delete set null`, and with Bạc sitting at
--- 0đ everyone lands back in a tier immediately.
+-- renamed. With Bạc sitting at 0đ everyone lands back in a tier immediately.
+--
+-- `customers.tier_id` is `on delete restrict`, so the holders are detached here
+-- explicitly rather than by cascade. That is the point of restrict: dropping a
+-- tier is a demotion, and a demotion has to be written down, not inferred.
 --
 -- Order matters: the delete frees threshold 0 before Bạc is lowered onto it,
 -- otherwise the unique constraint fires mid-statement.
+update public.customers
+   set tier_id = null
+ where tier_id in (select id from public.membership_tiers where name = 'Thành viên');
+
 delete from public.membership_tiers where name = 'Thành viên';
 
 -- Amounts are a starting point; admins edit them (and schedule raises) from
@@ -112,7 +119,9 @@ create table if not exists public.tier_threshold_schedules (
   note              text,
   created_by        uuid,
   created_at        timestamptz not null default now(),
-  check ((mode = 'amount'     and target_amount     is not null and target_amount >= 0)
+  -- Strictly positive: 0đ is not a threshold, it is every member at once. This
+  -- is the backstop for a blank form field that coerced to 0 on the way in.
+  check ((mode = 'amount'     and target_amount     is not null and target_amount > 0)
       or (mode = 'percentile' and target_percentile is not null
           and target_percentile > 0 and target_percentile < 100))
 );

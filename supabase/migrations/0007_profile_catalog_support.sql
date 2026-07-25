@@ -28,14 +28,8 @@ alter table public.customers
 -- without a migration, and the shop tab bar is built from the distinct values.
 alter table public.rewards
   add column if not exists category             text,
-  add column if not exists original_points_cost integer,
   add column if not exists is_exclusive         boolean not null default false,
   add column if not exists is_featured          boolean not null default false;
-
-alter table public.rewards drop constraint if exists rewards_original_cost_check;
-alter table public.rewards
-  add constraint rewards_original_cost_check
-  check (original_points_cost is null or original_points_cost >= points_cost);
 
 create index if not exists rewards_category_idx
   on public.rewards (category) where is_active;

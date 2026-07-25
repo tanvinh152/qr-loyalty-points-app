@@ -31,6 +31,7 @@ import { Pagination } from "@/components/pagination"
 import { SectionCard } from "@/components/section-card"
 import { StatCard } from "@/components/stat-card"
 import { StatusDot } from "@/components/status-dot"
+import { TruncatedText } from "@/components/truncated-text"
 import { cn, formatVnd } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/server"
 import { getLocale, getMessages } from "@/lib/i18n/server"
@@ -342,7 +343,7 @@ export default async function CustomerDetailPage({
                       <TableCell className="text-muted-foreground whitespace-nowrap">
                         {dateTime.format(new Date(row.created_at))}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="max-w-[240px]">
                         <div className="flex items-center gap-2">
                           <span
                             className={cn(
@@ -352,21 +353,24 @@ export default async function CustomerDetailPage({
                           >
                             <Icon className="size-4" aria-hidden />
                           </span>
-                          <span className="text-body-sm font-semibold">
-                            {/* A redemption names the reward it spent points
-                                on; an earn has only the order code. */}
+                          {/* A redemption names the reward it spent points on;
+                              an earn has only the order code. */}
+                          <TruncatedText className="text-body-sm font-semibold">
                             {row.reward?.name ??
                               t.admin.transactions.types[row.type]}
-                          </span>
+                          </TruncatedText>
                         </div>
                       </TableCell>
-                      <TableCell className="text-body-xs">
+                      <TableCell className="text-body-xs max-w-[260px]">
                         {adjust ? (
                           <div className="grid gap-0.5">
-                            <span className="text-body-sm">
+                            <TruncatedText className="text-body-sm">
                               {adjust.reason}
-                            </span>
-                            <span className="text-muted-foreground">
+                            </TruncatedText>
+                            <TruncatedText
+                              lines={1}
+                              className="text-muted-foreground"
+                            >
                               {[
                                 adjust.actor?.email &&
                                   t.admin.transactions.adjustBy(
@@ -379,7 +383,7 @@ export default async function CustomerDetailPage({
                               ]
                                 .filter(Boolean)
                                 .join(" · ")}
-                            </span>
+                            </TruncatedText>
                           </div>
                         ) : (
                           <span className="font-mono">
@@ -441,9 +445,9 @@ export default async function CustomerDetailPage({
                     {dateTime.format(new Date(ticket.created_at))}
                   </span>
                 </div>
-                <p className="text-body-sm text-muted-foreground line-clamp-2">
+                <TruncatedText className="text-body-sm text-muted-foreground">
                   {ticket.message}
-                </p>
+                </TruncatedText>
               </li>
             ))}
           </ul>

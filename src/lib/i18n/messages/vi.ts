@@ -250,11 +250,7 @@ export const vi: Messages = {
     products: {
       metaTitle: "Điểm Sản Phẩm",
       title: "Điểm Sản Phẩm",
-      helper:
-        "Gán mã SKU Pancake (display ID của phiên bản) với số điểm mỗi sản phẩm.",
       productCode: "Mã SKU",
-      productCodeHelper:
-        "Pancake → Sản phẩm → display ID của phiên bản. Phải trùng khớp tuyệt đối.",
       label: "Tên gợi nhớ",
       labelHelper: "Ghi chú nội bộ, khách không nhìn thấy.",
       pointsAwarded: "Điểm mỗi sản phẩm",
@@ -289,9 +285,6 @@ export const vi: Messages = {
       description: "Mô tả",
       pointsCost: "Điểm cần đổi",
       pointsCostHelper: "Số điểm bị trừ khi khách đổi phần quà này.",
-      originalPointsCost: "Giá cũ",
-      originalPointsCostHelper:
-        "Hiển thị gạch ngang bên cạnh giá hiện tại. Để trống nếu không giảm giá.",
       category: "Danh mục",
       categoryHelper:
         "Xếp phần quà vào một tab trong cửa hàng. Chọn lại tên có sẵn hoặc nhập tên mới.",
@@ -305,8 +298,6 @@ export const vi: Messages = {
         "Đã có phần quà khác đang nổi bật. Hãy tắt phần quà đó trước.",
       featuredChip: "Nổi bật",
       exclusiveChip: "Đặc quyền",
-      discountFrom: (points: number) =>
-        `giá cũ ${points.toLocaleString()} điểm`,
       quantity: "Số lượng",
       quantityHelper: "Số lượng còn lại. 0 = hết hàng.",
       imageUrl: "Ảnh (URL)",
@@ -521,6 +512,10 @@ export const vi: Messages = {
       title: "Tạo tài khoản mới",
       fullName: "Họ và tên",
       fullNamePlaceholder: "VD: Nguyễn Văn A",
+      email: "Email",
+      emailPlaceholder: "ban@email.com",
+      emailHint:
+        "Dùng để liên hệ với bạn về tài khoản và các yêu cầu hỗ trợ.",
       dob: "Ngày sinh",
       dobHint: "Để chúng mình gửi bạn một món quà nhỏ vào ngày sinh nhật.",
       orderCode: "Mã đơn hàng gần nhất",
@@ -586,7 +581,6 @@ export const vi: Messages = {
       eyebrow: "Cửa hàng đổi thưởng",
       earnMoreHint: "Điểm được cộng tự động",
       historyCta: "Lịch sử đổi",
-      wasCost: (points: number) => `Giá cũ ${points.toLocaleString()} điểm`,
       filterLabel: "Lọc theo danh mục",
       outOfStock: "Hết hàng",
       notEnough: "Chưa đủ điểm",
@@ -721,6 +715,7 @@ export const vi: Messages = {
     errors: {
       invalidCredentials: "Số điện thoại hoặc mật khẩu không đúng.",
       phoneTaken: "Số điện thoại này đã được đăng ký.",
+      emailTaken: "Email này đã được dùng cho một tài khoản khác.",
       signupFailed: "Đăng ký không thành công. Vui lòng thử lại.",
       signInFailed: "Đăng nhập không thành công. Vui lòng thử lại.",
       rateLimited: "Quá nhiều lần thử. Vui lòng thử lại sau 15 phút.",
@@ -729,6 +724,8 @@ export const vi: Messages = {
       orderAlreadyLinked:
         "Đơn hàng này đã thuộc về một tài khoản thành viên. Vui lòng đăng nhập bằng số điện thoại đã dùng trước đó hoặc liên hệ hỗ trợ.",
       proofFailed: "Mã đơn hàng không khớp với số điện thoại này.",
+      serviceUnavailable:
+        "Hệ thống đang gặp sự cố. Vui lòng thử lại sau vài phút.",
       sessionExpired: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
       noCustomer: "Chưa có tài khoản điểm nào được liên kết với đăng nhập này.",
       rewardNotFound: "Phần quà này không còn khả dụng.",
@@ -741,6 +738,7 @@ export const vi: Messages = {
   validation: {
     orderRequired: "Vui lòng nhập mã đơn hàng",
     nameRequired: "Vui lòng nhập tên",
+    emailRequired: "Vui lòng nhập email",
     invalidEmail: "Email không hợp lệ",
     phoneRequired: "Vui lòng nhập số điện thoại",
     invalidPhone: "Số điện thoại không hợp lệ",
@@ -757,7 +755,6 @@ export const vi: Messages = {
     messageRequired: "Vui lòng mô tả vấn đề",
     messageTooLong: "Vui lòng viết ngắn hơn 2000 ký tự",
     invalidDate: "Ngày không hợp lệ",
-    originalCostTooLow: "Giá cũ phải lớn hơn hoặc bằng giá hiện tại",
     perkTitleRequired: "Cần nhập tên quyền lợi",
     tooManyPerks: "Tối đa 6 quyền lợi",
     wholeNumber: "Phải là số nguyên",

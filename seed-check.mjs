@@ -59,7 +59,6 @@ if (cmd === "seed") {
       .from("rewards")
       .update({
         category: "pate",
-        original_points_cost: rewards[0].points_cost + 50,
         is_exclusive: true,
         is_featured: true,
         is_active: true,

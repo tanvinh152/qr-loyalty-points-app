@@ -30,7 +30,9 @@ QR loyalty-point app. Next.js 16 (App Router) + Supabase + Pancake POS + shadcn/
   `customers/`, `transactions/`, protected `layout.tsx`.
 - **Customer accounts**: `src/app/(customer)/{login,register,auth}` + the `(account)` group
   (`dashboard/`, `rewards/`, `tiers/`, `history/`, `help/`, `profile/`). Auth is phone +
-  password via a synthetic email (`phoneToEmail` in `src/lib/phone.ts`). Admin vs customer is
+  password, but Supabase Auth is email-keyed: `/register` REQUIRES a real email, stores it on
+  `auth.users` AND `customers.email`, and `signIn` resolves phone → `customers.email` before
+  `signInWithPassword` (`0014`). Nothing is ever mailed. Admin vs customer is
   the JWT claim `app_metadata.role === 'admin'` (`public.is_admin()` in `0005`); both portals
   are guarded in `src/lib/supabase/middleware.ts`. Customers still have NO direct write path to
   `public.customers` — redemption goes through `redeem_reward` (`0006`) and the profile form
@@ -51,7 +53,9 @@ QR loyalty-point app. Next.js 16 (App Router) + Supabase + Pancake POS + shadcn/
   `claim_points` RPC — the ONLY write path for a claim. Never bypass it. It is granted to
   `service_role` ONLY (it trusts the item list it is handed) — call it with `createAdminClient()`.
   Order money reaches it as `p_order_total` (`orderSpendTotal()` in `src/lib/pancake/client.ts`).
-- **Point calc**: `src/lib/points.ts` MUST stay in sync with the SQL in `0011_claim_spend.sql`.
+- **Point calc**: lives ONLY in `claim_points` (`0011_claim_spend.sql`). `src/lib/points.ts`
+  is types now — the TS copy of the arithmetic was deleted because nothing called it. Do not
+  reintroduce a second implementation; if the admin UI ever needs a preview, call the RPC.
 - **Ownership gate**: `matchesOrderPhones` in `src/lib/phone.ts`, over
   `orderPhoneCandidates(order)`. Pancake masks phones as `0****70`, but `customer.phone_numbers`
   also holds the real one once the record has it — when a real number is present it is compared

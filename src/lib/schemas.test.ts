@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest"
 import type { Messages } from "@/lib/i18n/messages"
 import {
   makeAdjustSchema,
+  makeCustomerSignupSchema,
   makeLoyaltySettingsSchema,
+  makePhoneSchema,
   makeProfileSchema,
   makeRewardSchema,
   makeTierScheduleSchema,
@@ -26,6 +28,62 @@ function issues(result: { success: boolean; error?: { issues: readonly unknown[]
     return { message: issue.message, path: issue.path.join(".") }
   })
 }
+
+describe("makePhoneSchema", () => {
+  const schema = makePhoneSchema(v)
+
+  // The schema now OUTPUTS the normalized number rather than what was typed.
+  // That is what keeps one person to one `customers.phone` row — the key sign-in
+  // looks their address up by; callers may still normalize again, since doing so
+  // is idempotent.
+  it("returns the normalized number, not the typed string", () => {
+    for (const typed of ["+84 90 123 4567", "84901234567", "090-123-4567"]) {
+      const result = schema.safeParse({ phone: typed })
+      expect(result.success && result.data.phone, typed).toBe("0901234567")
+    }
+  })
+
+  it("rejects a number that is not a Vietnamese mobile", () => {
+    const result = schema.safeParse({ phone: "901234567" })
+    expect(issues(result)).toContainEqual({
+      message: "invalidPhone",
+      path: "phone",
+    })
+  })
+})
+
+// The signup email is the account's auth identity, so a typo is not a cosmetic
+// problem: it is the address the member will have to sign in with forever.
+describe("makeCustomerSignupSchema", () => {
+  const schema = makeCustomerSignupSchema(v)
+  const base = {
+    phone: "0901234567",
+    password: "hunter2hunter2",
+    email: "member@example.com",
+    full_name: "Nguyễn Văn A",
+    date_of_birth: "1995-04-02",
+    terms: true,
+    order_code: "ORDER-1",
+  }
+
+  it("lower-cases and trims the address", () => {
+    const result = schema.safeParse({ ...base, email: "  Member@Example.COM " })
+    expect(result.success && result.data.email).toBe("member@example.com")
+  })
+
+  it("rejects a malformed address", () => {
+    expect(issues(schema.safeParse({ ...base, email: "member@" }))).toContainEqual(
+      { message: "invalidEmail", path: "email" },
+    )
+  })
+
+  it("rejects a blank address", () => {
+    expect(issues(schema.safeParse({ ...base, email: "   " }))).toContainEqual({
+      message: "emailRequired",
+      path: "email",
+    })
+  })
+})
 
 describe("makeLoyaltySettingsSchema", () => {
   const schema = makeLoyaltySettingsSchema(v)
@@ -55,13 +113,27 @@ describe("makeLoyaltySettingsSchema", () => {
     )
   })
 
-  // BUG: a trailing comma yields a phantom status 0. `Number("")` is 0, not NaN,
-  // so the every-element-is-an-integer refine sees [3, 0] and passes. Status 0 is
-  // "new" in Pancake, so "3," silently makes brand-new unpaid orders claimable.
-  // Pinned as-is; the fix belongs with the schema, not the test.
-  it("lets a trailing comma through as status 0", () => {
+  // A trailing comma used to yield a phantom status 0 — `Number("")` is 0, not
+  // NaN — and 0 is Pancake's "new", so "3," quietly made brand-new unpaid orders
+  // claimable. Empty segments are now dropped before parsing.
+  it("ignores a trailing comma instead of reading it as status 0", () => {
     const result = schema.safeParse({ ...base, claimable_statuses: "3," })
-    expect(result.success && result.data.claimable_statuses).toEqual([3, 0])
+    expect(result.success && result.data.claimable_statuses).toEqual([3])
+  })
+
+  it("keeps a list usable when the admin leaves a gap between commas", () => {
+    const result = schema.safeParse({ ...base, claimable_statuses: "3, ,16" })
+    expect(result.success && result.data.claimable_statuses).toEqual([3, 16])
+  })
+
+  // Statuses are a closed set from Pancake; a typo is a setting that silently
+  // matches nothing, so it is rejected at the form rather than at claim time.
+  it("rejects a status Pancake does not define", () => {
+    const result = schema.safeParse({ ...base, claimable_statuses: "3,999" })
+    expect(issues(result)).toContainEqual({
+      message: "invalidStatuses",
+      path: "claimable_statuses",
+    })
   })
 })
 
@@ -134,19 +206,45 @@ describe("makeTierScheduleSchema", () => {
     }
   })
 
-  // BUG: `z.union([z.coerce.number(), z.literal("")])` tries the coercion first
-  // and `Number("")` is 0, so the z.literal("") branch is unreachable. A blank
-  // amount field therefore parses to 0 instead of "", the required-field refine
-  // sees a non-empty value, and a 0đ threshold is queued — which would promote
-  // every member on the next apply. The field is only spared because the form
-  // marks it required in the DOM.
-  it("turns a blank amount into a 0đ threshold instead of rejecting it", () => {
+  // A blank amount used to coerce to 0 and satisfy the required-field refine,
+  // queueing a 0đ threshold that would promote every member on the next apply.
+  // Only the DOM's `required` stood between that and production.
+  it("rejects a blank amount rather than queueing a 0đ threshold", () => {
     const result = schema.safeParse({
       ...base,
       mode: "amount",
       target_amount: "",
     })
-    expect(result.success && result.data.target_amount).toBe(0)
+    expect(issues(result)).toContainEqual({
+      message: "amountRequired",
+      path: "target_amount",
+    })
+  })
+
+  // Same destination by a different route: an explicit 0 is not a blank, but it
+  // is not a threshold either.
+  it("rejects an explicit 0đ amount", () => {
+    const result = schema.safeParse({
+      ...base,
+      mode: "amount",
+      target_amount: "0",
+    })
+    expect(issues(result)).toContainEqual({
+      message: "positive",
+      path: "target_amount",
+    })
+  })
+
+  it("treats a blank percentile as absent", () => {
+    const result = schema.safeParse({
+      ...base,
+      mode: "percentile",
+      target_percentile: "",
+    })
+    expect(issues(result)).toContainEqual({
+      message: "percentileRequired",
+      path: "target_percentile",
+    })
   })
 
   // The doc comment above the schema calls the two modes mutually exclusive, but
@@ -174,41 +272,8 @@ describe("makeRewardSchema", () => {
     is_active: true,
   }
 
-  it("accepts a was-price above the current price", () => {
-    expect(
-      schema.safeParse({ ...base, original_points_cost: "150" }).success,
-    ).toBe(true)
-  })
-
-  it("accepts a was-price equal to the current price", () => {
-    // The DB constraint is >=, not >, so the form must not be stricter.
-    expect(
-      schema.safeParse({ ...base, original_points_cost: "100" }).success,
-    ).toBe(true)
-  })
-
-  it("rejects a was-price below the current price", () => {
-    const result = schema.safeParse({ ...base, original_points_cost: "50" })
-    expect(issues(result)).toContainEqual({
-      message: "originalCostTooLow",
-      path: "original_points_cost",
-    })
-  })
-
-  it("accepts an absent was-price", () => {
+  it("accepts the minimal reward", () => {
     expect(schema.safeParse(base).success).toBe(true)
-  })
-
-  // BUG: same unreachable-z.literal("") cause as the tier schedule above. A blank
-  // "was" field coerces to 0, the refine then compares 0 >= points_cost and
-  // fails, so an admin who clears the discount field is told the price is too
-  // low. Blanking a was-price is impossible through the form today.
-  it("rejects a blank was-price it should have treated as absent", () => {
-    const result = schema.safeParse({ ...base, original_points_cost: "" })
-    expect(issues(result)).toContainEqual({
-      message: "originalCostTooLow",
-      path: "original_points_cost",
-    })
   })
 
   it("rejects a malformed image URL", () => {

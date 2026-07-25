@@ -48,9 +48,6 @@ export function RewardCard({
   const tooExpensive = currentPoints < reward.points_cost
   // The server re-checks both — this only avoids an obviously doomed round trip.
   const disabled = outOfStock || tooExpensive || isPending
-  const discounted =
-    reward.original_points_cost != null &&
-    reward.original_points_cost > reward.points_cost
 
   function handleRedeem() {
     startTransition(async () => {
@@ -66,11 +63,6 @@ export function RewardCard({
 
   const price = (
     <div className="grid gap-0.5">
-      {discounted && (
-        <span className="text-body-xs text-muted-foreground tabular-nums line-through">
-          {r.wasCost(reward.original_points_cost!)}
-        </span>
-      )}
       <span className="text-headline-md text-primary tabular-nums">
         {r.cost(reward.points_cost)}
       </span>
