@@ -11,7 +11,8 @@ export function PageHeader({
   children,
 }: {
   title: string
-  description?: string
+  /** A node rather than a string so a page can hang a link off the subtitle. */
+  description?: React.ReactNode
   /** Status chip that sits above the title on the customer screens. */
   eyebrow?: React.ReactNode
   /** `display` is the 48px hero treatment the Stitch customer screens use. */

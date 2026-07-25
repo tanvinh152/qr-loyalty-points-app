@@ -1,6 +1,7 @@
 import Link from "next/link"
 import {
   ArrowDownLeft,
+  ArrowRight,
   ArrowUpRight,
   Clock,
   Gift,
@@ -23,7 +24,6 @@ import { cn, formatVnd } from "@/lib/utils"
 import { getLocale, getMessages } from "@/lib/i18n/server"
 import {
   getActiveRewards,
-  getNextReward,
   getTiers,
   getTransactions,
   tierProgress,
@@ -56,10 +56,9 @@ export default async function DashboardPage() {
     },
   )
 
-  const [tiers, recent, nextReward, rewards] = await Promise.all([
+  const [tiers, recent, rewards] = await Promise.all([
     getTiers(),
     getTransactions(customer.id, { page: 1, pageSize: RECENT_COUNT }),
-    getNextReward(customer.current_points),
     getActiveRewards(),
   ])
 
@@ -76,8 +75,20 @@ export default async function DashboardPage() {
   return (
     <div className="grid gap-6">
       <PageHeader
+        size="display"
         title={d.greeting(customer.full_name ?? customer.phone)}
-        description={d.eyebrow}
+        // The subtitle is where the pet lives: named once the profile has one,
+        // a nudge back to /profile while it hasn't.
+        description={
+          customer.pet_name ? (
+            d.petLine(customer.pet_name)
+          ) : (
+            <Link href="/profile" className="text-primary hover:underline">
+              {d.addPetCta}
+              <ArrowRight className="ml-1 inline size-4" aria-hidden />
+            </Link>
+          )
+        }
       >
         {/* Points arrive on their own now (webhook), so the header's action is
             spending them rather than claiming them. */}
@@ -87,28 +98,32 @@ export default async function DashboardPage() {
         </Link>
       </PageHeader>
 
-      {/* The mockup opens on summary tiles — tier first, balance second — and
-          keeps the tier journey in its own centred card below them. Spend earns
-          the tier and points buy the rewards, so both totals get a tile. */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {/* The mockup opens on exactly two hero tiles — tier first, balance
+          second — and keeps the tier journey in its own centred card below
+          them. Lifetime spend is not a third tile: it belongs to the journey
+          card, since spend is what the journey measures. */}
+      <div className="grid gap-6 sm:grid-cols-2">
         <StatCard
           label={d.tierLabel}
           value={current ? current.name : d.noTier}
           hint={d.lifetimeHint(customer.lifetime_points)}
           icon={Medal}
+          tone="tier"
+          size="display"
+          // The tile takes the gem wash so the tier reads as its colour here
+          // and on the journey card below. getTiers() is threshold-sorted.
+          className={tierAccentClass(tierRank(tiers, current?.id))}
         />
         <StatCard
           label={d.balanceLabel}
           value={customer.current_points}
           icon={Wallet}
           tone="secondary"
+          size="display"
           highlight
-        />
-        <StatCard
-          label={d.lifetimeSpend}
-          value={formatVnd(customer.lifetime_spend)}
-          hint={d.lifetimeSpendHint}
-          icon={Receipt}
+          badge={
+            <Badge variant="secondary">{t.customer.nav.pointsUnit}</Badge>
+          }
         />
       </div>
 
@@ -123,6 +138,17 @@ export default async function DashboardPage() {
       >
         <div className="mx-auto grid max-w-xl gap-4 text-center">
           <h2 className="text-headline-md">{d.journeyTitle}</h2>
+          {/* The spend total lives here rather than in a third tile: it is the
+              number the bar below is measured against. */}
+          <p className="text-body-sm text-muted-foreground -mt-2">
+            <span className="flex items-center justify-center gap-1.5">
+              <Receipt className="size-4 shrink-0" aria-hidden />
+              {d.lifetimeSpend}
+              <span className="text-foreground font-semibold tabular-nums">
+                {formatVnd(customer.lifetime_spend)}
+              </span>
+            </span>
+          </p>
 
           <div className="grid gap-2">
             <div className="text-label-md flex items-center justify-between gap-2 uppercase">
@@ -277,35 +303,6 @@ export default async function DashboardPage() {
           </ul>
         )}
       </SectionCard>
-
-      {nextReward && (
-        <SectionCard title={d.featuredTitle}>
-          <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="grid gap-1">
-              <div className="flex items-center gap-2">
-                <Sparkles className="text-secondary size-4" aria-hidden />
-                <span className="text-headline-md">{nextReward.name}</span>
-                <Badge variant="secondary">
-                  {t.customer.rewards.cost(nextReward.points_cost)}
-                </Badge>
-              </div>
-              <p className="text-body-sm text-muted-foreground">
-                {d.featuredAway(
-                  Math.max(0, nextReward.points_cost - customer.current_points),
-                  nextReward.name,
-                )}
-              </p>
-            </div>
-            <Link
-              href="/rewards"
-              className={cn(buttonVariants({ variant: "secondary" }))}
-            >
-              <Gift className="size-4" aria-hidden />
-              {d.featuredCta}
-            </Link>
-          </div>
-        </SectionCard>
-      )}
     </div>
   )
 }

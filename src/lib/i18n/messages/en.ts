@@ -304,6 +304,7 @@ export const en = {
       quantityHelper: "Stock left. 0 = out of stock.",
       imageUrl: "Image URL",
       status: "Status",
+      statusHelper: "Inactive rewards are hidden from the shop.",
       cost: (points: number) => `${points.toLocaleString()} pts`,
       stockOf: (left: number, max: number) => `Stock: ${left} / ${max}`,
       soldOut: "Out of stock",
@@ -540,6 +541,9 @@ export const en = {
       metaTitle: "My points",
       eyebrow: "Dashboard",
       greeting: (name: string) => `Welcome back, ${name}`,
+      /** Sits under the greeting once the profile names a pet. */
+      petLine: (pet: string) => `${pet}'s human 🐾`,
+      addPetCta: "Add your pet",
       balanceLabel: "points available",
       lifetimeLabel: "Lifetime points",
       tier: (name: string) => `${name} tier`,

@@ -66,6 +66,7 @@ export function RewardDialog({
       title={row ? `${t.common.edit} — ${row.name}` : m.addTitle}
       description={m.helper}
       trigger={trigger ?? defaultTrigger}
+      className="sm:max-w-2xl"
     >
       {(close) => (
         <RewardFields row={row} categories={categories} onSaved={close} />
@@ -147,7 +148,7 @@ function RewardFields({
           )}
         />
 
-        <div className="grid gap-6 sm:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2">
           <FormField
             control={form.control}
             name="points_cost"
@@ -237,19 +238,28 @@ function RewardFields({
           )}
         />
 
+        {/* All three rows share one shape — checkbox, then label and helper
+            stacked to its right — so their left edges line up and the rows keep
+            an even rhythm. `items-start` + `mt-0.5` puts the 16px box on the
+            first line of the label instead of centring it against a two-line
+            block. */}
         <div className="grid gap-4">
           <FormField
             control={form.control}
             name="is_active"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center gap-3">
+              <FormItem className="flex flex-row items-start gap-3">
                 <FormControl>
                   <Checkbox
+                    className="mt-0.5"
                     checked={Boolean(field.value)}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
-                <FormLabel>{m.status}</FormLabel>
+                <div className="grid gap-0.5">
+                  <FormLabel>{m.status}</FormLabel>
+                  <FormDescription>{m.statusHelper}</FormDescription>
+                </div>
               </FormItem>
             )}
           />
@@ -257,17 +267,18 @@ function RewardFields({
             control={form.control}
             name="is_exclusive"
             render={({ field }) => (
-              <FormItem className="grid gap-1">
-                <div className="flex flex-row items-center gap-3">
-                  <FormControl>
-                    <Checkbox
-                      checked={Boolean(field.value)}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
+              <FormItem className="flex flex-row items-start gap-3">
+                <FormControl>
+                  <Checkbox
+                    className="mt-0.5"
+                    checked={Boolean(field.value)}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="grid gap-0.5">
                   <FormLabel>{m.isExclusive}</FormLabel>
+                  <FormDescription>{m.isExclusiveHelper}</FormDescription>
                 </div>
-                <FormDescription>{m.isExclusiveHelper}</FormDescription>
               </FormItem>
             )}
           />
@@ -275,17 +286,18 @@ function RewardFields({
             control={form.control}
             name="is_featured"
             render={({ field }) => (
-              <FormItem className="grid gap-1">
-                <div className="flex flex-row items-center gap-3">
-                  <FormControl>
-                    <Checkbox
-                      checked={Boolean(field.value)}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
+              <FormItem className="flex flex-row items-start gap-3">
+                <FormControl>
+                  <Checkbox
+                    className="mt-0.5"
+                    checked={Boolean(field.value)}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="grid gap-0.5">
                   <FormLabel>{m.isFeatured}</FormLabel>
+                  <FormDescription>{m.isFeaturedHelper}</FormDescription>
                 </div>
-                <FormDescription>{m.isFeaturedHelper}</FormDescription>
               </FormItem>
             )}
           />
