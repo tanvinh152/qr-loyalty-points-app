@@ -23,14 +23,20 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        "flex flex-col gap-6 md:flex-row md:items-center md:justify-between",
+        "flex flex-col gap-4 sm:gap-6 md:flex-row md:items-center md:justify-between",
         className,
       )}
     >
       <div className="grid gap-1">
         {eyebrow && <div className="mb-2">{eyebrow}</div>}
         <h1
-          className={size === "display" ? "text-display" : "text-headline-lg"}
+          className={
+            size === "display"
+              ? // 36px (the display's own phone step-down) still runs a
+                // Vietnamese greeting to three lines on a 328px column.
+                "text-headline-lg sm:text-display"
+              : "text-headline-lg"
+          }
         >
           {title}
         </h1>

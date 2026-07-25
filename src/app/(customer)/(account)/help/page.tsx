@@ -19,12 +19,12 @@ export default async function HelpPage() {
   if (!customer) return null
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4 sm:gap-6">
       <PageHeader title={h.title} description={h.subtitle} size="display" />
 
       {/* 2:1 bento, as in the mockup: the form owns two thirds and the contact
           channels stack beside it. */}
-      <div className="grid gap-6 md:grid-cols-12 md:items-start">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-12 md:items-start">
         <SectionCard
           title={h.formTitle}
           icon={Mail}
@@ -39,8 +39,8 @@ export default async function HelpPage() {
           />
         </SectionCard>
 
-        <div className="flex flex-col gap-6 md:col-span-4 md:h-full">
-          <section className="border-border bg-card grid flex-1 content-start gap-2 rounded-2xl border p-6">
+        <div className="flex flex-col gap-4 sm:gap-6 md:col-span-4 md:h-full">
+          <section className="border-border bg-card grid flex-1 content-start gap-2 rounded-2xl border p-4 sm:p-6">
             <div className="flex items-center justify-between gap-2">
               <span className="bg-secondary/15 text-secondary grid size-12 place-items-center rounded-full">
                 <Phone className="size-5" aria-hidden />
@@ -59,7 +59,7 @@ export default async function HelpPage() {
             </a>
           </section>
 
-          <section className="border-border bg-card grid flex-1 content-start gap-2 rounded-2xl border p-6">
+          <section className="border-border bg-card grid flex-1 content-start gap-2 rounded-2xl border p-4 sm:p-6">
             {/* Tertiary channel in the mockup — `--warning` is that token here. */}
             <span className="bg-warning/15 text-warning grid size-12 place-items-center rounded-full">
               <MessageSquare className="size-5" aria-hidden />

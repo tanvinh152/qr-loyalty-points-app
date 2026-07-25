@@ -48,16 +48,16 @@ export default async function RewardsPage({
   ]
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4 sm:gap-6">
       {/* The header leads with the balance, not the page name: the mockup's
           eyebrow carries the title and the number is the hero. */}
-      <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+      <div className="flex flex-col gap-4 sm:gap-6 md:flex-row md:items-end md:justify-between">
         <div className="grid gap-1">
           <span className="text-label-md text-muted-foreground uppercase">
             {r.eyebrow}
           </span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-display text-primary tabular-nums">
+          <div className="flex flex-wrap items-baseline gap-2">
+            <span className="text-headline-lg text-primary tabular-nums sm:text-display">
               {customer.current_points.toLocaleString()}
             </span>
             <span className="text-headline-md text-muted-foreground">
@@ -84,7 +84,9 @@ export default async function RewardsPage({
 
       <nav
         aria-label={r.filterLabel}
-        className="flex gap-2 overflow-x-auto pb-1 whitespace-nowrap"
+        // The strip scrolls edge to edge on a phone rather than inside the
+        // page gutter, so a half-cut chip reads as "there is more this way".
+        className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 whitespace-nowrap sm:mx-0 sm:px-0"
       >
         {tabs.map((tab) => {
           const active = category === tab.key
@@ -112,9 +114,9 @@ export default async function RewardsPage({
 
       {/* One bento grid: the featured reward is a wide cell inside it, not a
           separate band above it. */}
-      <div className="grid gap-6 md:grid-cols-12">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-12">
         {hero && (
-          <section className="border-border bg-card grid gap-6 overflow-hidden rounded-3xl border sm:grid-cols-2 md:col-span-8">
+          <section className="border-border bg-card grid gap-4 overflow-hidden rounded-3xl border sm:grid-cols-2 sm:gap-6 md:col-span-8">
             {hero.image_url ? (
               // Admin-entered URLs from any host, so this stays a plain <img>
               // instead of widening next.config remotePatterns to the whole web.
@@ -132,7 +134,7 @@ export default async function RewardsPage({
               </div>
             )}
 
-            <div className="grid content-center gap-3 p-6 md:p-12">
+            <div className="grid content-center gap-3 p-4 sm:p-6 md:p-12">
               <span className="text-label-md text-secondary flex items-center gap-1.5 uppercase">
                 <Sparkles className="size-4" aria-hidden />
                 {r.featuredChip}

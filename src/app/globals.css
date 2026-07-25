@@ -118,45 +118,64 @@
   --text-label-md--font-weight: 600;
 }
 
+/* ── Dark theme (the baseline) ────────────────────────────────────────────
+   docs/color_palette_theme.md § Dark Theme drives the ACCENTS — bright blue
+   #0075e3 (--primary-container), cyan #04cdf8 (--ring), deep blue #001eb6
+   (--brand), text #f0f4f8. The SURFACE ladder below is deliberately NOT the
+   spec's navies: putting #000f5b behind every card turned the whole app blue
+   and tiring to read. Surfaces are a low-chroma neutral with a faint blue
+   undertone; the brand blue earns its place on buttons and focus rings, not on
+   the paper. Do not "restore" #00082e/#000f5b here. */
+
 :root {
   /* The canvas is the darkest layer; every surface above it steps lighter. */
-  --background: #10131a;
-  --foreground: #e0e2ec;
-  --card: #1d2027;
-  --card-foreground: #e0e2ec;
-  --popover: #191b23;
-  --popover-foreground: #e0e2ec;
+  --background: #0a1020;
+  --foreground: #f0f4f8;
+  --card: #141b2e;
+  --card-foreground: #f0f4f8;
+  --popover: #141b2e;
+  --popover-foreground: #f0f4f8;
   --primary: #d8e2ff;
-  --primary-foreground: #122f5f;
+  /* This one ink sits on BOTH --primary (pale, e.g. Button `default`) and
+     --primary-container (bright blue, e.g. the active reward filter chip), so
+     it has to be dark enough for the blue: #001eb6 reads on the pale tint but
+     collapses to 2.5:1 on #0075e3. */
+  --primary-foreground: #00082e;
   /* The saturated step: filled buttons, the active nav pill, focus glows. */
-  --primary-container: #4d8eff;
+  --primary-container: #0075e3;
+  /* The mint stays the SECOND accent hue: when secondary was cyan too, every
+     chip and badge in the UI was some shade of blue. */
   --secondary: #4edea3;
   --secondary-foreground: #003824;
   --secondary-container: #00b47d;
-  --muted: #191b23;
-  --muted-foreground: #c4c6d0;
+  --muted: #141b2e;
+  --muted-foreground: #a6b1c6;
   /* accent == the tint behind active nav and chips, one step above --card. */
-  --accent: #272a31;
-  --accent-foreground: #d8e2ff;
+  --accent: #1e2740;
+  --accent-foreground: #f0f4f8;
   --destructive: #ffb4ab;
   --destructive-container: #93000a;
   --success: #4edea3;
   --warning: #ffb95f;
-  --border: #44474f;
-  --input: #44474f;
-  --ring: #4d8eff;
-  --outline: #8e909a;
+  /* --border is a hairline divider, tuned to the same visual weight the old
+     #44474f had (~2:1 on the canvas). --input is heavier on purpose: a field
+     outline is a control boundary and clears 3:1 against both bg and card. */
+  --border: #3a4667;
+  --input: #5f6d95;
+  --ring: #04cdf8;
+  --outline: #8b96ae;
   /* Chicha `surface` — the page canvas, same value as --background. */
-  --surface-low: #10131a;
-  --surface-container: #1d2027;
-  --surface-high: #272a31;
-  --surface-highest: #32353c;
+  --surface-low: #0a1020;
+  --surface-container: #141b2e;
+  --surface-high: #1e2740;
+  --surface-highest: #2a3550;
   /* The brand mark's saturated blue. Reserved for the logo and hero accents —
-     it fails contrast as a text or border color on this canvas. */
+     it fails contrast as a text or border color on this canvas. It is the
+     logo's own colour, NOT a palette token: leave it out of theme swaps. */
   --chicha-blue: #261cc1;
-  /* The dangnhap CTA blue: a lifted `chicha-blue` that carries white text at an
-     accessible contrast, which #261cc1 itself does not. Filled buttons only. */
-  --brand: #4d45e6;
+  /* The dangnhap CTA blue: the spec's Deep Blue, which carries white text at an
+     accessible contrast that #261cc1 does not. Filled buttons only. */
+  --brand: #001eb6;
   /* Tier accents for the member screens. Keyed by membership_tiers.sort_order,
      never by name: tier names are admin-editable rows. */
   --tier-1: #cbd5e1;
@@ -166,20 +185,22 @@
      member mockups; do not swap these two back. */
   --tier-4: #67e8f9;
   --tier-5: #f43f5e;
-  --chart-1: #4d8eff;
+  /* chart-1 is the cyan, not the bright blue: #0075e3 sits too close to the
+     card in both hue and value to read as a line on top of it. */
+  --chart-1: #04cdf8;
   --chart-2: #4edea3;
   --chart-3: #ffb95f;
-  --chart-4: #adc6ff;
+  --chart-4: #7ea6ff;
   --chart-5: #d8e2ff;
   --radius: 1rem;
-  --sidebar: #0b0e15;
-  --sidebar-foreground: #e0e2ec;
-  --sidebar-primary: #4d8eff;
+  --sidebar: #070c18;
+  --sidebar-foreground: #f0f4f8;
+  --sidebar-primary: #0075e3;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #272a31;
-  --sidebar-accent-foreground: #d8e2ff;
-  --sidebar-border: #44474f;
-  --sidebar-ring: #4d8eff;
+  --sidebar-accent: #1e2740;
+  --sidebar-accent-foreground: #f0f4f8;
+  --sidebar-border: #3a4667;
+  --sidebar-ring: #04cdf8;
 }
 
 /* ── Light theme ──────────────────────────────────────────────────────────

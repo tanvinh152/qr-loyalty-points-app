@@ -1,12 +1,4 @@
-import {
-  Award,
-  Cake,
-  Gem,
-  Gift,
-  Percent,
-  Sparkles,
-  Truck,
-} from "lucide-react"
+import { Award, Cake, Gem, Gift, Percent, Sparkles, Truck } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -69,10 +61,13 @@ export default async function TiersPage() {
   const heroPerks = perks.slice(0, HERO_PERKS)
 
   const locale = await getLocale()
-  const monthYear = new Intl.DateTimeFormat(locale === "vi" ? "vi-VN" : "en-GB", {
-    month: "long",
-    year: "numeric",
-  })
+  const monthYear = new Intl.DateTimeFormat(
+    locale === "vi" ? "vi-VN" : "en-GB",
+    {
+      month: "long",
+      year: "numeric",
+    },
+  )
   const memberSince = monthYear.format(new Date(customer.created_at))
   // The card is a screen the member shows in a shop, so the number stays masked
   // the same way Pancake masks it.
@@ -81,7 +76,7 @@ export default async function TiersPage() {
   return (
     <div
       className={cn(
-        "grid gap-6 rounded-3xl p-6 md:p-10",
+        "grid gap-4 rounded-3xl p-4 sm:gap-6 sm:p-6 md:p-10",
         tierAccentClass(rank),
       )}
     >
@@ -106,24 +101,24 @@ export default async function TiersPage() {
           />
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-12">
-          <section className="border-border bg-card relative min-h-[400px] overflow-hidden rounded-3xl border p-6 md:col-span-8 md:p-12">
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-12">
+          <section className="border-border bg-card relative overflow-hidden rounded-3xl border p-4 sm:min-h-[400px] sm:p-6 md:col-span-8 md:p-12">
             {/* Decorative gem glow — the accent class set --tier above. */}
             <span
               aria-hidden
               className="bg-tier/20 pointer-events-none absolute -top-16 -right-16 size-56 rounded-full blur-3xl"
             />
-            <div className="relative grid gap-6">
+            <div className="relative grid gap-4 sm:gap-6">
               {/* Status text leads on the left; the gem emblem sits top-right
                   with its own glow, as in the member mockups. */}
               <div className="flex items-start justify-between gap-4">
-                <div className="grid gap-1">
+                <div className="grid min-w-0 gap-1">
                   <span className="text-label-md text-tier uppercase">
                     {ti.statusActive(current.name)}
                   </span>
                   {/* Spend leads here: it is what the ring below fills with and
                       what the other tiers are priced in. */}
-                  <div className="flex items-baseline gap-2">
+                  <div className="flex flex-wrap items-baseline gap-2">
                     <span className="text-headline-lg text-primary tabular-nums">
                       {formatVnd(customer.lifetime_spend)}
                     </span>
@@ -143,8 +138,8 @@ export default async function TiersPage() {
                     </p>
                   )}
                 </div>
-                <span className="border-tier/30 bg-tier/10 text-tier shadow-tier/30 grid size-20 shrink-0 place-items-center rounded-2xl border shadow-[0_0_30px_-6px]">
-                  <Gem className="size-9" aria-hidden />
+                <span className="border-tier/30 bg-tier/10 text-tier shadow-tier/30 grid size-14 shrink-0 place-items-center rounded-2xl border shadow-[0_0_30px_-6px] sm:size-20">
+                  <Gem className="size-7 sm:size-9" aria-hidden />
                 </span>
               </div>
 
@@ -185,7 +180,7 @@ export default async function TiersPage() {
             </div>
           </section>
 
-          <section className="border-border bg-card grid content-center justify-items-center gap-4 rounded-3xl border p-6 text-center md:col-span-4 md:p-8">
+          <section className="border-border bg-card grid content-center justify-items-center gap-4 rounded-3xl border p-4 text-center sm:p-6 md:col-span-4 md:p-8">
             <h2 className="text-headline-md">{ti.progressTitle}</h2>
             {next ? (
               <>
@@ -200,10 +195,12 @@ export default async function TiersPage() {
               </>
             ) : (
               <>
+                {/* Same caption as the other branch — the tier's own name.
+                    A bare "Level" under MAX says nothing. */}
                 <TierRing
                   percent={100}
                   label={ti.maxLabel}
-                  caption={ti.maxLevel}
+                  caption={current.name}
                 />
                 <p className="text-body-sm text-muted-foreground">
                   {ti.atTop(current.name)}
@@ -218,9 +215,9 @@ export default async function TiersPage() {
         // Not a SectionCard: the mockup's privileges panel carries a full-height
         // tier rail down its left edge, which the shared header strip has no
         // room for.
-        <section className="border-border bg-card relative overflow-hidden rounded-3xl border p-6 md:p-8">
+        <section className="border-border bg-card relative overflow-hidden rounded-3xl border p-4 sm:p-6 md:p-8">
           <span aria-hidden className="bg-tier absolute inset-y-0 left-0 w-1" />
-          <h2 className="text-headline-md mb-6">
+          <h2 className="text-headline-md mb-4 sm:mb-6">
             {ti.perksTitle(current.name)}
           </h2>
           {perks.length === 0 ? (
@@ -264,7 +261,7 @@ export default async function TiersPage() {
             <li
               key={tier.id}
               className={cn(
-                "border-border grid gap-1 rounded-3xl border p-6",
+                "border-border grid gap-1 rounded-3xl border p-4 sm:p-6",
                 tierAccentClass(index),
                 tier.id === current?.id && "border-tier ring-tier ring-1",
               )}

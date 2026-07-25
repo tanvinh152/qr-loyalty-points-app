@@ -1,6 +1,5 @@
 import Link from "next/link"
 import {
-  HelpCircle,
   History,
   LogOut,
   Medal,
@@ -116,41 +115,35 @@ export default async function AccountLayout({
       <div className="flex min-w-0 grow flex-col">
         {/* Phone header: the rail is hidden there, so the brand and balance
             still need a home. */}
-        <header className="bg-sidebar border-border sticky top-0 z-40 flex h-16 items-center gap-3 border-b px-4 md:hidden">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <PawPrint className="text-primary size-5" aria-hidden />
-            <span className="text-headline-md">{t.brand.name}</span>
+        <header className="bg-sidebar border-border sticky top-0 z-40 flex min-h-16 items-center gap-3 border-b px-4 pt-[env(safe-area-inset-top)] md:hidden">
+          <Link href="/dashboard" className="flex min-w-0 items-center gap-2">
+            <PawPrint className="text-primary size-5 shrink-0" aria-hidden />
+            <span className="text-headline-md truncate">{t.brand.name}</span>
           </Link>
           {customer && (
-            <span className="bg-surface-high text-label-md text-primary ml-auto inline-flex items-center gap-1.5 rounded-full px-3 py-1.5">
+            <span className="bg-surface-high text-label-md text-primary ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 whitespace-nowrap">
               <Sparkles className="size-4" aria-hidden />
               {customer.current_points.toLocaleString()} {nav.pointsUnit}
             </span>
           )}
-          {/* Profile moved into the phone tab bar, so the header carries the two
-              destinations the bar had to drop. */}
+          {/* Only history rides along: five children never fit a 360px bar, and
+              help + the theme switch have a home on /profile instead. */}
           <Link
             href="/history"
             aria-label={nav.history}
             className={cn(
-              buttonVariants({ variant: "ghost", size: "sm" }),
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "shrink-0",
               !customer && "ml-auto",
             )}
           >
             <History className="size-5" aria-hidden />
           </Link>
-          <Link
-            href="/help"
-            aria-label={nav.help}
-            className={buttonVariants({ variant: "ghost", size: "sm" })}
-          >
-            <HelpCircle className="size-5" aria-hidden />
-          </Link>
-          <ThemeToggle iconOnly />
         </header>
 
-        {/* pb-24 keeps the last row clear of the phone tab bar. */}
-        <main className="mx-auto w-full max-w-[1280px] grow px-4 py-6 pb-28 md:px-12 md:py-12 md:pb-12 lg:px-20">
+        {/* The bottom pad clears the phone tab bar, its floating active bubble
+            and the home indicator below it. */}
+        <main className="mx-auto w-full max-w-[1280px] grow px-4 py-6 pb-[calc(--spacing(32)+env(safe-area-inset-bottom))] md:px-12 md:py-12 md:pb-12 lg:px-20">
           {customer ? (
             children
           ) : (
@@ -169,7 +162,7 @@ export default async function AccountLayout({
         </main>
       </div>
 
-      <div className="bg-sidebar border-border fixed inset-x-0 bottom-0 z-40 border-t md:hidden">
+      <div className="bg-sidebar border-border fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] md:hidden">
         <PortalNav
           items={bottomItems}
           label={nav.bottomLabel}

@@ -97,7 +97,7 @@ export function PortalNav({
             className={cn(
               "transition-colors",
               bottom
-                ? "text-label-sm relative grid justify-items-center gap-1 pb-3 text-center font-bold uppercase"
+                ? "relative grid h-full content-end justify-items-center gap-1 px-1 pb-3 text-center"
                 : // The active rail item is marked by a left bar, not a filled
                   // pill, so the row keeps the mockup's flush-left rhythm.
                   "text-body-sm flex items-center gap-3 rounded-r-xl border-l-4 px-4 py-3",
@@ -118,7 +118,7 @@ export function PortalNav({
                 className={cn(
                   "grid place-items-center transition-all",
                   active
-                    ? "bg-primary-container border-sidebar text-primary-foreground -mt-8 mb-1 size-12 rounded-full border-4"
+                    ? "bg-primary-container border-sidebar text-primary-foreground -mt-7 mb-1 size-11 rounded-full border-4"
                     : "size-5",
                 )}
               >
@@ -127,7 +127,17 @@ export function PortalNav({
             ) : (
               <Icon className="size-5" aria-hidden />
             )}
-            {item.label}
+            {bottom ? (
+              // Two lines' worth of height whether the label needs one or two:
+              // Vietnamese labels wrap at 10px in a ~90px column, and without a
+              // reserved box the wrapped item pushes its icon out of line with
+              // the others.
+              <span className="text-label-sm flex h-7 items-end justify-center leading-[14px] font-bold break-words uppercase">
+                {item.label}
+              </span>
+            ) : (
+              item.label
+            )}
           </Link>
         )
       })}

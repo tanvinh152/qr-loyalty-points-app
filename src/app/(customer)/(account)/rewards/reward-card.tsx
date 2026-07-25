@@ -153,8 +153,11 @@ export function RewardCard({
 
         {/* The redeem control lives over the image and fades in on hover. It
             stays in the DOM and in the tab order, so focus-within has to reveal
-            it too or keyboard users would be operating an invisible button. */}
-        <div className="absolute inset-0 grid place-items-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+            it too or keyboard users would be operating an invisible button.
+            A touch screen never hovers, so there it drops the scrim and parks
+            the button in the corner permanently — otherwise the only way to
+            redeem on a phone is to tab to an invisible target. */}
+        <div className="absolute inset-0 grid place-items-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 pointer-coarse:inset-auto pointer-coarse:right-3 pointer-coarse:bottom-3 pointer-coarse:bg-transparent pointer-coarse:opacity-100">
           {action}
         </div>
       </div>

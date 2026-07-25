@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Hanken_Grotesk, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner"
@@ -19,6 +19,15 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 })
+
+// `viewportFit: "cover"` is the switch that makes env(safe-area-inset-*) resolve
+// to anything other than 0 — the phone tab bar is fixed to the bottom edge and
+// would otherwise sit under the home indicator.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getMessages()

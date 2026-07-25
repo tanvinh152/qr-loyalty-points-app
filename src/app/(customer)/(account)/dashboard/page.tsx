@@ -73,7 +73,7 @@ export default async function DashboardPage() {
   const teasers = rewards.slice(0, TEASER_COUNT)
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4 sm:gap-6">
       <PageHeader
         size="display"
         title={d.greeting(customer.full_name ?? customer.phone)}
@@ -102,11 +102,13 @@ export default async function DashboardPage() {
           second — and keeps the tier journey in its own centred card below
           them. Lifetime spend is not a third tile: it belongs to the journey
           card, since spend is what the journey measures. */}
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
         <StatCard
           label={d.tierLabel}
           value={current ? current.name : d.noTier}
-          hint={d.lifetimeHint(customer.lifetime_points)}
+          // Spend, not lifetime points: points buy rewards and decide nothing
+          // about the tier, so pairing them here read as a promotion rule.
+          hint={d.spendHint(formatVnd(customer.lifetime_spend))}
           icon={Medal}
           tone="tier"
           size="display"
@@ -121,15 +123,13 @@ export default async function DashboardPage() {
           tone="secondary"
           size="display"
           highlight
-          badge={
-            <Badge variant="secondary">{t.customer.nav.pointsUnit}</Badge>
-          }
+          badge={<Badge variant="secondary">{t.customer.nav.pointsUnit}</Badge>}
         />
       </div>
 
       <section
         className={cn(
-          "border-border relative overflow-hidden rounded-3xl border p-6 md:p-12",
+          "border-border relative overflow-hidden rounded-3xl border p-4 sm:p-6 md:p-12",
           // The card takes the current tier's gem colour as a wash; every other
           // surface on the page stays neutral.
           // getTiers() already returns rows sorted by threshold.
@@ -141,7 +141,7 @@ export default async function DashboardPage() {
           {/* The spend total lives here rather than in a third tile: it is the
               number the bar below is measured against. */}
           <p className="text-body-sm text-muted-foreground -mt-2">
-            <span className="flex items-center justify-center gap-1.5">
+            <span className="flex flex-wrap items-center justify-center gap-1.5">
               <Receipt className="size-4 shrink-0" aria-hidden />
               {d.lifetimeSpend}
               <span className="text-foreground font-semibold tabular-nums">
@@ -151,15 +151,21 @@ export default async function DashboardPage() {
           </p>
 
           <div className="grid gap-2">
-            <div className="text-label-md flex items-center justify-between gap-2 uppercase">
-              <span className="text-muted-foreground">
+            {/* A grid, not a three-way `justify-between`: tier names are admin
+                free text, and at 12px uppercase two long ones crush the percent
+                between them instead of each keeping a third of the row. */}
+            <div className="text-label-md grid grid-cols-3 items-center gap-2 uppercase">
+              <span className="text-muted-foreground min-w-0 truncate text-left">
                 {current ? current.name : d.noTier}
               </span>
-              <span className="text-tier font-semibold">
+              <span className="text-tier min-w-0 truncate text-center font-semibold">
                 {d.percentComplete(progress)}
               </span>
-              <span className="text-muted-foreground">
-                {next ? next.name : d.topTier}
+              {/* A third of an uppercase row truncates a sentence to nonsense,
+                  so the top-tier case gets its own short label — the full
+                  sentence is below the bar. */}
+              <span className="text-muted-foreground min-w-0 truncate text-right">
+                {next ? next.name : d.topTierShort}
               </span>
             </div>
             <Progress
@@ -167,13 +173,17 @@ export default async function DashboardPage() {
               label={d.tierProgressLabel}
               accent
             />
-            <div className="text-muted-foreground text-body-xs flex items-center justify-between tabular-nums">
-              <span>{formatVnd(floor)}</span>
-              {next && <span>{formatVnd(next.spend_threshold)}</span>}
+            <div className="text-muted-foreground text-body-xs flex items-center justify-between gap-2 tabular-nums">
+              <span className="whitespace-nowrap">{formatVnd(floor)}</span>
+              {next && (
+                <span className="whitespace-nowrap">
+                  {formatVnd(next.spend_threshold)}
+                </span>
+              )}
             </div>
           </div>
 
-          <p className="text-body-sm text-muted-foreground flex items-center justify-center gap-1.5">
+          <p className="text-body-sm text-muted-foreground flex flex-wrap items-center justify-center gap-1.5">
             <Info className="size-4 shrink-0" aria-hidden />
             {next ? d.spendAway(formatVnd(toNext)) : d.topTier}
           </p>
@@ -185,7 +195,7 @@ export default async function DashboardPage() {
               "mx-auto rounded-full",
             )}
           >
-            {t.customer.nav.tiers}
+            {d.tiersCta}
             <Medal className="size-4" aria-hidden />
           </Link>
         </div>
@@ -208,7 +218,7 @@ export default async function DashboardPage() {
           }
         >
           {/* Same card as the shop, so a reward looks identical in both places. */}
-          <div className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-6 lg:grid-cols-3">
             {teasers.map((reward) => (
               <RewardCard
                 key={reward.id}
@@ -234,16 +244,8 @@ export default async function DashboardPage() {
             {d.viewAll}
           </Link>
         }
-        footer={
-          recent.rows.length > 0 ? (
-            <Link
-              href="/history"
-              className="text-primary text-label-md w-full text-center hover:underline"
-            >
-              {d.viewAllActivity}
-            </Link>
-          ) : undefined
-        }
+        // No footer link: the header action already goes to /history, and two
+        // "view all" CTAs on one card read as two different destinations.
       >
         {recent.rows.length === 0 ? (
           <EmptyState
@@ -256,12 +258,12 @@ export default async function DashboardPage() {
             {recent.rows.map((row) => (
               <li
                 key={row.id}
-                className="flex items-center justify-between gap-4 px-6 py-4"
+                className="flex items-center justify-between gap-3 px-4 py-3 sm:gap-4 sm:px-6 sm:py-4"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <span
                     className={cn(
-                      "bg-surface-container grid size-12 shrink-0 place-items-center rounded-xl",
+                      "bg-surface-container grid size-10 shrink-0 place-items-center rounded-xl sm:size-12",
                       row.amount >= 0 ? "text-secondary" : "text-destructive",
                     )}
                   >

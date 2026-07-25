@@ -1,11 +1,17 @@
 // English catalog — the source of truth. `Messages` (typeof en) is the shape
 // every other locale must satisfy. Interpolated strings are functions so the
 // arguments stay type-checked across locales.
+//
+// House rules for anyone adding copy here:
+//  * American spelling (center, program, canceled, finalized).
+//  * Never describe a flow the code does not have. Points are credited by the
+//    Pancake webhook and by the one proof order taken at signup — there is no
+//    scan screen, no counter, and no manual claim.
 
 export const en = {
   meta: {
     appTitle: "Loyalty Points",
-    appDescription: "Scan, claim, and track loyalty points",
+    appDescription: "Earn points automatically and track your rewards",
   },
   common: {
     previous: "Previous",
@@ -23,9 +29,7 @@ export const en = {
     cancel: "Cancel",
     active: "Active",
     inactive: "Inactive",
-    back: "Back",
     actions: "Actions",
-    close: "Close",
     search: "Search",
     // Delete is irreversible, so it always goes through a confirmation dialog.
     confirmDeleteTitle: "Delete this record?",
@@ -59,11 +63,9 @@ export const en = {
     code: (n: number) => `code ${n}`,
     unknown: (n: number) => `Status #${n}`,
   },
-  // The programme's name and one-line pitch. Shown on the auth split and the
-  // account rail; it is all that survived the removal of the manual claim screen.
+  // The program's name. Shown on the auth split and the account rail.
   brand: {
     name: "Chicha Label",
-    tagline: "Shop for your pet, collect points for their next treat 🐾",
   },
   // Light/dark switch. The label shows the theme the button switches TO.
   theme: {
@@ -97,7 +99,9 @@ export const en = {
       title: "Dashboard",
       subtitle: "Welcome back. Here's what's happening today.",
       customers: "Customers",
-      customersHint: "People who have claimed at least once",
+      // Counts every row in `customers`, which is written at signup and by the
+      // webhook — not a count of who has earned points.
+      customersHint: "Everyone with a registered account",
       pointsIssued: "Points issued",
       pointsIssuedHint: "Total points given out",
       pointsRedeemed: "Points redeemed",
@@ -144,8 +148,10 @@ export const en = {
       title: "Loyalty Settings",
       helper:
         "Points = sum(quantity × points per product) × tier multiplier, then rounded.",
+      // The multiplier has to produce a fraction, or the rounding step in the
+      // example demonstrates nothing.
       formulaExample:
-        "Example: 2 bags × 10 points = 20, tier multiplier 1.5 → 30, rounded down → 30 points.",
+        "Example: 3 bags × 5 points = 15, tier multiplier 1.5 → 22.5, rounded down → 22 points.",
       rounding: "Rounding",
       roundingHelper:
         "How a fractional points total is turned into a whole number.",
@@ -157,8 +163,7 @@ export const en = {
       ceilExample: "12.1 → 13",
       claimableStatuses: "Which orders can earn points?",
       claimableStatusesHelper:
-        "Tick the Pancake order statuses that are allowed to claim. An order in any other status is rejected.",
-      statusCode: (n: number) => `code ${n}`,
+        "Tick the Pancake order statuses that are allowed to earn points. An order in any other status is skipped until it reaches one of these.",
       recommended: "recommended",
       selectedCount: (n: number) => `${n} selected`,
       noStatusSelected: "Pick at least one status.",
@@ -181,12 +186,11 @@ export const en = {
       spendThresholdHelper:
         "Total money ever spent to reach this tier, in đồng. 0 = starting tier.",
       multiplier: "Multiplier",
-      multiplierHelper: "1 = normal. 1.5 = every claim earns 1.5× points.",
+      multiplierHelper: "1 = normal. 1.5 = every order earns 1.5× points.",
       sortOrder: "Order",
-      sortOrderHelper: "Display order, lowest first.",
-      benefits: "Benefits (legacy)",
+      benefits: "Short description",
       benefitsHelper:
-        "Free text kept from the old design. The perks below are what the tier screen renders.",
+        "One line summarizing the tier. The perks below are what the tier screen renders.",
       perks: "Perks",
       perksHelper:
         "Shown on the customer's tier screen. The first three also headline the tier card.",
@@ -208,12 +212,9 @@ export const en = {
         sparkles: "Other",
       },
       listTitle: "Tier list",
-      addTitle: "Add a tier",
       empty: "No tiers yet — add your first one below.",
       saved: "Tier saved.",
-      deleted: "Tier deleted.",
       saveFailed: "Save failed.",
-      deleteFailed: "Delete failed.",
       // ---- scheduled threshold raises ----
       pendingThreshold: "Upcoming threshold",
       pendingNone: "No change queued",
@@ -241,7 +242,7 @@ export const en = {
       scheduleSaved: "Raise scheduled.",
       scheduleSaveFailed: "Could not schedule that raise.",
       scheduleCancel: "Cancel the queued raise",
-      scheduleCanceled: "Queued raise cancelled.",
+      scheduleCanceled: "Queued raise canceled.",
       scheduleCancelFailed: "Could not cancel it.",
       scheduleDuplicate:
         "This tier already has a raise queued. Cancel it before adding another.",
@@ -264,7 +265,6 @@ export const en = {
       empty:
         "No product mappings yet — orders will earn the unmapped-product points.",
       saved: "Product mapping saved.",
-      deleted: "Product mapping deleted.",
       saveFailed: "Save failed.",
       deleteFailed: "Delete failed.",
       duplicate: "That SKU is already mapped.",
@@ -290,7 +290,6 @@ export const en = {
       category: "Category",
       categoryHelper:
         "Groups the reward into a shop tab. Reuse an existing name or type a new one.",
-      categoryNone: "No category",
       isExclusive: "Members-only",
       isExclusiveHelper: "Appears under the shop's “Exclusive” tab.",
       isFeatured: "Featured",
@@ -308,19 +307,17 @@ export const en = {
       cost: (points: number) => `${points.toLocaleString()} pts`,
       stockOf: (left: number, max: number) => `Stock: ${left} / ${max}`,
       soldOut: "Out of stock",
-      listTitle: "Reward list",
       searchPlaceholder: "Search rewards…",
       noMatch: "No rewards match that search.",
       statTotal: "Total rewards",
       statActive: "Active",
       statLowStock: "Running low",
       statLowStockHint: (n: number) => `${n} or fewer left in stock`,
-      statAvgCost: "Average cost",
+      statAvgCost: "Average points cost",
       addTitle: "Add a reward",
       empty:
         "No rewards yet — add one so customers have something to spend points on.",
       saved: "Reward saved.",
-      deleted: "Reward deleted.",
       saveFailed: "Save failed.",
       deleteFailed: "Delete failed.",
     },
@@ -337,7 +334,7 @@ export const en = {
       lifetimePointsHint: "Total points ever earned",
       lifetimeSpend: "Spend",
       lifetimeSpendHint: "Total money ever spent — decides the tier",
-      empty: "No customers yet — they appear here after their first claim.",
+      empty: "No customers yet — they appear here once they sign up.",
       search: "Search by phone or name",
       totalMembers: "Total members",
       profileStatus: "Profile",
@@ -345,7 +342,6 @@ export const en = {
       profileIncomplete: "Not filled in",
       detail: {
         metaTitle: "Customer",
-        notFound: "No customer with that id.",
         backToList: "Back to customers",
         statAvailable: "Available points",
         statLifetime: "Lifetime points",
@@ -366,15 +362,12 @@ export const en = {
         topTier: "Top tier reached",
         toNext: (amount: string, tier: string) => `${amount} more to ${tier}`,
         grandfathered: (tier: string) =>
-          `Keeps ${tier} from the threshold in force when they reached it.`,
+          `Kept at ${tier} on the threshold that applied when they reached it.`,
         multiplier: (value: number) => `×${value} on every order`,
         historyTitle: "Transaction history",
         historyEmpty: "No transactions yet.",
         supportTitle: "Support requests",
         supportEmpty: "No support requests from this customer.",
-        // The ledger has no code column; the history screen derives one the same
-        // way, so both portals show a customer the same reference.
-        code: "Reference",
         adjust: {
           title: "Grant tier & points",
           helper:
@@ -434,7 +427,9 @@ export const en = {
         ADJUST: "Manual adjustment",
       },
       sources: {
-        claim: "Customer scanned a code",
+        // `claim` is written only by the proof order taken at signup — there is
+        // no scan screen and no manual claim. See auth/actions.ts.
+        claim: "Sign-up verification order",
         webhook: "Automatic from Pancake",
         admin: "Entered by staff",
         redeem: "Reward redemption",
@@ -447,7 +442,7 @@ export const en = {
     support: {
       metaTitle: "Support requests",
       title: "Support requests",
-      subtitle: "Tickets customers filed from the help centre, newest first.",
+      subtitle: "Tickets customers filed from the help center, newest first.",
       statOpen: "Open",
       statOpenHint: "Still waiting for a reply",
       statClosed: "Closed",
@@ -481,14 +476,13 @@ export const en = {
   },
   customer: {
     nav: {
-      home: "Dashboard",
+      home: "Home",
       rewards: "Rewards",
       tiers: "Tiers",
       history: "History",
       help: "Help",
       profile: "Profile",
       signOut: "Sign out",
-      upgrade: "Upgrade tier",
       pointsUnit: "points",
       mainLabel: "Main",
       bottomLabel: "Quick links",
@@ -526,8 +520,10 @@ export const en = {
       dobHint: "So we can send you a little something on your birthday.",
       orderCode: "Most recent order code",
       orderCodePlaceholder: "e.g. 8661",
+      // The points half is conditional: signup only claims the order when its
+      // status is already claimable, otherwise the webhook credits it later.
       orderCodeHint:
-        "Enter the code of an order placed with this phone number. It confirms the number is yours, links your account to the shop, and earns you that order's points.",
+        "Enter the code of an order placed with this phone number. It confirms the number is yours and links your account to the shop — that order's points are added once it has been delivered.",
       terms: "I agree to the ",
       termsLink: "Terms",
       termsAnd: " and ",
@@ -539,55 +535,43 @@ export const en = {
     },
     dashboard: {
       metaTitle: "My points",
-      eyebrow: "Dashboard",
       greeting: (name: string) => `Welcome back, ${name}`,
       /** Sits under the greeting once the profile names a pet. */
       petLine: (pet: string) => `${pet}'s human 🐾`,
       addPetCta: "Add your pet",
-      balanceLabel: "points available",
+      balanceLabel: "Points available",
       lifetimeLabel: "Lifetime points",
-      tier: (name: string) => `${name} tier`,
       noTier: "Not a member yet",
-      progressTo: (name: string) => `Progress to ${name}`,
       tierProgressLabel: "Progress to the next tier",
-      pointsAway: (points: number) => `${points.toLocaleString()} points to go`,
+      // Spend, not points: the tier tile must not imply points move the tier.
+      spendHint: (amount: string) => `${amount} spent`,
       topTier: "You're at the highest tier 🎉",
+      /** The same fact at the end of the progress bar, where a sentence would
+       *  be truncated to nonsense. */
+      topTierShort: "MAX",
       tierLabel: "Current tier",
-      lifetimeHint: (points: number) =>
-        `${points.toLocaleString()} lifetime points`,
       lifetimeSpend: "Total spent",
-      lifetimeSpendHint: "What moves you up the tiers",
       spendAway: (amount: string) => `${amount} more to go`,
       journeyTitle: "Your tier journey",
       percentComplete: (pct: number) => `${pct}% complete`,
+      tiersCta: "View membership tiers",
       recentTitle: "Recent activity",
       viewAll: "View all",
-      viewAllActivity: "View all activity",
       emptyTitle: "No activity yet",
-      emptyBody: "Claim your first order to start collecting points.",
-      redeemCta: "Redeem",
-      historyCta: "History",
-      featuredTitle: "Next reward",
-      featuredCta: "Go to rewards",
-      featuredAway: (points: number, name: string) =>
-        `${points.toLocaleString()} points away from ${name}`,
+      emptyBody: "Place your first order — points land here on their own.",
     },
     rewards: {
       metaTitle: "Reward store",
       title: "Reward store",
-      subtitle: "Turn your points into treats, toys and discounts.",
-      tierLabel: "Membership tier",
-      balance: (points: number) =>
-        `${points.toLocaleString()} points available`,
       cost: (points: number) => `${points.toLocaleString()} points`,
-      stock: (n: number) => `${n} left`,
       allCategories: "All",
       exclusiveCategory: "Exclusive",
       exclusiveChip: "Exclusive",
       featuredChip: "Featured",
       hotChip: "Hot",
       lowStock: "Almost gone",
-      eyebrow: "Reward store",
+      /** Labels the points figure it sits above, not the page. */
+      eyebrow: "Points available",
       earnMoreHint: "Points added automatically",
       historyCta: "Redemption history",
       filterLabel: "Filter by category",
@@ -605,8 +589,6 @@ export const en = {
       metaTitle: "Point history",
       title: "Point history",
       subtitle: "Everything you've earned and spent.",
-      date: "Date",
-      activity: "Activity",
       transaction: "Transaction",
       kind: "Type",
       time: "Time",
@@ -618,12 +600,16 @@ export const en = {
       // self-contained.
       types: { EARN: "Earned", REDEEM: "Redeemed", ADJUST: "Adjusted" },
       emptyTitle: "No transactions yet",
-      emptyBody: "Claim an order and it will show up here.",
+      emptyBody: "Your orders will show up here on their own.",
       statCount: "Transactions",
       statEarned: "Points earned",
       statSpent: "Points spent",
       searchLabel: "Search",
-      searchPlaceholder: "Search by order code…",
+      // The search runs against `order_code`, NOT the TXN-… reference in the
+      // list, so the placeholder has to name the shop's code and the hint has
+      // to rule the visible one out.
+      searchPlaceholder: "Shop order code, e.g. 8661…",
+      searchHint: "The shop's order code — not the TXN- reference shown below.",
       fromLabel: "From",
       toLabel: "To",
       filterCta: "Apply",
@@ -634,16 +620,15 @@ export const en = {
     },
     tiers: {
       metaTitle: "Tiers & benefits",
-      eyebrow: "Current status",
+      eyebrow: "Current tier",
       title: (name: string) => `${name} member`,
       subtitle:
         "Every đồng you spend moves you up. Higher tiers earn points faster and unlock more.",
       noTier: "No tier yet",
-      noTierBody: "Claim your first order to join the programme.",
+      noTierBody: "Place your first order to join the program.",
       statusActive: (name: string) => `${name} status active`,
       progressTitle: "Tier progress",
       maxLabel: "MAX",
-      maxLevel: "Level",
       atTop: (name: string) => `You're at the top tier, ${name}.`,
       spendToNext: (amount: string, name: string) =>
         `${amount} more to reach ${name}`,
@@ -652,22 +637,23 @@ export const en = {
       grandfathered: (name: string, date: string) =>
         `You reached ${name} in ${date} and it's yours to keep, whatever the requirement becomes.`,
       perksTitle: (name: string) => `${name} privileges`,
-      noPerks: "Benefits for this tier are being finalised.",
-      multiplier: (value: number) => `${value}× points`,
-      othersTitle: "Other membership tiers",
+      noPerks: "Benefits for this tier are being finalized.",
+      othersTitle: "All membership tiers",
       thresholdAt: (amount: string) => `From ${amount} spent`,
       levelLabel: (level: number) => `LV.${level}`,
       heroPerksLabel: "Exclusive benefits",
       cardCta: "View digital card",
       cardTitle: "Membership card",
-      cardBody: "Show this at the counter to collect or redeem points.",
+      // No counter flow exists: points are credited from the phone number on
+      // the order, and rewards are redeemed in the app.
+      cardBody:
+        "Your membership card. Points are credited automatically to this phone number.",
       memberSince: (date: string) => `Member since ${date}`,
-      lockedTitle: "Obsidian tier",
-      lockedBody: "An invite-only rank, coming soon.",
+      multiplier: (value: number) => `${value}× points`,
     },
     help: {
       metaTitle: "Support",
-      title: "Support centre",
+      title: "Support center",
       subtitle:
         "We're here to listen and solve any problem. Pick a channel or send us a request below.",
       formTitle: "Send a support request",
@@ -692,20 +678,25 @@ export const en = {
       success: "Request sent. We'll get back to you shortly.",
       hotlineTitle: "Hotline",
       hotlineBadge: "24/7",
-      hotlineBody: "Talk to our team and get an answer right away.",
+      hotlineBody: "Call our team directly.",
       hotlineNumber: "1900 1234",
-      chatTitle: "Live chat",
-      chatBody: "Connect with a specialist through the in-app chat.",
-      chatCta: "Start a chat",
+      // No chat provider is wired up — this card points at the form on the
+      // same page, so the copy must promise the form and nothing more.
+      chatTitle: "Written request",
+      chatBody: "Send us the details and we'll reply by email.",
+      chatCta: "Go to the form",
     },
     profile: {
       metaTitle: "Profile",
       title: "Set up your profile",
-      subtitle:
-        "Tell us about you and your best friend to personalise rewards.",
+      /** Once `profile_completed_at` is set, there is nothing left to set up. */
+      titleEdit: "Your profile",
       panelTitle: "Welcome to the pack.",
       panelBody:
         "The more we know, the better we can tailor your perks and birthday surprises.",
+      // Phone only: the desktop rail already carries these, but the phone tab
+      // bar has no room for them and the header cannot hold five children.
+      settingsSection: "Settings",
       ownerSection: "Owner information",
       fullName: "Full name",
       fullNamePlaceholder: "Your full name",
@@ -721,6 +712,7 @@ export const en = {
       orderHint:
         "Every order placed with this phone number is added to your balance automatically once it is delivered.",
       submit: "Complete profile",
+      submitEdit: "Save changes",
       submitting: "Saving…",
       success: "Profile saved.",
       failed: "Could not save your profile. Please try again.",
@@ -743,7 +735,8 @@ export const en = {
       serviceUnavailable:
         "Something went wrong on our side. Please try again in a few minutes.",
       sessionExpired: "Your session expired. Please sign in again.",
-      noCustomer: "No points account is linked to this login yet.",
+      noCustomer:
+        "This login has no loyalty profile yet. Please contact support.",
       rewardNotFound: "This reward is no longer available.",
       outOfStock: "This reward is out of stock.",
       insufficientPoints: "You don't have enough points for this reward.",
@@ -758,7 +751,7 @@ export const en = {
     invalidEmail: "Invalid email",
     phoneRequired: "Phone is required",
     invalidPhone: "Invalid phone number",
-    nonNegative: "Must be >= 0",
+    nonNegative: "Cannot be less than 0",
     positive: "Must be greater than 0",
     skuRequired: "SKU is required",
     tierNameRequired: "Tier name is required",

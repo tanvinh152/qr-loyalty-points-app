@@ -170,7 +170,8 @@ export function ProfileForm({ customer }: { customer: CustomerRow }) {
           p.submitting
         ) : (
           <>
-            {p.submit}
+            {/* Matches the heading: "complete" the first time, "save" after. */}
+            {customer.profile_completed_at ? p.submitEdit : p.submit}
             <ArrowRight className="size-5" aria-hidden />
           </>
         )}

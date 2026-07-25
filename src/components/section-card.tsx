@@ -35,7 +35,7 @@ export function SectionCard({
       )}
     >
       {(title || actions) && (
-        <div className="border-border flex flex-col gap-3 border-b p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="border-border flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div className="grid gap-1">
             {title && (
               <h3 className="text-headline-md flex items-center gap-2">
@@ -54,7 +54,7 @@ export function SectionCard({
       )}
       <div className={bodyClassName}>{children}</div>
       {footer && (
-        <div className="border-border/50 flex items-center justify-between gap-4 border-t px-6 py-3">
+        <div className="border-border/50 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 sm:gap-4 sm:px-6">
           {footer}
         </div>
       )}

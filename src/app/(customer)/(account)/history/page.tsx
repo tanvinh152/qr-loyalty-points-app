@@ -88,11 +88,29 @@ export default async function HistoryPage({
     return `/history?${params}`
   }
 
+  // Derived once so the phone list and the desktop table cannot drift: the
+  // ledger has no transaction-code column, so the mockup's code comes from the
+  // row id, which is stable and unique already.
+  const entries = rows.map((row) => ({
+    row,
+    credit: row.amount >= 0,
+    code: `${row.type === "REDEEM" ? "RDM" : "TXN"}-${row.id
+      .replace(/-/g, "")
+      .slice(-6)
+      .toUpperCase()}`,
+    title:
+      row.type === "EARN"
+        ? h.earn(row.order_code)
+        : row.type === "REDEEM"
+          ? (row.reward?.name ?? h.redeem)
+          : h.adjust,
+  }))
+
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4 sm:gap-6">
       <PageHeader title={h.title} description={h.subtitle} size="display" />
 
-      <div className="grid gap-6 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-3 sm:gap-6">
         <StatCard label={h.statCount} value={totals.count} icon={Receipt} />
         <StatCard
           label={h.statEarned}
@@ -112,7 +130,7 @@ export default async function HistoryPage({
           component is involved. Paging resets by omitting `page`. */}
       <form
         action="/history"
-        className="border-border bg-card grid gap-5 rounded-2xl border p-5 md:grid-cols-[1fr_auto_auto_auto] md:items-end"
+        className="border-border bg-card grid gap-4 rounded-2xl border p-4 sm:gap-5 sm:p-5 md:grid-cols-[1fr_auto_auto_auto] md:items-end"
       >
         <div className="grid gap-1.5">
           <Label htmlFor="history-q">{h.searchLabel}</Label>
@@ -124,7 +142,14 @@ export default async function HistoryPage({
             placeholder={h.searchPlaceholder}
             icon={Search}
             className="text-body-sm h-12"
+            aria-describedby="history-q-hint"
           />
+          {/* The search runs on `order_code`, but the list shows a TXN- code
+              derived from the row id — say so, or the visible code gets typed
+              in and returns nothing. */}
+          <p id="history-q-hint" className="text-body-xs text-muted-foreground">
+            {h.searchHint}
+          </p>
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="history-from">{h.fromLabel}</Label>
@@ -147,7 +172,7 @@ export default async function HistoryPage({
           />
         </div>
         <div className="flex gap-2">
-          <Button type="submit" className="h-12 rounded-xl px-8">
+          <Button type="submit" className="h-12 grow rounded-xl px-8 md:grow-0">
             <SlidersHorizontal className="size-4" aria-hidden />
             {h.filterCta}
           </Button>
@@ -185,84 +210,119 @@ export default async function HistoryPage({
             description={h.emptyBody}
           />
         ) : (
-          <div className="overflow-x-auto">
-            <Table className="min-w-[800px]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{h.transaction}</TableHead>
-                  <TableHead>{h.kind}</TableHead>
-                  <TableHead>{h.amount}</TableHead>
-                  <TableHead>{h.time}</TableHead>
-                  <TableHead>{h.status}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((row) => {
-                  const credit = row.amount >= 0
-                  const Icon = credit ? ArrowUpRight : ArrowDownLeft
-                  // The mockup's transaction code. The ledger has no such column,
-                  // so it is derived from the row id — stable and unique already.
-                  const code = `${row.type === "REDEEM" ? "RDM" : "TXN"}-${row.id
-                    .replace(/-/g, "")
-                    .slice(-6)
-                    .toUpperCase()}`
-                  return (
-                    <TableRow key={row.id}>
-                      <TableCell className="max-w-[280px]">
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={cn(
-                              "bg-surface-container grid size-12 shrink-0 place-items-center rounded-xl",
-                              credit ? "text-secondary" : "text-destructive",
-                            )}
-                          >
-                            <Icon className="size-5" aria-hidden />
-                          </span>
-                          <div className="min-w-0">
-                            {/* A reward name is admin free text and the order
-                                label carries a POS code — both outrun the
-                                column on a phone. */}
-                            <TruncatedText className="font-semibold">
-                              {row.type === "EARN"
-                                ? h.earn(row.order_code)
-                                : row.type === "REDEEM"
-                                  ? (row.reward?.name ?? h.redeem)
-                                  : h.adjust}
-                            </TruncatedText>
-                            <p className="text-label-sm text-muted-foreground font-mono">
-                              {code}
-                            </p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {h.types[row.type]}
-                      </TableCell>
-                      <TableCell
+          <>
+            {/* A phone cannot show a five-column ledger without side-scrolling
+                it, so it gets the same rows as a list instead. Kind and status
+                are dropped there: the arrow and the sign already carry the
+                kind, and every committed row has the same status. */}
+            <ul className="divide-border divide-y sm:hidden">
+              {entries.map(({ row, credit, code, title }) => {
+                const Icon = credit ? ArrowUpRight : ArrowDownLeft
+                return (
+                  <li
+                    key={row.id}
+                    className="flex items-center justify-between gap-3 px-4 py-3"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span
                         className={cn(
-                          "font-bold tabular-nums",
+                          "bg-surface-container grid size-10 shrink-0 place-items-center rounded-xl",
                           credit ? "text-secondary" : "text-destructive",
                         )}
                       >
-                        {credit ? `+${row.amount}` : row.amount}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground whitespace-nowrap">
-                        {dateFormat.format(new Date(row.created_at))}
-                      </TableCell>
-                      <TableCell>
-                        {/* The ledger is append-only and every row is already
-                            committed, so there is only one possible state. */}
-                        <Badge variant="success" className="gap-1.5">
-                          <CircleCheck className="size-4" aria-hidden />
-                          {h.statusDone}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </div>
+                        <Icon className="size-5" aria-hidden />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold">{title}</p>
+                        <p className="text-label-sm text-muted-foreground truncate font-mono">
+                          {code}
+                        </p>
+                        <p className="text-body-xs text-muted-foreground">
+                          {dateFormat.format(new Date(row.created_at))}
+                        </p>
+                      </div>
+                    </div>
+                    <span
+                      className={cn(
+                        "shrink-0 font-bold tabular-nums",
+                        credit ? "text-secondary" : "text-destructive",
+                      )}
+                    >
+                      {credit ? `+${row.amount}` : row.amount}
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
+
+            <div className="hidden overflow-x-auto sm:block">
+              <Table className="min-w-[800px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{h.transaction}</TableHead>
+                    <TableHead>{h.kind}</TableHead>
+                    <TableHead>{h.amount}</TableHead>
+                    <TableHead>{h.time}</TableHead>
+                    <TableHead>{h.status}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {entries.map(({ row, credit, code, title }) => {
+                    const Icon = credit ? ArrowUpRight : ArrowDownLeft
+                    return (
+                      <TableRow key={row.id}>
+                        <TableCell className="max-w-[280px]">
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={cn(
+                                "bg-surface-container grid size-12 shrink-0 place-items-center rounded-xl",
+                                credit ? "text-secondary" : "text-destructive",
+                              )}
+                            >
+                              <Icon className="size-5" aria-hidden />
+                            </span>
+                            <div className="min-w-0">
+                              {/* A reward name is admin free text and the order
+                                  label carries a POS code — both outrun the
+                                  column on a narrow window. */}
+                              <TruncatedText className="font-semibold">
+                                {title}
+                              </TruncatedText>
+                              <p className="text-label-sm text-muted-foreground font-mono">
+                                {code}
+                              </p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {h.types[row.type]}
+                        </TableCell>
+                        <TableCell
+                          className={cn(
+                            "font-bold tabular-nums",
+                            credit ? "text-secondary" : "text-destructive",
+                          )}
+                        >
+                          {credit ? `+${row.amount}` : row.amount}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground whitespace-nowrap">
+                          {dateFormat.format(new Date(row.created_at))}
+                        </TableCell>
+                        <TableCell>
+                          {/* The ledger is append-only and every row is already
+                              committed, so there is only one possible state. */}
+                          <Badge variant="success" className="gap-1.5">
+                            <CircleCheck className="size-4" aria-hidden />
+                            {h.statusDone}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
       </SectionCard>
     </div>

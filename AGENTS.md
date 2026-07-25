@@ -63,9 +63,15 @@ QR loyalty-point app. Next.js 16 (App Router) + Supabase + Pancake POS + shadcn/
   customer point data before it passes. Rate limiting: `src/lib/rate-limit.ts`.
 - **i18n**: cookie-driven, Vietnamese default. `src/lib/i18n/messages/en.ts` is the source of
   truth; `vi.ts` is typed against it, so add keys to both.
-- **Design system**: dark-only "Chicha Pet Members" (`design/stitch-v2/README.md`). Tokens live
-  in `src/app/globals.css` `:root`; the token NAMES are inherited from the old light system, so
-  pages use `bg-card` / `text-muted-foreground` and never a literal hex. `globals.css` carries
+- **Design system**: "Chicha Pet Members" (`design/stitch-v2/README.md`) is the LAYOUT reference;
+  its mockups are dark-only, but the app ships both themes. Both palettes come from
+  `docs/color_palette_theme.md`: dark is `src/app/globals.css` `:root`, light overrides the same
+  token names in `:root[data-theme="light"]` + its `prefers-color-scheme` mirror — keep those two
+  light blocks in sync. In DARK the doc supplies the ACCENTS only (`--primary-container`,
+  `--ring`, `--brand`, `--foreground`); the surface ladder is a low-chroma neutral on purpose —
+  the doc's navies as `--background`/`--card` turned the app unreadably blue, don't put them back. Pages use `bg-card` / `text-muted-foreground` and never a literal hex
+  (`src/**` currently has zero hardcoded hex — keep it that way). `--chicha-blue` is the logo
+  mark's own blue and is exempt from the palette. `globals.css` carries
   `@source not "../../design"`: without it Tailwind compiles the mockups' CDN classes and the
   build fails on their `url()` references.
 - shadcn Button is Base UI: NO `asChild`. Use `buttonVariants` on a Link (see `src/components/page-link.tsx`).

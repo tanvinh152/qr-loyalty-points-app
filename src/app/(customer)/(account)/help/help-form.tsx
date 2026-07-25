@@ -42,8 +42,12 @@ export function HelpForm({
   }
 
   return (
-    <form ref={formRef} action={handleSubmit} className="grid gap-6 p-6">
-      <div className="grid gap-6 sm:grid-cols-2">
+    <form
+      ref={formRef}
+      action={handleSubmit}
+      className="grid gap-4 p-4 sm:gap-6 sm:p-6"
+    >
+      <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
         <div className="grid gap-2">
           <Label htmlFor="support-name">{h.name}</Label>
           <Input
