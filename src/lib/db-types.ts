@@ -10,8 +10,35 @@ export type LoyaltySettingsRow = {
   rounding: Rounding
   claimable_statuses: number[]
   unmapped_sku_points: number
+  /** One-time points granted on successful registration. 0 = off. */
+  welcome_gift_points: number
+  /** Points for one daily check-in. 0 = feature off. */
+  checkin_points: number
   is_active: boolean
   updated_at: string
+}
+
+/** Return shape of the grant_welcome_gift RPC. */
+export type WelcomeGiftResult = {
+  granted: boolean
+  points_awarded: number
+  current_points: number
+}
+
+/** One daily check-in (0019). At most one row per customer per VN calendar day. */
+export type CustomerCheckinRow = {
+  id: string
+  customer_id: string
+  checkin_date: string
+  points_awarded: number
+  created_at: string
+}
+
+/** Return shape of the checkin RPC. */
+export type CheckinResult = {
+  points_awarded: number
+  current_points: number
+  checkin_date: string
 }
 
 /** One row of the tier screen's benefit grid. Stored in `membership_tiers.perks`. */
@@ -57,6 +84,8 @@ export type RewardRow = {
   /** At most one active reward may carry this — enforced by a partial index. */
   is_featured: boolean
   is_active: boolean
+  /** Minimum tier required to redeem, by spend_threshold. Null = unrestricted. */
+  min_tier_id: string | null
   created_at: string
 }
 
@@ -175,6 +204,52 @@ export type ApplyScheduleResult = {
     from: number
     to: number
   }[]
+}
+
+export type PendingReconciliationStatus =
+  | "pending"
+  | "reconciled"
+  | "unchanged"
+  | "failed"
+
+/** A TikTok order queued for a delayed money re-check (0016). */
+export type PendingOrderReconciliationRow = {
+  id: string
+  order_code: string
+  customer_id: string
+  source_name: string
+  claimed_total: number
+  claimed_at: string
+  reconcile_after: string
+  status: PendingReconciliationStatus
+  reconciled_at: string | null
+  created_at: string
+}
+
+/** Return shape of the reconcile_order_spend RPC. */
+export type ReconcileOrderSpendResult = {
+  order_code: string
+  old_total: number
+  new_total: number
+  delta: number
+  lifetime_spend: number
+  tier_upgraded: boolean
+}
+
+export type BlogPostType = "article" | "promotion"
+
+export type BlogPostRow = {
+  id: string
+  slug: string
+  title: string
+  excerpt: string | null
+  content: string
+  cover_image_url: string | null
+  post_type: BlogPostType
+  is_published: boolean
+  published_at: string | null
+  created_at: string
+  updated_at: string
 }
 
 export type SupportRequestStatus = "open" | "closed"

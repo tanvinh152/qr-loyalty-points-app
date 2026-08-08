@@ -104,6 +104,10 @@ export function makeLoyaltySettingsSchema(v: V) {
   return z.object({
     rounding: z.enum(["floor", "round", "ceil"]),
     unmapped_sku_points: z.coerce.number().int().min(0, v.nonNegative),
+    // One-time points granted on registration. 0 = feature off.
+    welcome_gift_points: z.coerce.number().int().min(0, v.nonNegative),
+    // Points for one daily check-in. 0 = feature off.
+    checkin_points: z.coerce.number().int().min(0, v.nonNegative),
     // Free text in the form ("3, 16") -> int[].
     //
     // Empty segments are dropped, not parsed: `Number("")` is 0 and 0 is
@@ -233,6 +237,8 @@ export function makeRewardSchema(v: V) {
     is_exclusive: z.coerce.boolean(),
     is_featured: z.coerce.boolean(),
     is_active: z.coerce.boolean(),
+    // Minimum tier required to redeem. Blank = unrestricted, same as null.
+    min_tier_id: z.string().uuid().optional().or(z.literal("")),
   })
 }
 export type RewardInput = z.infer<ReturnType<typeof makeRewardSchema>>
@@ -260,6 +266,34 @@ export function makeAdjustSchema(v: V) {
 }
 export type AdjustInput = z.infer<ReturnType<typeof makeAdjustSchema>>
 export type AdjustFormValues = z.input<ReturnType<typeof makeAdjustSchema>>
+
+// Admin: blog & promotion post.
+const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+export function makeBlogPostSchema(v: V) {
+  return z.object({
+    id: z.string().uuid().optional(),
+    title: z.string().trim().min(1, v.blogTitleRequired),
+    slug: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .min(1, v.blogSlugRequired)
+      .regex(SLUG_RE, v.invalidSlug),
+    excerpt: z.string().trim().max(300).optional().or(z.literal("")),
+    content: z.string().trim().min(1, v.blogContentRequired),
+    cover_image_url: z
+      .string()
+      .trim()
+      .url(v.invalidUrl)
+      .optional()
+      .or(z.literal("")),
+    post_type: z.enum(["article", "promotion"]),
+    is_published: z.coerce.boolean(),
+  })
+}
+export type BlogPostInput = z.infer<ReturnType<typeof makeBlogPostSchema>>
+export type BlogPostFormValues = z.input<ReturnType<typeof makeBlogPostSchema>>
 
 // Customer: support centre contact form.
 export const SUPPORT_TOPICS = [

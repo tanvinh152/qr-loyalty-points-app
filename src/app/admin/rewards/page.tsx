@@ -6,7 +6,7 @@ import { SearchInput } from "@/components/search-input"
 import { StatCard } from "@/components/stat-card"
 import { createClient } from "@/lib/supabase/server"
 import { getMessages } from "@/lib/i18n/server"
-import { getRewardCategories } from "@/lib/loyalty"
+import { getRewardCategories, getTiers } from "@/lib/loyalty"
 import { LOW_STOCK } from "@/lib/rewards"
 import type { RewardRow } from "@/lib/db-types"
 import { RewardCard } from "./reward-card"
@@ -33,9 +33,10 @@ export default async function RewardsPage({
   })
   if (search) query = query.ilike("name", `%${search}%`)
 
-  const [{ data }, categories] = await Promise.all([
+  const [{ data }, categories, tiers] = await Promise.all([
     query,
     getRewardCategories(),
+    getTiers(),
   ])
   const rewards = (data ?? []) as RewardRow[]
 
@@ -52,7 +53,7 @@ export default async function RewardsPage({
   return (
     <div className="grid gap-6">
       <PageHeader title={m.title} description={m.helper}>
-        <RewardDialog categories={categories} />
+        <RewardDialog categories={categories} tiers={tiers} />
       </PageHeader>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -91,6 +92,7 @@ export default async function RewardsPage({
               reward={reward}
               maxQuantity={maxQuantity}
               categories={categories}
+              tiers={tiers}
             />
           ))}
         </div>

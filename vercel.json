@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/tier-schedules",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/reconcile-tiktok-orders",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}

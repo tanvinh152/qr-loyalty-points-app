@@ -6,6 +6,8 @@ import {
   canonicalOrderCode,
   orderSpendTotal,
   toRpcItems,
+  isTikTokSource,
+  TIKTOK_RECONCILE_DELAY_DAYS,
 } from "@/lib/pancake/client"
 import { PancakeRequestError } from "@/lib/pancake/types"
 import {
@@ -166,9 +168,59 @@ export async function POST(req: Request) {
   console.info(
     `[pancake-webhook] claimed ${orderCode}: +${result.points_awarded} points`,
   )
+
+  if (isTikTokSource(order.order_sources_name)) {
+    await enqueueTikTokReconciliation({
+      orderCode,
+      customerId: customer.id,
+      sourceName: order.order_sources_name ?? "",
+      claimedTotal: orderSpendTotal(order),
+    })
+  }
+
   // No customer PII in the response — Pancake logs webhook bodies.
   return Response.json({
     claimed: true,
     points_awarded: result.points_awarded,
   })
+}
+
+/**
+ * Queues a claimed TikTok order for a later re-check once Pancake's sync has
+ * had time to settle (see 0016_tiktok_reconciliation.sql). Best-effort: the
+ * claim already succeeded, so a failure here only means this one order misses
+ * reconciliation — it must never turn a successful claim into an error response.
+ */
+async function enqueueTikTokReconciliation({
+  orderCode,
+  customerId,
+  sourceName,
+  claimedTotal,
+}: {
+  orderCode: string
+  customerId: string
+  sourceName: string
+  claimedTotal: number
+}) {
+  const reconcileAfter = new Date(
+    Date.now() + TIKTOK_RECONCILE_DELAY_DAYS * 24 * 60 * 60 * 1000,
+  ).toISOString()
+
+  const { error } = await createAdminClient()
+    .from("pending_order_reconciliations")
+    .insert({
+      order_code: orderCode,
+      customer_id: customerId,
+      source_name: sourceName,
+      claimed_total: claimedTotal,
+      reconcile_after: reconcileAfter,
+    })
+
+  if (error) {
+    console.error(
+      "[pancake-webhook] failed to enqueue TikTok reconciliation",
+      orderCode,
+      error,
+    )
+  }
 }

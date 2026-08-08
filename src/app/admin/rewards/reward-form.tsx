@@ -8,6 +8,7 @@ import { toast } from "sonner"
 
 import { FormDialog } from "@/components/form-dialog"
 import { FormError } from "@/components/form-error"
+import { ImageUpload } from "@/components/image-upload"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -21,25 +22,38 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useT } from "@/lib/i18n/provider"
+import { formatVnd } from "@/lib/utils"
 import {
   makeRewardSchema,
   type RewardFormValues,
   type RewardInput,
 } from "@/lib/schemas"
-import type { RewardRow } from "@/lib/db-types"
+import type { MembershipTierRow, RewardRow } from "@/lib/db-types"
 import { saveReward } from "./actions"
+
+const NO_MIN_TIER = ""
 
 /** Create/edit dialog for a reward. `trigger` overrides the default button. */
 export function RewardDialog({
   row,
   categories = [],
+  tiers = [],
   trigger,
 }: {
   row?: RewardRow
   /** Existing category slugs, offered as a datalist on the free-text field. */
   categories?: string[]
+  /** For the minimum-tier picker, sorted by spend_threshold by the caller. */
+  tiers?: MembershipTierRow[]
   trigger?: React.ReactNode
 }) {
   const t = useT()
@@ -69,7 +83,12 @@ export function RewardDialog({
       className="sm:max-w-2xl"
     >
       {(close) => (
-        <RewardFields row={row} categories={categories} onSaved={close} />
+        <RewardFields
+          row={row}
+          categories={categories}
+          tiers={tiers}
+          onSaved={close}
+        />
       )}
     </FormDialog>
   )
@@ -78,10 +97,12 @@ export function RewardDialog({
 function RewardFields({
   row,
   categories,
+  tiers,
   onSaved,
 }: {
   row?: RewardRow
   categories: string[]
+  tiers: MembershipTierRow[]
   onSaved: () => void
 }) {
   const t = useT()
@@ -101,6 +122,7 @@ function RewardFields({
       is_exclusive: row?.is_exclusive ?? false,
       is_featured: row?.is_featured ?? false,
       is_active: row?.is_active ?? true,
+      min_tier_id: row?.min_tier_id ?? NO_MIN_TIER,
     },
   })
 
@@ -197,6 +219,14 @@ function RewardFields({
           render={({ field }) => (
             <FormItem>
               <FormLabel>{m.imageUrl}</FormLabel>
+              {/* Upload and paste write the same field: uploading fills it with
+                  a `media` bucket URL, and an externally hosted image can still
+                  be pasted, which is what every existing row holds. */}
+              <ImageUpload
+                value={fieldValue(field.value)}
+                onChange={field.onChange}
+                folder="rewards"
+              />
               <FormControl>
                 <Input
                   type="url"
@@ -233,6 +263,43 @@ function RewardFields({
                 ))}
               </datalist>
               <FormDescription>{m.categoryHelper}</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="min_tier_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{m.minTier}</FormLabel>
+              <Select
+                value={fieldValue(field.value)}
+                onValueChange={field.onChange}
+                items={[
+                  { value: NO_MIN_TIER, label: m.noMinTier },
+                  ...tiers.map((tier) => ({
+                    value: tier.id,
+                    label: `${tier.name} (${formatVnd(tier.spend_threshold)}+)`,
+                  })),
+                ]}
+              >
+                <FormControl>
+                  <SelectTrigger className="w-full max-w-md">
+                    <SelectValue />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value={NO_MIN_TIER}>{m.noMinTier}</SelectItem>
+                  {tiers.map((tier) => (
+                    <SelectItem key={tier.id} value={tier.id}>
+                      {`${tier.name} (${formatVnd(tier.spend_threshold)}+)`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormDescription>{m.minTierHelper}</FormDescription>
               <FormMessage />
             </FormItem>
           )}

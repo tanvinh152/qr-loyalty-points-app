@@ -5,7 +5,7 @@ import { TruncatedText } from "@/components/truncated-text"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { getMessages } from "@/lib/i18n/server"
-import type { RewardRow } from "@/lib/db-types"
+import type { MembershipTierRow, RewardRow } from "@/lib/db-types"
 import { RewardDialog } from "./reward-form"
 import { deleteReward } from "./actions"
 
@@ -21,16 +21,20 @@ export async function RewardCard({
   reward,
   maxQuantity,
   categories,
+  tiers,
 }: {
   reward: RewardRow
   /** Largest stock across the grid, so the bars share one scale. */
   maxQuantity: number
   /** Passed straight through to the edit dialog's category datalist. */
   categories: string[]
+  /** Passed straight through to the edit dialog's minimum-tier picker. */
+  tiers: MembershipTierRow[]
 }) {
   const t = await getMessages()
   const m = t.admin.rewards
   const soldOut = reward.quantity === 0
+  const minTier = tiers.find((tier) => tier.id === reward.min_tier_id) ?? null
 
   return (
     <article className="border-border bg-card grid overflow-hidden rounded-xl border">
@@ -71,6 +75,9 @@ export async function RewardCard({
             </Badge>
           )}
           {soldOut && <Badge variant="destructive">{m.soldOut}</Badge>}
+          {minTier && (
+            <Badge variant="secondary">{m.minTierChip(minTier.name)}</Badge>
+          )}
         </div>
       </div>
 
@@ -109,7 +116,7 @@ export async function RewardCard({
         </div>
 
         <div className="flex items-center justify-end gap-1">
-          <RewardDialog row={reward} categories={categories} />
+          <RewardDialog row={reward} categories={categories} tiers={tiers} />
           <ConfirmDelete
             name={reward.name}
             onConfirm={deleteReward.bind(null, reward.id)}

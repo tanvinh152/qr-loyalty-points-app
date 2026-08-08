@@ -322,6 +322,14 @@ export async function signUp(
     }
   }
 
+  // One-time signup bonus, amount set by the admin (0018). Best-effort like
+  // everything below the link: the account and its point-earning are already
+  // real, so a failure here must not turn a completed signup into an error.
+  const { error: giftError } = await admin.rpc("grant_welcome_gift", {
+    p_customer_id: linked.customer.id,
+  })
+  if (giftError) console.warn("[signup] welcome gift skipped", giftError)
+
   // Name + DOB. Same RPC the profile screen uses; the pet fields are empty at
   // signup, so passing null blanks nothing.
   const { error: profileError } = await admin.rpc("update_customer_profile", {

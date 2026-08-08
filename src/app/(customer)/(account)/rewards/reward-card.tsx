@@ -19,18 +19,21 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n/provider"
-import type { RewardRow } from "@/lib/db-types"
+import type { MembershipTierRow, RewardRow } from "@/lib/db-types"
 import { LOW_STOCK } from "@/lib/rewards"
 import { redeemReward } from "./actions"
 
 export function RewardCard({
   reward,
   currentPoints,
+  lockedFor = null,
   variant = "card",
   className,
 }: {
   reward: RewardRow
   currentPoints: number
+  /** Set when the customer's tier is below reward.min_tier_id — the tier they need. */
+  lockedFor?: MembershipTierRow | null
   /** `bare` drops the frame and image — the shop hero supplies its own. */
   variant?: "card" | "bare"
   /** Grid placement from the caller; the bento columns live on the page. */
@@ -46,8 +49,9 @@ export function RewardCard({
   // low-stock stat, kept as a literal here so the card needs no extra query.
   const lowStock = !outOfStock && reward.quantity <= LOW_STOCK
   const tooExpensive = currentPoints < reward.points_cost
-  // The server re-checks both — this only avoids an obviously doomed round trip.
-  const disabled = outOfStock || tooExpensive || isPending
+  const tierLocked = lockedFor !== null
+  // The server re-checks all three — this only avoids an obviously doomed round trip.
+  const disabled = outOfStock || tooExpensive || tierLocked || isPending
 
   function handleRedeem() {
     startTransition(async () => {
@@ -77,7 +81,13 @@ export function RewardCard({
         render={<Button type="button" size="sm" disabled={disabled} />}
       >
         {isPending && <Loader2 className="size-4 animate-spin" aria-hidden />}
-        {isPending ? r.redeeming : tooExpensive ? r.notEnough : r.redeem}
+        {isPending
+          ? r.redeeming
+          : tierLocked
+            ? r.tierRequired(lockedFor.name)
+            : tooExpensive
+              ? r.notEnough
+              : r.redeem}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -118,6 +128,8 @@ export function RewardCard({
       <Sparkles className="size-3" aria-hidden />
       {r.exclusiveChip}
     </Badge>
+  ) : tierLocked ? (
+    <Badge variant="muted">{r.tierRequired(lockedFor.name)}</Badge>
   ) : outOfStock ? (
     <Badge variant="muted">{r.outOfStock}</Badge>
   ) : lowStock ? (

@@ -19,13 +19,17 @@ export default async function SettingsPage() {
   const supabase = await createClient()
   const { data } = await supabase
     .from("loyalty_settings")
-    .select("rounding, claimable_statuses, unmapped_sku_points")
+    .select(
+      "rounding, claimable_statuses, unmapped_sku_points, welcome_gift_points, checkin_points",
+    )
     .eq("is_active", true)
     .maybeSingle()
 
   const initial = {
     rounding: (data?.rounding ?? "floor") as Rounding,
     unmapped_sku_points: data?.unmapped_sku_points ?? 0,
+    welcome_gift_points: data?.welcome_gift_points ?? 0,
+    checkin_points: data?.checkin_points ?? 0,
     // Nothing saved yet -> pre-tick the recommended set rather than a bare [3],
     // which would reject every order that has moved on to "received_money".
     claimable_statuses: data?.claimable_statuses ?? DEFAULT_CLAIMABLE_STATUSES,

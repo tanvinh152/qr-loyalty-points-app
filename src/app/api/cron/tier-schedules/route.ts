@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin"
-import { verifyWebhookSecret } from "@/lib/webhook-auth"
+import { verifyCronRequest } from "@/lib/webhook-auth"
 import type { ApplyScheduleResult } from "@/lib/db-types"
 
 // Applies any tier threshold raise whose effective date has arrived.
@@ -10,12 +10,11 @@ import type { ApplyScheduleResult } from "@/lib/db-types"
 // feature work on a deployment with no cron configured at all. The cron is the
 // guarantee that a raise lands on its date even if nobody visits.
 //
-// Shares WEBHOOK_SECRET with the Pancake endpoint rather than owning a second
-// one: both are "an unauthenticated caller must not be able to poke this", and
-// two secrets to rotate is one more chance to get a rotation wrong.
+// Accepts either the shared WEBHOOK_SECRET header (manual/internal calls) or
+// Vercel Cron's own `Authorization: Bearer CRON_SECRET` — see verifyCronRequest.
 
 export async function POST(req: Request) {
-  if (!verifyWebhookSecret(req)) {
+  if (!verifyCronRequest(req)) {
     return Response.json({ error: "unauthorized" }, { status: 401 })
   }
   return run()
@@ -23,7 +22,7 @@ export async function POST(req: Request) {
 
 // Most cron runners (Vercel Cron included) issue a GET.
 export async function GET(req: Request) {
-  if (!verifyWebhookSecret(req)) {
+  if (!verifyCronRequest(req)) {
     return Response.json({ error: "unauthorized" }, { status: 401 })
   }
   return run()

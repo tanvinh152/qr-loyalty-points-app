@@ -18,6 +18,8 @@ export async function saveSettings(
   const parsed = makeLoyaltySettingsSchema(t.validation).safeParse({
     rounding: formData.get("rounding"),
     unmapped_sku_points: formData.get("unmapped_sku_points"),
+    welcome_gift_points: formData.get("welcome_gift_points"),
+    checkin_points: formData.get("checkin_points"),
     claimable_statuses: formData.get("claimable_statuses"),
   })
   if (!parsed.success) {

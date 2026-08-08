@@ -19,6 +19,7 @@ export type RedeemErrorCode =
   | "reward_not_found"
   | "out_of_stock"
   | "insufficient_points"
+  | "tier_too_low"
   | "redeem_failed"
 
 export type RedeemResult =
@@ -33,6 +34,7 @@ async function fail(code: RedeemErrorCode): Promise<RedeemResult> {
     reward_not_found: e.rewardNotFound,
     out_of_stock: e.outOfStock,
     insufficient_points: e.insufficientPoints,
+    tier_too_low: e.tierTooLow,
     redeem_failed: e.redeemFailed,
   }
   return { ok: false, code, error: byCode[code] }
@@ -43,6 +45,7 @@ function codeFor(pgCode: string | undefined): RedeemErrorCode {
   if (pgCode === "P0001") return "reward_not_found"
   if (pgCode === "P0002") return "out_of_stock"
   if (pgCode === "P0003") return "insufficient_points"
+  if (pgCode === "P0006") return "tier_too_low"
   return "redeem_failed"
 }
 

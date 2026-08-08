@@ -56,6 +56,20 @@ QR loyalty-point app. Next.js 16 (App Router) + Supabase + Pancake POS + shadcn/
 - **Point calc**: lives ONLY in `claim_points` (`0011_claim_spend.sql`). `src/lib/points.ts`
   is types now — the TS copy of the arithmetic was deleted because nothing called it. Do not
   reintroduce a second implementation; if the admin UI ever needs a preview, call the RPC.
+- **Storage**: ONE public bucket, `media` (`0015_media_storage.sql`), with a folder per feature —
+  `rewards/`, and `blog/` when that exists. Declared in the migration, NOT in `config.toml`
+  (that block only applies to `supabase start`, so a hosted project would have no bucket).
+  `src/lib/media.ts` is the pure half — bucket limits, the folder ALLOWLIST, `mediaPath`,
+  `mediaObjectPath` — and is imported by the browser too, so it must stay free of `server-only`.
+  `src/lib/storage.ts` is the only code that talks to the bucket. The stored key is
+  `<folder>/<uuid>.<ext>` where `ext` comes from the VALIDATED MIME TYPE, never the uploaded
+  filename, and SVG is not allowed. `rewards.image_url` holds the full public URL and may STILL
+  hold a hand-pasted external one, which is why the render sites stay a plain `<img>` and why
+  `deleteImageByUrl` no-ops on any URL outside the bucket. Uploads go through `uploadMedia`
+  (`src/app/admin/media-actions.ts`), which CHECKS `app_metadata.role === 'admin'` ITSELF: it
+  hands the file to `createAdminClient()`, which bypasses the bucket's RLS, and a server action is
+  a public POST endpoint — the `/admin` proxy guard is not enough on its own. UI:
+  `src/components/image-upload.tsx`.
 - **Ownership gate**: `matchesOrderPhones` in `src/lib/phone.ts`, over
   `orderPhoneCandidates(order)`. Pancake masks phones as `0****70`, but `customer.phone_numbers`
   also holds the real one once the record has it — when a real number is present it is compared

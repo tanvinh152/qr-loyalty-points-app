@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Medal,
   MessageSquare,
+  Newspaper,
   Package,
   Receipt,
   Settings,
@@ -32,6 +33,7 @@ const ICONS = {
   // Admin
   dashboard: LayoutDashboard,
   products: Package,
+  blog: Newspaper,
   customers: Users,
   transactions: Receipt,
   support: MessageSquare,

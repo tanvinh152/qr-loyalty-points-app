@@ -87,7 +87,12 @@ describe("makeCustomerSignupSchema", () => {
 
 describe("makeLoyaltySettingsSchema", () => {
   const schema = makeLoyaltySettingsSchema(v)
-  const base = { rounding: "floor" as const, unmapped_sku_points: 0 }
+  const base = {
+    rounding: "floor" as const,
+    unmapped_sku_points: 0,
+    welcome_gift_points: 0,
+    checkin_points: 0,
+  }
 
   it("parses the admin's free-text status list into integers", () => {
     const result = schema.safeParse({ ...base, claimable_statuses: "3, 16" })

@@ -10,7 +10,10 @@ import {
   getActiveRewards,
   getFeaturedReward,
   getRewardCategories,
+  getTiers,
+  resolveDisplayTier,
 } from "@/lib/loyalty"
+import type { RewardRow } from "@/lib/db-types"
 import { getAccount } from "../account"
 import { RewardCard } from "./reward-card"
 
@@ -30,11 +33,25 @@ export default async function RewardsPage({
   if (!customer) return null
 
   const { category } = await searchParams
-  const [rewards, categories, featured] = await Promise.all([
+  const [rewards, categories, featured, tiers] = await Promise.all([
     getActiveRewards({ category }),
     getRewardCategories(),
     getFeaturedReward(),
+    getTiers(),
   ])
+
+  // The tier a reward's own min_tier_id gate compares against — the same
+  // "display tier" resolveDisplayTier shows on /tiers and the dashboard, not
+  // the raw earned-from-spend tier.
+  const displayTier = resolveDisplayTier(tiers, customer)
+  const displayThreshold = displayTier?.spend_threshold ?? -1
+  const tiersById = new Map(tiers.map((tier) => [tier.id, tier]))
+  function lockedFor(reward: RewardRow) {
+    if (!reward.min_tier_id) return null
+    const minTier = tiersById.get(reward.min_tier_id)
+    if (!minTier || minTier.spend_threshold <= displayThreshold) return null
+    return minTier
+  }
 
   // The hero only headlines the unfiltered store: inside a filter it would sit
   // above a grid it may not even belong to.
@@ -148,6 +165,7 @@ export default async function RewardsPage({
               <RewardCard
                 reward={hero}
                 currentPoints={customer.current_points}
+                lockedFor={lockedFor(hero)}
                 variant="bare"
               />
             </div>
@@ -159,6 +177,7 @@ export default async function RewardsPage({
             key={reward.id}
             reward={reward}
             currentPoints={customer.current_points}
+            lockedFor={lockedFor(reward)}
             className="md:col-span-4"
           />
         ))}

@@ -3,6 +3,7 @@ import {
   ArrowDownLeft,
   ArrowRight,
   ArrowUpRight,
+  CalendarCheck,
   Clock,
   Gift,
   History,
@@ -24,13 +25,16 @@ import { cn, formatVnd } from "@/lib/utils"
 import { getLocale, getMessages } from "@/lib/i18n/server"
 import {
   getActiveRewards,
+  getCheckinPoints,
   getTiers,
   getTransactions,
+  hasCheckedInToday,
   tierProgress,
 } from "@/lib/loyalty"
 import { getAccount } from "../account"
 import { RewardCard } from "../rewards/reward-card"
 import { tierAccentClass, tierRank } from "../tier-accent"
+import { CheckinButton } from "./checkin-card"
 
 export async function generateMetadata() {
   const t = await getMessages()
@@ -56,11 +60,16 @@ export default async function DashboardPage() {
     },
   )
 
-  const [tiers, recent, rewards] = await Promise.all([
+  const [tiers, recent, rewards, checkinPoints] = await Promise.all([
     getTiers(),
     getTransactions(customer.id, { page: 1, pageSize: RECENT_COUNT }),
     getActiveRewards(),
+    getCheckinPoints(),
   ])
+  // Only queried when the feature is on — an off admin toggle should not cost
+  // every dashboard load an extra read.
+  const checkedInToday =
+    checkinPoints > 0 ? await hasCheckedInToday(customer.id) : false
 
   const {
     current,
@@ -200,6 +209,19 @@ export default async function DashboardPage() {
           </Link>
         </div>
       </section>
+
+      {checkinPoints > 0 && (
+        <SectionCard
+          title={d.checkinTitle}
+          icon={CalendarCheck}
+          bodyClassName="flex flex-col items-start gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6"
+        >
+          <p className="text-body-sm text-muted-foreground">
+            {d.checkinBody(checkinPoints)}
+          </p>
+          <CheckinButton initialCheckedIn={checkedInToday} />
+        </SectionCard>
+      )}
 
       {teasers.length > 0 && (
         <SectionCard

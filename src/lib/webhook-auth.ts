@@ -10,12 +10,31 @@ import { timingSafeEqual } from "node:crypto"
 export const WEBHOOK_SECRET_HEADER = "x-webhook-secret"
 
 export function verifyWebhookSecret(req: Request): boolean {
-  const expected = process.env.WEBHOOK_SECRET
-  // Fail closed: an unset secret must never mean "everyone is authorized".
-  if (!expected) return false
+  return timingSafeHeaderEqual(
+    req.headers.get(WEBHOOK_SECRET_HEADER),
+    process.env.WEBHOOK_SECRET,
+  )
+}
 
-  const provided = req.headers.get(WEBHOOK_SECRET_HEADER)
-  if (!provided) return false
+// Cron routes have no Pancake-imposed header shape, so they can accept either
+// a manual/internal call (same header as the Pancake webhook) or a real
+// Vercel Cron invocation, which sends `Authorization: Bearer $CRON_SECRET`
+// automatically once CRON_SECRET is set as a project env var. The Pancake
+// webhook itself stays on verifyWebhookSecret only — it will never send Bearer.
+export function verifyCronRequest(req: Request): boolean {
+  if (verifyWebhookSecret(req)) return true
+
+  const auth = req.headers.get("authorization")
+  const provided = auth?.startsWith("Bearer ") ? auth.slice(7) : null
+  return timingSafeHeaderEqual(provided, process.env.CRON_SECRET)
+}
+
+function timingSafeHeaderEqual(
+  provided: string | null,
+  expected: string | undefined,
+): boolean {
+  // Fail closed: an unset secret must never mean "everyone is authorized".
+  if (!expected || !provided) return false
 
   const a = Buffer.from(provided)
   const b = Buffer.from(expected)

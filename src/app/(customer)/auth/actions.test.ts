@@ -391,6 +391,27 @@ describe("signUp — proving the phone", () => {
   })
 })
 
+// 0018: a one-time signup bonus, amount configured by the admin. Best-effort
+// like everything else once the account is real.
+describe("signUp — the welcome gift", () => {
+  it("grants it for the linked customer", async () => {
+    expect(await run()).toEqual({ redirected: true })
+    expect(adminRpc).toHaveBeenCalledWith("grant_welcome_gift", {
+      p_customer_id: "cust-1",
+    })
+  })
+
+  it("does not block a completed signup when the grant fails", async () => {
+    adminRpc.mockImplementation(async (fn: string) => {
+      if (fn === "find_orphan_auth_user") return findOrphan()
+      if (fn === "claim_points") return claimPoints()
+      if (fn === "grant_welcome_gift") return { data: null, error: { code: "XX000" } }
+      return { data: null, error: null }
+    })
+    expect(await run()).toEqual({ redirected: true })
+  })
+})
+
 describe("signUp — claiming the proof order", () => {
   it("skips the claim when the order has not reached a claimable status", async () => {
     getOrder.mockResolvedValueOnce({ ...ORDER, status: 0 })

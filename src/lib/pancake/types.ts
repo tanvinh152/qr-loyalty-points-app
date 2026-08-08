@@ -43,6 +43,11 @@ export const pancakeOrderSchema = z.object({
     .nullish(),
   total_price: z.number().nullish(),
   total_price_after_sub_discount: z.number().nullish(),
+  // Marketplace channel, e.g. "TikTok Shop". Verified present on the list
+  // endpoint (GET /shops/:id/orders); carried here on the assumption the
+  // single-order GET returns the same order object — see reconcile-tiktok
+  // cron for the runtime check that assumption gets on first real use.
+  order_sources_name: z.string().nullish(),
   items: z.array(pancakeItemSchema).default([]),
 })
 

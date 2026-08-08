@@ -83,6 +83,38 @@ export async function getActiveSettings(): Promise<ActiveSettings | null> {
   }
 }
 
+// 0 means the admin has not turned the feature on — callers hide the check-in
+// card entirely rather than showing a button that always fails.
+export async function getCheckinPoints(): Promise<number> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from("loyalty_settings")
+    .select("checkin_points")
+    .eq("is_active", true)
+    .maybeSingle<Pick<LoyaltySettingsRow, "checkin_points">>()
+  return data?.checkin_points ?? 0
+}
+
+// Today's check-in, VN calendar day — the same boundary the checkin RPC uses
+// (`now() at time zone 'Asia/Ho_Chi_Minh'`). Computed in JS via en-CA, which is
+// the one Intl locale that formats a date as YYYY-MM-DD.
+export function todayInVietnam(): string {
+  return new Date().toLocaleDateString("en-CA", {
+    timeZone: "Asia/Ho_Chi_Minh",
+  })
+}
+
+export async function hasCheckedInToday(customerId: string): Promise<boolean> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from("customer_checkins")
+    .select("id")
+    .eq("customer_id", customerId)
+    .eq("checkin_date", todayInVietnam())
+    .maybeSingle()
+  return Boolean(data)
+}
+
 // SKU -> points, active mappings only. Fetches just the SKUs on the order.
 export async function getSkuPoints(skus: string[]): Promise<SkuPointMap> {
   const unique = [...new Set(skus.filter(Boolean))]

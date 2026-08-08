@@ -13,6 +13,7 @@ const isOrderClaimed = vi.fn()
 const getCustomerByPancakeId = vi.fn()
 const rpc = vi.fn()
 const verifyWebhookSecret = vi.fn()
+const reconciliationInsert = vi.fn()
 
 vi.mock("@/lib/pancake/client", async () => {
   const actual =
@@ -29,7 +30,12 @@ vi.mock("@/lib/loyalty", () => ({
 }))
 
 vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: () => ({ rpc: (...args: unknown[]) => rpc(...args) }),
+  createAdminClient: () => ({
+    rpc: (...args: unknown[]) => rpc(...args),
+    from: (table: string) => ({
+      insert: (row: unknown) => reconciliationInsert(table, row),
+    }),
+  }),
 }))
 
 vi.mock("@/lib/webhook-auth", () => ({
@@ -85,6 +91,7 @@ beforeEach(() => {
   isOrderClaimed.mockResolvedValue(false)
   getCustomerByPancakeId.mockResolvedValue(CUSTOMER)
   rpc.mockResolvedValue({ data: { points_awarded: 10 }, error: null })
+  reconciliationInsert.mockResolvedValue({ error: null })
 })
 
 describe("POST /api/webhooks/pancake — the happy path", () => {
@@ -218,5 +225,44 @@ describe("POST /api/webhooks/pancake — claim outcomes", () => {
     getActiveSettings.mockResolvedValueOnce(null)
     const res = await post()
     expect(res.status).toBe(503)
+  })
+})
+
+// 0016: TikTok orders sync their final total 4-6 days late, so a claimed
+// order from that channel is queued for a later re-check.
+describe("POST /api/webhooks/pancake — TikTok reconciliation queue", () => {
+  it("enqueues a claimed TikTok order", async () => {
+    getOrder.mockResolvedValueOnce({
+      ...ORDER,
+      order_sources_name: "TikTok Shop",
+    })
+    const res = await post()
+    expect(res.status).toBe(200)
+    expect(reconciliationInsert).toHaveBeenCalledWith(
+      "pending_order_reconciliations",
+      expect.objectContaining({
+        order_code: "ORDER-1",
+        customer_id: "cust-1",
+        source_name: "TikTok Shop",
+        claimed_total: 500_000,
+      }),
+    )
+  })
+
+  it("does not enqueue an order from another channel", async () => {
+    const res = await post()
+    expect(res.status).toBe(200)
+    expect(reconciliationInsert).not.toHaveBeenCalled()
+  })
+
+  it("still reports the claim as successful when the enqueue write fails", async () => {
+    getOrder.mockResolvedValueOnce({
+      ...ORDER,
+      order_sources_name: "TikTok Shop",
+    })
+    reconciliationInsert.mockResolvedValueOnce({ error: new Error("boom") })
+    const res = await post()
+    expect(res.status).toBe(200)
+    expect(await json(res)).toEqual({ claimed: true, points_awarded: 10 })
   })
 })

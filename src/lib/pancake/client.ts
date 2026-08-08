@@ -286,6 +286,18 @@ export function orderSpendTotal(order: PancakeOrder): number {
   return Number.isFinite(total) && total > 0 ? total : 0
 }
 
+// TikTok Shop orders sync their final total into Pancake 4-6 days after the
+// order lands, so a webhook-time claim can be wrong until then. Matched
+// case-insensitively and by substring — Pancake's exact channel string
+// ("TikTok Shop", "Tiktok", …) is not something we control.
+export function isTikTokSource(sourceName: string | null | undefined): boolean {
+  return Boolean(sourceName?.toLowerCase().includes("tiktok"))
+}
+
+// How long to wait after a TikTok order is claimed before re-fetching it to
+// check whether Pancake's synced total has changed.
+export const TIKTOK_RECONCILE_DELAY_DAYS = 6
+
 /**
  * Every phone number the order carries — usually masked ("0****70"), but not
  * always: `customer.phone_numbers` also holds the real number once the record

@@ -28,6 +28,8 @@ type Props = {
   initial: {
     rounding: Rounding
     unmapped_sku_points: number
+    welcome_gift_points: number
+    checkin_points: number
     claimable_statuses: number[]
   }
 }
@@ -164,6 +166,44 @@ export function SettingsForm({ initial }: Props) {
           step="1"
           min="0"
           defaultValue={initial.unmapped_sku_points}
+          required
+          className="h-11 max-w-sm"
+        />
+      </fieldset>
+
+      <fieldset className="grid gap-3">
+        <div className="grid gap-1">
+          <Label htmlFor="welcome_gift_points">{s.welcomeGiftPoints}</Label>
+          <p className="text-muted-foreground text-body-sm">
+            {s.welcomeGiftPointsHelper}
+          </p>
+        </div>
+        <Input
+          id="welcome_gift_points"
+          name="welcome_gift_points"
+          type="number"
+          step="1"
+          min="0"
+          defaultValue={initial.welcome_gift_points}
+          required
+          className="h-11 max-w-sm"
+        />
+      </fieldset>
+
+      <fieldset className="grid gap-3">
+        <div className="grid gap-1">
+          <Label htmlFor="checkin_points">{s.checkinPoints}</Label>
+          <p className="text-muted-foreground text-body-sm">
+            {s.checkinPointsHelper}
+          </p>
+        </div>
+        <Input
+          id="checkin_points"
+          name="checkin_points"
+          type="number"
+          step="1"
+          min="0"
+          defaultValue={initial.checkin_points}
           required
           className="h-11 max-w-sm"
         />

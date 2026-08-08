@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Gift, LogOut, Medal, Package, Settings } from "lucide-react"
+import { Gift, LogOut, Medal, Newspaper, Package, Settings } from "lucide-react"
 
 import { InitialsAvatar } from "@/components/initials-avatar"
 import { PortalNav, type PortalNavItem } from "@/components/portal-nav"
@@ -36,6 +36,7 @@ export default async function AdminLayout({
     { href: "/admin/tiers", label: nav.tiers, icon: "tiers" },
     { href: "/admin/products", label: nav.products, icon: "products" },
     { href: "/admin/rewards", label: nav.rewards, icon: "rewards" },
+    { href: "/admin/blog", label: nav.blog, icon: "blog" },
     { href: "/admin/customers", label: nav.customers, icon: "customers" },
     {
       href: "/admin/transactions",
@@ -59,6 +60,7 @@ export default async function AdminLayout({
   ]
   const headerLinks = [
     { href: "/admin/rewards", label: nav.rewards, icon: Gift },
+    { href: "/admin/blog", label: nav.blog, icon: Newspaper },
     { href: "/admin/products", label: nav.products, icon: Package },
     { href: "/admin/tiers", label: nav.tiers, icon: Medal },
     { href: "/admin/settings", label: nav.settings, icon: Settings },
