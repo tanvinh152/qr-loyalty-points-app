@@ -22,6 +22,7 @@ import { TruncatedText } from "@/components/truncated-text"
 import { createClient } from "@/lib/supabase/server"
 import { getMessages } from "@/lib/i18n/server"
 import { formatVnd } from "@/lib/utils"
+import { getTiers, resolveDisplayTier } from "@/lib/loyalty"
 import type { CustomerRow } from "@/lib/db-types"
 
 export async function generateMetadata() {
@@ -30,10 +31,6 @@ export async function generateMetadata() {
 }
 
 const PAGE_SIZE = 20
-
-type CustomerWithTier = CustomerRow & {
-  membership_tiers: { name: string } | null
-}
 
 export default async function CustomersPage({
   searchParams,
@@ -51,7 +48,7 @@ export default async function CustomersPage({
   const supabase = await createClient()
   let query = supabase
     .from("customers")
-    .select("*, membership_tiers(name)", { count: "exact" })
+    .select("*", { count: "exact" })
     // Spend, not points: the list is ordered by what now decides the tier.
     .order("lifetime_spend", { ascending: false })
     .range(from, to)
@@ -60,8 +57,8 @@ export default async function CustomersPage({
     query = query.or(`phone.ilike.%${search}%,full_name.ilike.%${search}%`)
   }
 
-  const { data, count } = await query
-  const customers = (data ?? []) as unknown as CustomerWithTier[]
+  const [{ data, count }, tiers] = await Promise.all([query, getTiers()])
+  const customers = (data ?? []) as unknown as CustomerRow[]
   const total = count ?? 0
   const hasNext = total > to + 1
   const pageHref = (n: number) =>
@@ -133,66 +130,69 @@ export default async function CustomersPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {customers.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="max-w-[280px]">
-                      <div className="flex items-center gap-3">
-                        <InitialsAvatar name={c.full_name?.trim() || c.phone} />
-                        <div className="min-w-0">
-                          {/* Both lines are free text the member typed, and the
-                            synthetic auth email is long by construction. */}
-                          <TruncatedText
-                            lines={1}
-                            focusable={false}
-                            tooltip={c.full_name ?? c.phone}
-                          >
-                            <Link
-                              href={`/admin/customers/${c.id}`}
-                              className="text-body-sm leading-tight font-semibold hover:underline"
+                {customers.map((c) => {
+                  const displayTier = resolveDisplayTier(tiers, c)
+                  return (
+                    <TableRow key={c.id}>
+                      <TableCell className="max-w-[280px]">
+                        <div className="flex items-center gap-3">
+                          <InitialsAvatar
+                            name={c.full_name?.trim() || c.phone}
+                          />
+                          <div className="min-w-0">
+                            {/* Both lines are free text the member typed, and
+                              the synthetic auth email is long by construction. */}
+                            <TruncatedText
+                              lines={1}
+                              focusable={false}
+                              tooltip={c.full_name ?? c.phone}
                             >
-                              {c.full_name ?? c.phone}
-                            </Link>
-                          </TruncatedText>
-                          <TruncatedText
-                            lines={1}
-                            className="text-muted-foreground text-body-xs"
-                          >
-                            {c.email ?? "—"}
-                          </TruncatedText>
+                              <Link
+                                href={`/admin/customers/${c.id}`}
+                                className="text-body-sm leading-tight font-semibold hover:underline"
+                              >
+                                {c.full_name ?? c.phone}
+                              </Link>
+                            </TruncatedText>
+                            <TruncatedText
+                              lines={1}
+                              className="text-muted-foreground text-body-xs"
+                            >
+                              {c.email ?? "—"}
+                            </TruncatedText>
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{c.phone}</TableCell>
-                    <TableCell>
-                      {c.membership_tiers ? (
-                        <Badge variant="secondary">
-                          {c.membership_tiers.name}
-                        </Badge>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell className="text-primary text-right font-bold tabular-nums">
-                      {c.current_points.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-right tabular-nums">
-                      {c.lifetime_points.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatVnd(c.lifetime_spend)}
-                    </TableCell>
-                    <TableCell>
-                      <StatusDot
-                        label={
-                          c.profile_completed_at
-                            ? cm.profileComplete
-                            : cm.profileIncomplete
-                        }
-                        tone={c.profile_completed_at ? "success" : "neutral"}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell>{c.phone}</TableCell>
+                      <TableCell>
+                        {displayTier ? (
+                          <Badge variant="secondary">{displayTier.name}</Badge>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      <TableCell className="text-primary text-right font-bold tabular-nums">
+                        {c.current_points.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-right tabular-nums">
+                        {c.lifetime_points.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatVnd(c.lifetime_spend)}
+                      </TableCell>
+                      <TableCell>
+                        <StatusDot
+                          label={
+                            c.profile_completed_at
+                              ? cm.profileComplete
+                              : cm.profileIncomplete
+                          }
+                          tone={c.profile_completed_at ? "success" : "neutral"}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </div>

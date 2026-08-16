@@ -1,6 +1,7 @@
 import "server-only"
 
 import { createAdminClient } from "@/lib/supabase/admin"
+import { isDrawable } from "@/lib/spin"
 import type { LoyaltyRules, SkuPointMap } from "@/lib/points"
 import type {
   AdjustMeta,
@@ -9,6 +10,7 @@ import type {
   LoyaltySettingsRow,
   MembershipTierRow,
   RewardRow,
+  SpinResultRow,
   TierScheduleRow,
   TransactionRow,
   TransactionSource,
@@ -113,6 +115,90 @@ export async function hasCheckedInToday(customerId: string): Promise<boolean> {
     .eq("checkin_date", todayInVietnam())
     .maybeSingle()
   return Boolean(data)
+}
+
+// 0 means the wheel is off; callers hide the whole feature rather than showing
+// a spin button that always fails.
+export async function getSpinDailyLimit(): Promise<number> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from("loyalty_settings")
+    .select("spin_daily_limit")
+    .eq("is_active", true)
+    .maybeSingle<Pick<LoyaltySettingsRow, "spin_daily_limit">>()
+  return data?.spin_daily_limit ?? 0
+}
+
+// How many spins the member has already used today, on the same VN calendar day
+// the spin_wheel RPC counts against. The RPC is still the authority — this is
+// only what the page renders before the first click.
+export async function getSpinsUsedToday(customerId: string): Promise<number> {
+  const supabase = createAdminClient()
+  const { count } = await supabase
+    .from("spin_results")
+    .select("id", { count: "exact", head: true })
+    .eq("customer_id", customerId)
+    .eq("spin_date", todayInVietnam())
+  return count ?? 0
+}
+
+/**
+ * The wedges the wheel renders, ordered `sort_order, id` — the same order as
+ * `rewards_spin_draw_idx`, the running-total window inside `spin_wheel`, and
+ * the admin's own list on /admin/rewards. The animation finds its wedge by the
+ * id the RPC returned, so a drifted order would not misplace a prize; keeping
+ * the three in step is so that "position 3" means one thing everywhere.
+ *
+ * Only drawable slices are returned. A wedge nobody can land on is a lie told
+ * to the member, and `isDrawable` is the same predicate the RPC filters on.
+ */
+export async function getSpinPrizes(): Promise<RewardRow[]> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from("rewards")
+    .select("*")
+    .eq("kind", "spin")
+    .eq("is_active", true)
+    .gt("weight", 0)
+    .order("sort_order")
+    .order("id")
+  // The sold-out-gift half of the predicate needs the row in hand, so it is
+  // applied here rather than as a third `.eq`.
+  return ((data ?? []) as RewardRow[]).filter(isDrawable)
+}
+
+/**
+ * A member's own wins, newest first. Reads the frozen `prize_*` columns and
+ * never joins back to `rewards`: what someone won must keep reading the way it
+ * read the day they won it, even after the slice is renamed or deleted.
+ */
+export async function getSpinHistory(
+  customerId: string,
+  limit = 10,
+): Promise<SpinResultRow[]> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from("spin_results")
+    .select("*")
+    .eq("customer_id", customerId)
+    .order("created_at", { ascending: false })
+    .limit(limit)
+  return (data ?? []) as SpinResultRow[]
+}
+
+// Gift wins still sitting at the counter. Only 'gift' prizes are ever settled
+// by hand — a points win is credited by the RPC and a 'none' leaves no debt.
+export async function getUncollectedGiftCount(
+  customerId: string,
+): Promise<number> {
+  const supabase = createAdminClient()
+  const { count } = await supabase
+    .from("spin_results")
+    .select("id", { count: "exact", head: true })
+    .eq("customer_id", customerId)
+    .eq("prize_type", "gift")
+    .is("fulfilled_at", null)
+  return count ?? 0
 }
 
 // SKU -> points, active mappings only. Fetches just the SKUs on the order.
@@ -310,11 +396,19 @@ export async function linkPancakeCustomer(
 
 // Reward store listing. Out-of-stock rewards are still shown (greyed out in the
 // UI) so the store does not silently shrink.
+//
+// `kind = 'redeem'` is not optional here or in any other shop query below: the
+// wheel's slices share this table since 0022, and dropping the filter puts
+// "Chúc bạn may mắn lần sau" on the storefront.
 export async function getActiveRewards({
   category,
 }: { category?: string } = {}): Promise<RewardRow[]> {
   const supabase = createAdminClient()
-  let query = supabase.from("rewards").select("*").eq("is_active", true)
+  let query = supabase
+    .from("rewards")
+    .select("*")
+    .eq("kind", "redeem")
+    .eq("is_active", true)
   // "exclusive" is a pseudo-category on the shop's tab bar: it filters the flag,
   // not the column, so an exclusive reward keeps its real category too.
   if (category === EXCLUSIVE_CATEGORY) query = query.eq("is_exclusive", true)
@@ -334,6 +428,7 @@ export async function getRewardCategories(): Promise<string[]> {
   const { data } = await supabase
     .from("rewards")
     .select("category")
+    .eq("kind", "redeem")
     .eq("is_active", true)
     .not("category", "is", null)
   const seen = new Set<string>()
@@ -350,6 +445,7 @@ export async function getFeaturedReward(): Promise<RewardRow | null> {
   const { data } = await supabase
     .from("rewards")
     .select("*")
+    .eq("kind", "redeem")
     .eq("is_active", true)
     .eq("is_featured", true)
     .maybeSingle<RewardRow>()
@@ -539,6 +635,7 @@ export async function getNextReward(
   const { data } = await supabase
     .from("rewards")
     .select("*")
+    .eq("kind", "redeem")
     .eq("is_active", true)
     .gt("quantity", 0)
     .gt("points_cost", currentPoints)

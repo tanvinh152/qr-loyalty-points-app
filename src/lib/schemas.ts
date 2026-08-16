@@ -108,6 +108,8 @@ export function makeLoyaltySettingsSchema(v: V) {
     welcome_gift_points: z.coerce.number().int().min(0, v.nonNegative),
     // Points for one daily check-in. 0 = feature off.
     checkin_points: z.coerce.number().int().min(0, v.nonNegative),
+    // Free spins per VN calendar day. 0 = feature off.
+    spin_daily_limit: z.coerce.number().int().min(0, v.nonNegative),
     // Free text in the form ("3, 16") -> int[].
     //
     // Empty segments are dropped, not parsed: `Number("")` is 0 and 0 is
@@ -243,6 +245,43 @@ export function makeRewardSchema(v: V) {
 }
 export type RewardInput = z.infer<ReturnType<typeof makeRewardSchema>>
 export type RewardFormValues = z.input<ReturnType<typeof makeRewardSchema>>
+
+// Admin: one wedge of the lucky wheel — a `rewards` row with kind = 'spin'
+// (0022). `kind` is not a field here; saveSpinPrize stamps it.
+//
+// `weight` is a relative odds figure, not a percentage — nothing has to add up
+// to 100, so adding a slice never forces the others to be re-balanced. The
+// refinement mirrors the DB's rewards_spin_points_check so the form catches a
+// points slice worth nothing before the insert does.
+export function makeSpinPrizeSchema(v: V) {
+  return z
+    .object({
+      id: z.string().uuid().optional(),
+      name: z.string().trim().min(1, v.spinPrizeNameRequired),
+      image_url: z
+        .string()
+        .trim()
+        .url(v.invalidUrl)
+        .optional()
+        .or(z.literal("")),
+      prize_type: z.enum(["points", "gift", "none"]),
+      // blankable: a cleared number input posts "" and would coerce to 0, which
+      // for `weight` silently drops the slice out of the draw.
+      points_amount: blankable(z.coerce.number().int().min(0, v.nonNegative)),
+      weight: blankable(z.coerce.number().int().min(0, v.nonNegative)),
+      // Stock, and only a 'gift' slice spends it. A sold-out gift drops out of
+      // the draw (0022), so the form shows this field for gifts alone.
+      quantity: blankable(z.coerce.number().int().min(0, v.nonNegative)),
+      is_active: z.coerce.boolean(),
+      sort_order: blankable(z.coerce.number().int().min(0, v.nonNegative)),
+    })
+    .refine((p) => p.prize_type !== "points" || (p.points_amount ?? 0) > 0, {
+      message: v.spinPointsRequired,
+      path: ["points_amount"],
+    })
+}
+export type SpinPrizeInput = z.infer<ReturnType<typeof makeSpinPrizeSchema>>
+export type SpinPrizeFormValues = z.input<ReturnType<typeof makeSpinPrizeSchema>>
 
 // Admin: manual points/tier adjustment. Deltas are signed — the RPC is what
 // refuses to push a balance below zero. `grant_tier_id` IS a direct tier

@@ -38,21 +38,59 @@ export async function saveTier(input: TierInput): Promise<SaveState> {
     }
   }
 
-  const { id: rowId, benefits, perks, ...rest } = parsed.data
+  const { id: rowId, spend_threshold, multiplier, benefits, perks } =
+    parsed.data
   // The five tiers are a fixed ladder: this is adjust-only, never insert. A
   // payload without an id has nothing to update, so it is refused rather than
-  // silently creating a sixth tier.
+  // silently creating a sixth tier. `name` and `sort_order` are read-only in
+  // the form and dropped here too, so calling this action directly can't
+  // rename a tier or change its rank.
   if (!rowId) return { ok: false, message: m.saveFailed }
 
+  const supabase = await createClient()
+
+  const { data: row } = await supabase
+    .from("membership_tiers")
+    .select("sort_order")
+    .eq("id", rowId)
+    .maybeSingle()
+  if (!row) return { ok: false, message: m.saveFailed }
+
+  // The ladder must stay strictly ascending by sort_order — the same
+  // invariant apply_due_tier_schedules (0010) enforces for scheduled raises —
+  // so a manual edit here can't invert two neighboring tiers.
+  const [{ data: prevRows }, { data: nextRows }] = await Promise.all([
+    supabase
+      .from("membership_tiers")
+      .select("spend_threshold")
+      .lt("sort_order", row.sort_order)
+      .order("spend_threshold", { ascending: false })
+      .limit(1),
+    supabase
+      .from("membership_tiers")
+      .select("spend_threshold")
+      .gt("sort_order", row.sort_order)
+      .order("spend_threshold", { ascending: true })
+      .limit(1),
+  ])
+  const prevMax = prevRows?.[0]?.spend_threshold ?? null
+  const nextMin = nextRows?.[0]?.spend_threshold ?? null
+  if (prevMax !== null && spend_threshold <= prevMax) {
+    return { ok: false, message: m.thresholdBelowNeighbor }
+  }
+  if (nextMin !== null && spend_threshold >= nextMin) {
+    return { ok: false, message: m.thresholdAboveNeighbor }
+  }
+
   const payload = {
-    ...rest,
+    spend_threshold,
+    multiplier,
     benefits: benefits || null,
     // jsonb column. An empty detail is stored as null so the tier screen can
     // render the title alone instead of an empty second line.
     perks: perks.map((perk) => ({ ...perk, detail: perk.detail || null })),
   }
 
-  const supabase = await createClient()
   const { error } = await supabase
     .from("membership_tiers")
     .update(payload)
@@ -99,9 +137,11 @@ export async function saveTierSchedule(
   const { tier_id, mode, target_amount, target_percentile, effective_at, note } =
     parsed.data
 
-  // The check constraint insists the unused column is NULL, and a
-  // datetime-local value carries no zone — new Date() reads it in the server's,
-  // which is where the shop's business hours are.
+  // The check constraint insists the unused column is NULL. A datetime-local
+  // value ("YYYY-MM-DDTHH:mm") carries no zone, and the shop's business hours
+  // are Vietnam's — relying on the server process's local time (which on a
+  // typical serverless deploy is UTC) silently shifted the raise by ~7 hours.
+  // Vietnam has no DST, so the offset is always a fixed +07:00.
   const { error } = await createAdminClient()
     .from("tier_threshold_schedules")
     .insert({
@@ -113,7 +153,7 @@ export async function saveTierSchedule(
       target_amount: mode === "amount" ? (target_amount ?? null) : null,
       target_percentile:
         mode === "percentile" ? (target_percentile ?? null) : null,
-      effective_at: new Date(effective_at).toISOString(),
+      effective_at: new Date(`${effective_at}:00+07:00`).toISOString(),
       note: note || null,
     })
 

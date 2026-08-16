@@ -8,6 +8,7 @@ import {
   makePhoneSchema,
   makeProfileSchema,
   makeRewardSchema,
+  makeSpinPrizeSchema,
   makeTierScheduleSchema,
 } from "./schemas"
 
@@ -92,6 +93,7 @@ describe("makeLoyaltySettingsSchema", () => {
     unmapped_sku_points: 0,
     welcome_gift_points: 0,
     checkin_points: 0,
+    spin_daily_limit: 0,
   }
 
   it("parses the admin's free-text status list into integers", () => {
@@ -286,6 +288,55 @@ describe("makeRewardSchema", () => {
     expect(issues(result)).toContainEqual({
       message: "invalidUrl",
       path: "image_url",
+    })
+  })
+})
+
+describe("makeSpinPrizeSchema", () => {
+  const schema = makeSpinPrizeSchema(v)
+  const base = {
+    name: "Túi cát sắn 2,5kg",
+    prize_type: "gift" as const,
+    is_active: true,
+  }
+
+  it("accepts the minimal slice", () => {
+    expect(schema.safeParse(base).success).toBe(true)
+  })
+
+  // The refinement mirrors the DB's rewards_spin_points_check: a points wedge
+  // that grants nothing is an editing mistake the form should catch first.
+  it("rejects a points slice worth nothing", () => {
+    const result = schema.safeParse({
+      ...base,
+      prize_type: "points",
+      points_amount: "0",
+    })
+    expect(issues(result)).toContainEqual({
+      message: "spinPointsRequired",
+      path: "points_amount",
+    })
+  })
+
+  it("coerces the gift's stock", () => {
+    const result = schema.safeParse({ ...base, quantity: "20" })
+    expect(result.success && result.data.quantity).toBe(20)
+  })
+
+  // blankable(): a cleared number input posts "" and must stay undefined rather
+  // than coercing to 0, which for `weight` silently drops the slice out of the
+  // draw and for `quantity` reads as sold out.
+  it("leaves a cleared stock field undefined rather than zeroing it", () => {
+    const result = schema.safeParse({ ...base, quantity: "", weight: "" })
+    expect(result.success && result.data.quantity).toBeUndefined()
+    expect(result.success && result.data.weight).toBeUndefined()
+  })
+
+  it("rejects negative stock", () => {
+    const result = schema.safeParse({ ...base, quantity: "-1" })
+    expect(issues(result)).toContainEqual({
+      message: "nonNegative",
+      path: "quantity",
     })
   })
 })

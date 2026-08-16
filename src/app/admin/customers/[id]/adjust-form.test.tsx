@@ -73,6 +73,14 @@ const currentDelta = () => screen.getByRole("spinbutton", { name: m.currentDelta
 const lifetimeDelta = () =>
   screen.getByRole("spinbutton", { name: m.lifetimeDelta })
 
+// A valid submit only opens the confirmation dialog — the RPC call moves
+// behind an explicit "yes, apply it" click since this is an unbounded,
+// immediate balance/tier mutation.
+async function submitAndConfirm(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(submit())
+  await user.click(await screen.findByRole("button", { name: m.confirmCta }))
+}
+
 beforeEach(() => {
   adjust.mockReset()
   adjust.mockResolvedValue({ ok: true, message: m.saved })
@@ -113,7 +121,7 @@ describe("AdjustForm", () => {
     await user.clear(currentDelta())
     await user.type(currentDelta(), "5")
     await user.type(reasonBox(), "Bù điểm đơn lỗi")
-    await user.click(submit())
+    await submitAndConfirm(user)
 
     await waitFor(() => expect(adjust).toHaveBeenCalledTimes(1))
     expect(adjust).toHaveBeenCalledWith(
@@ -133,10 +141,23 @@ describe("AdjustForm", () => {
     await user.clear(currentDelta())
     await user.type(currentDelta(), "-50")
     await user.type(reasonBox(), "Thu hồi điểm")
-    await user.click(submit())
+    await submitAndConfirm(user)
 
     await waitFor(() => expect(adjust).toHaveBeenCalledTimes(1))
     expect(adjust.mock.calls[0][0]).toMatchObject({ current_delta: -50 })
+  })
+
+  it("does not call the RPC until the confirmation dialog is accepted", async () => {
+    const user = userEvent.setup()
+    renderForm()
+
+    await user.clear(currentDelta())
+    await user.type(currentDelta(), "5")
+    await user.type(reasonBox(), "Bù điểm đơn lỗi")
+    await user.click(submit())
+
+    expect(await screen.findByText(m.confirmTitle)).toBeInTheDocument()
+    expect(adjust).not.toHaveBeenCalled()
   })
 
   it("previews the resulting balances as the admin types", async () => {
@@ -188,7 +209,7 @@ describe("AdjustForm", () => {
     await user.clear(currentDelta())
     await user.type(currentDelta(), "-500")
     await user.type(reasonBox(), "Thu hồi điểm")
-    await user.click(submit())
+    await submitAndConfirm(user)
 
     expect(await screen.findByText(m.insufficient)).toBeInTheDocument()
   })

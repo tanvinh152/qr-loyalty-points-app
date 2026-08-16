@@ -84,6 +84,7 @@ export const en = {
       tiers: "Tiers",
       products: "Products",
       rewards: "Rewards",
+      spin: "Spin wheel",
       blog: "Blog",
       customers: "Customers",
       transactions: "Transactions",
@@ -143,6 +144,7 @@ export const en = {
       signIn: "Sign in",
       required: "Email and password are required.",
       invalidCredentials: "Invalid credentials.",
+      rateLimited: "Too many failed attempts. Try again in a few minutes.",
     },
     settings: {
       metaTitle: "Loyalty Settings",
@@ -177,6 +179,9 @@ export const en = {
       checkinPoints: "Daily check-in",
       checkinPointsHelper:
         "Points for one check-in per day. 0 = hides the check-in card.",
+      spinDailyLimit: "Spins per day",
+      spinDailyLimitHelper:
+        "Free wheel spins each member gets per day. 0 = hides the wheel.",
       save: "Save settings",
       invalidInput: "Invalid input",
       saveFailed: "Save failed. Check permissions.",
@@ -222,6 +227,10 @@ export const en = {
       empty: "No tiers yet — add your first one below.",
       saved: "Tier saved.",
       saveFailed: "Save failed.",
+      thresholdBelowNeighbor:
+        "That would drop this tier to or below the one beneath it.",
+      thresholdAboveNeighbor:
+        "That would raise this tier to or past the one above it.",
       // ---- scheduled threshold raises ----
       pendingThreshold: "Upcoming threshold",
       pendingNone: "No change queued",
@@ -237,9 +246,9 @@ export const en = {
         "For example 5 means “the top 5% of spenders”. It is turned into a đồng amount on the effective date and stays fixed after that.",
       targetAmount: "New spend required",
       targetPercentile: "Top % of members",
-      effectiveAt: "Applies from",
+      effectiveAt: "Applies from (Vietnam time, UTC+7)",
       effectiveAtHelper:
-        "Nothing changes before this moment. Leave it in the future to announce the raise first.",
+        "Nothing changes before this moment. Leave it in the future to announce the raise first. Enter the time in Vietnam's time zone.",
       scheduleNote: "Note",
       scheduleNoteHelper: "Your own reminder of why. Not shown to customers.",
       schedulePreviewHint: (amount: string) =>
@@ -299,9 +308,13 @@ export const en = {
       uploadFailed: "Upload failed.",
     },
     rewards: {
-      metaTitle: "Rewards",
-      title: "Reward Store",
-      helper: "Items customers can redeem with their available points.",
+      metaTitle: "Gifts",
+      title: "Gifts",
+      helper:
+        "Every gift in one place. Redeemable gifts go to the shop; wheel gifts go on the lucky wheel.",
+      tabRedeem: "Redeemable",
+      tabSpin: "Wheel slices",
+      redeemHelper: "Items customers can redeem with their available points.",
       name: "Name",
       description: "Description",
       pointsCost: "Points cost",
@@ -344,6 +357,88 @@ export const en = {
       saved: "Reward saved.",
       saveFailed: "Save failed.",
       deleteFailed: "Delete failed.",
+      // The wheel's slices are gifts too, so they are managed on this same
+      // screen under their own tab (0022) — only the fields differ.
+      spin: {
+        helper:
+          "Every active slice becomes one wedge. Odds are weights, not percentages — a slice's chance is its weight divided by the total.",
+        addTitle: "Add a slice",
+        name: "Name",
+        prizeType: "What winning grants",
+        prizeTypeHelper:
+          "Points are credited automatically. A gift is handed over at the counter. Blank grants nothing.",
+        typePoints: "Points",
+        typeGift: "Gift",
+        typeNone: "Blank (no prize)",
+        pointsAmount: "Points awarded",
+        pointsAmountHelper: "Credited the moment the wheel stops.",
+        weight: "Weight",
+        weightHelper:
+          "Relative odds. A slice with weight 10 is drawn ten times as often as one with weight 1. Set 0 to keep the slice off the wheel.",
+        sortOrder: "Position",
+        sortOrderHelper: "Lower numbers sit earlier on the wheel.",
+        quantity: "Stock",
+        quantityHelper:
+          "How many are left to give away. A gift at 0 drops off the wheel until you restock it.",
+        outOfStock: "Out of stock",
+        imageUrl: "Image URL",
+        status: "Status",
+        statusHelper: "Inactive slices are removed from the wheel entirely.",
+        odds: (percent: string) => `${percent} chance`,
+        neverDrawn: "Never drawn",
+        pointsChip: (points: number) => `+${points.toLocaleString()} pts`,
+        searchPlaceholder: "Search slices…",
+        noMatch: "No slices match that search.",
+        empty: "No slices yet — add a few so the wheel has something to land on.",
+        statSlices: "Slices on the wheel",
+        statSlicesHint: "Drawable right now",
+        statTotalWeight: "Total weight",
+        statTotalWeightHint: "The denominator behind every percentage",
+        statOutOfStock: "Sold out",
+        statOutOfStockHint: "Gift slices with no stock left",
+        disabledWarning:
+          "The wheel is off. Set “Spins per day” above zero in Settings to show it to members.",
+        goToSettings: "Open settings",
+        noWeightWarning:
+          "No slice can be drawn right now. Give at least one active slice a weight — and restock any sold-out gift.",
+        outOfStockWarning: (n: number) =>
+          n === 1
+            ? "1 gift slice is sold out and off the wheel until you restock it."
+            : `${n} gift slices are sold out and off the wheel until you restock them.`,
+        saved: "Slice saved.",
+        saveFailed: "Save failed.",
+        deleteFailed: "Delete failed.",
+      },
+    },
+    spin: {
+      metaTitle: "Spin wheel",
+      title: "Spin Wheel",
+      statPending: "Gifts to hand over",
+      statPendingHint: "Won but not yet given",
+      winners: {
+        metaTitle: "Spin winners",
+        title: "Spin Winners",
+        subtitle: "Gifts won on the wheel, newest first. Mark each one once handed over.",
+        backToPrizes: "Back to the wheel",
+        viewWinners: "Winners",
+        customer: "Member",
+        prize: "Prize",
+        wonAt: "Won",
+        status: "Status",
+        statusPending: "Not handed over",
+        statusFulfilled: "Handed over",
+        fulfilledOn: (date: string) => `Handed over ${date}`,
+        markFulfilled: "Mark as handed over",
+        undoFulfilled: "Undo",
+        filterLabel: "Show",
+        filterPending: "Pending",
+        filterAll: "All",
+        empty: "No gifts have been won yet.",
+        emptyPending: "Nothing waiting — every gift has been handed over.",
+        marked: "Marked as handed over.",
+        unmarked: "Marked as pending again.",
+        updateFailed: "Could not update that win.",
+      },
     },
     blog: {
       metaTitle: "Blog",
@@ -441,6 +536,10 @@ export const en = {
           reasonHelper: "Stored on the ledger entry alongside your account.",
           preview: "After this change",
           submit: "Apply adjustment",
+          confirmTitle: "Confirm this adjustment?",
+          confirmBody:
+            "This changes the customer's point balance and/or tier immediately and cannot be undone from here. Double-check the preview before confirming.",
+          confirmCta: "Yes, apply it",
           saved: "Adjustment applied.",
           saveFailed: "Could not apply the adjustment.",
           insufficient: "That would push the balance below zero.",
@@ -486,6 +585,9 @@ export const en = {
         webhook: "Automatic from Pancake",
         admin: "Entered by staff",
         redeem: "Reward redemption",
+        welcome: "Welcome gift",
+        checkin: "Daily check-in",
+        spin: "Lucky spin",
       },
       // ADJUST rows carry no order code — the staff note stands in for one.
       adjustBy: (who: string) => `by ${who}`,
@@ -531,6 +633,7 @@ export const en = {
     nav: {
       home: "Home",
       rewards: "Rewards",
+      spin: "Spin & win",
       tiers: "Tiers",
       history: "History",
       help: "Help",
@@ -619,6 +722,45 @@ export const en = {
       checkinPending: "Checking in…",
       checkinDone: "Checked in today",
       checkinSuccess: (points: number) => `+${points.toLocaleString()} points`,
+      spinTitle: "Spin & win",
+      spinBody: (spins: number) =>
+        spins === 1
+          ? "You have 1 spin left today."
+          : `You have ${spins} spins left today.`,
+      spinBodyEmpty: "You've used every spin today. Come back tomorrow.",
+      spinCta: "Go to the wheel",
+      spinPendingGifts: (n: number) =>
+        n === 1 ? "1 gift waiting to be collected" : `${n} gifts waiting to be collected`,
+    },
+    spin: {
+      metaTitle: "Spin & win",
+      title: "Spin & win",
+      subtitle: "One tap, one prize. Free spins reset every day.",
+      spinsLeft: (n: number) => (n === 1 ? "1 spin left" : `${n} spins left`),
+      spinsLeftHint: "Resets at midnight",
+      spin: "Spin",
+      spinning: "Spinning…",
+      noSpinsLeft: "No spins left today",
+      wheelLabel: "Prize wheel",
+      // Read out to screen readers in place of the animation.
+      wheelSlice: (name: string, index: number, total: number) =>
+        `Slice ${index} of ${total}: ${name}`,
+      resultTitle: "You won!",
+      resultPoints: (points: number) =>
+        `${points.toLocaleString()} points have been added to your balance.`,
+      resultGift: "Show this screen at the counter to collect your prize.",
+      resultNone: "Better luck next time — you still have spins to use.",
+      resultNoneDone: "Better luck next time. Come back tomorrow for more spins.",
+      resultClose: "Nice",
+      historyTitle: "Prizes you've won",
+      historyEmpty: "Nothing yet — take your first spin.",
+      pendingChip: "Not collected",
+      collectedChip: "Collected",
+      pointsChip: (points: number) => `+${points.toLocaleString()} pts`,
+      noPrizeLabel: "No prize",
+      offTitle: "The wheel is taking a break",
+      offBody: "There's no spin event running right now. Check back soon.",
+      backToDashboard: "Back to home",
     },
     rewards: {
       metaTitle: "Reward store",
@@ -806,6 +948,9 @@ export const en = {
       alreadyCheckedIn: "You already checked in today.",
       checkinUnavailable: "Daily check-in is not available right now.",
       checkinFailed: "Check-in failed. Please try again.",
+      noSpinsLeft: "You've used every spin today. Come back tomorrow.",
+      spinUnavailable: "The spin wheel is not available right now.",
+      spinFailed: "The spin failed. Please try again.",
       redeemFailed: "Redemption failed. Please try again.",
       supportFailed: "Could not send your request. Please try again.",
     },
@@ -836,6 +981,8 @@ export const en = {
     skuRequired: "SKU is required",
     tierNameRequired: "Tier name is required",
     rewardNameRequired: "Reward name is required",
+    spinPrizeNameRequired: "Slice name is required",
+    spinPointsRequired: "A points slice must award more than 0",
     invalidStatuses: "Enter comma-separated numbers",
     invalidUrl: "Invalid URL",
     passwordTooShort: "Password must be at least 8 characters",

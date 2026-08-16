@@ -20,6 +20,7 @@ export async function saveSettings(
     unmapped_sku_points: formData.get("unmapped_sku_points"),
     welcome_gift_points: formData.get("welcome_gift_points"),
     checkin_points: formData.get("checkin_points"),
+    spin_daily_limit: formData.get("spin_daily_limit"),
     claimable_statuses: formData.get("claimable_statuses"),
   })
   if (!parsed.success) {
@@ -54,5 +55,9 @@ export async function saveSettings(
   if (error) return { ok: false, message: s.saveFailed }
 
   revalidatePath("/admin/settings")
+  // `spin_daily_limit` is what turns the wheel on, and the gift screen renders
+  // an "it's off" banner from it.
+  revalidatePath("/admin/rewards")
+  revalidatePath("/spin")
   return { ok: true, message: s.saved }
 }

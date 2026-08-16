@@ -14,7 +14,11 @@ import { EmptyState } from "@/components/empty-state"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { cn } from "@/lib/utils"
 import { getMessages } from "@/lib/i18n/server"
-import { getTiers, resolveDisplayTier } from "@/lib/loyalty"
+import {
+  getSpinDailyLimit,
+  getTiers,
+  resolveDisplayTier,
+} from "@/lib/loyalty"
 import { signOut } from "../auth/actions"
 import { PortalNav, type PortalNavItem } from "@/components/portal-nav"
 import { getAccount } from "./account"
@@ -28,9 +32,17 @@ export default async function AccountLayout({
   const nav = t.customer.nav
   const { customer } = await getAccount()
 
+  // The wheel only appears once the admin has turned it on: with the daily
+  // limit at 0 every route below /spin is an "it's off" notice, and a rail item
+  // pointing at one reads as a broken link rather than a feature.
+  const spinOn = (await getSpinDailyLimit()) > 0
+
   const items: PortalNavItem[] = [
     { href: "/dashboard", label: nav.home, icon: "home" },
     { href: "/rewards", label: nav.rewards, icon: "rewards" },
+    ...(spinOn
+      ? [{ href: "/spin", label: nav.spin, icon: "spin" as const }]
+      : []),
     { href: "/tiers", label: nav.tiers, icon: "tiers" },
     { href: "/history", label: nav.history, icon: "history" },
     { href: "/help", label: nav.help, icon: "help" },

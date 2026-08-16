@@ -4,6 +4,11 @@ import { redirect } from "next/navigation"
 
 import { createClient } from "@/lib/supabase/server"
 import { getMessages } from "@/lib/i18n/server"
+import {
+  getClientIp,
+  isLoginRateLimited,
+  recordLoginAttempt,
+} from "@/lib/rate-limit"
 
 export type LoginState = { error: string } | null
 
@@ -19,8 +24,13 @@ export async function login(
 
   if (!email || !password) return { error: l.required }
 
+  const ip = await getClientIp()
+  if (await isLoginRateLimited(ip)) return { error: l.rateLimited }
+
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithPassword({ email, password })
+
+  await recordLoginAttempt(ip, !error)
 
   if (error) return { error: l.invalidCredentials }
 

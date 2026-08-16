@@ -5,6 +5,7 @@ import {
   ArrowUpRight,
   CalendarCheck,
   Clock,
+  FerrisWheel,
   Gift,
   History,
   Info,
@@ -26,8 +27,11 @@ import { getLocale, getMessages } from "@/lib/i18n/server"
 import {
   getActiveRewards,
   getCheckinPoints,
+  getSpinDailyLimit,
+  getSpinsUsedToday,
   getTiers,
   getTransactions,
+  getUncollectedGiftCount,
   hasCheckedInToday,
   tierProgress,
 } from "@/lib/loyalty"
@@ -60,16 +64,26 @@ export default async function DashboardPage() {
     },
   )
 
-  const [tiers, recent, rewards, checkinPoints] = await Promise.all([
-    getTiers(),
-    getTransactions(customer.id, { page: 1, pageSize: RECENT_COUNT }),
-    getActiveRewards(),
-    getCheckinPoints(),
-  ])
+  const [tiers, recent, rewards, checkinPoints, spinDailyLimit] =
+    await Promise.all([
+      getTiers(),
+      getTransactions(customer.id, { page: 1, pageSize: RECENT_COUNT }),
+      getActiveRewards(),
+      getCheckinPoints(),
+      getSpinDailyLimit(),
+    ])
   // Only queried when the feature is on — an off admin toggle should not cost
   // every dashboard load an extra read.
   const checkedInToday =
     checkinPoints > 0 ? await hasCheckedInToday(customer.id) : false
+  const [spinsUsed, uncollectedGifts] =
+    spinDailyLimit > 0
+      ? await Promise.all([
+          getSpinsUsedToday(customer.id),
+          getUncollectedGiftCount(customer.id),
+        ])
+      : [0, 0]
+  const spinsLeft = Math.max(0, spinDailyLimit - spinsUsed)
 
   const {
     current,
@@ -220,6 +234,35 @@ export default async function DashboardPage() {
             {d.checkinBody(checkinPoints)}
           </p>
           <CheckinButton initialCheckedIn={checkedInToday} />
+        </SectionCard>
+      )}
+
+      {spinDailyLimit > 0 && (
+        <SectionCard
+          title={d.spinTitle}
+          icon={FerrisWheel}
+          bodyClassName="flex flex-col items-start gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6"
+        >
+          <div className="grid gap-1">
+            <p className="text-body-sm text-muted-foreground">
+              {spinsLeft > 0 ? d.spinBody(spinsLeft) : d.spinBodyEmpty}
+            </p>
+            {/* A gift won on the wheel is settled by hand at the counter, so
+                the only way a member learns it is waiting is being told. */}
+            {uncollectedGifts > 0 && (
+              <p className="text-body-sm text-warning flex items-center gap-1.5">
+                <Gift className="size-4 shrink-0" aria-hidden />
+                {d.spinPendingGifts(uncollectedGifts)}
+              </p>
+            )}
+          </div>
+          <Link
+            href="/spin"
+            className={cn(buttonVariants({ size: "lg" }), "rounded-full")}
+          >
+            <FerrisWheel className="size-5" aria-hidden />
+            {d.spinCta}
+          </Link>
         </SectionCard>
       )}
 

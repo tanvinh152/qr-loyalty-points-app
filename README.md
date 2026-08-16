@@ -9,6 +9,7 @@ Stack: Next.js 16 (App Router, Server Actions) · Supabase (Postgres/Auth/RLS) �
 Pancake POS REST API · Tailwind + shadcn/ui (Base UI) · React Hook Form + Zod.
 
 ## Architecture highlights
+
 - **Orders are never stored.** `/claim` fetches the order live from Pancake
   (`src/lib/pancake/client.ts`); only the resulting ledger row and customer state
   are persisted. The same endpoint resolves both order identifiers — the short POS
@@ -32,26 +33,32 @@ Pancake POS REST API · Tailwind + shadcn/ui (Base UI) · React Hook Form + Zod.
   in `claim_attempts` (`src/lib/rate-limit.ts`) — serverless-safe, no in-memory state.
 - **Restrictive RLS**: anon can read tiers, active rewards and active settings and
   nothing else; no anon writes anywhere.
-- **Point calc** is single-sourced: `src/lib/points.ts` (UI preview) mirrors the SQL
-  in `supabase/migrations/0003_claim_rpc.sql` (authoritative).
+- **Point calc** is single-sourced in SQL: the arithmetic lives only in the
+  `claim_points` RPC (`supabase/migrations/0011_claim_spend.sql`). `src/lib/points.ts`
+  is types now — do not reintroduce a TypeScript copy.
 
 ## Local setup
+
 1. `cp .env.example .env.local` and fill Supabase + Pancake values.
 2. Apply DB (see below).
 3. `npm run dev` → http://localhost:3000 (redirects to `/login` — the QR landing).
 
 ### Pancake credentials
+
 `PANCAKE_API_KEY` and `PANCAKE_SHOP_ID` are server-only. Sanity check a key with:
 
 ```bash
 curl "https://pos.pages.fm/api/v1/shops/<SHOP_ID>/orders/8661?api_key=<KEY>"
 ```
+
 An invalid key answers `403 {"message":"api_key is invalid"}`.
 
 ## Database
+
 Migrations live in `supabase/migrations/` (apply in order) and seed in `supabase/seed.sql`.
 
 Apply via Supabase SQL Editor (paste each file), or the CLI:
+
 ```bash
 supabase link --project-ref <ref>
 supabase db push          # applies migrations
@@ -63,6 +70,7 @@ Create an admin user (Supabase → Authentication → Add user, email+password) 
 at `/admin/login`.
 
 ## Scripts
+
 - `npm run dev` — dev server
 - `npm run build` — production build
 - `npm test` — vitest, both projects (see Testing below)
@@ -72,6 +80,7 @@ at `/admin/login`.
 - `npm run lint` — ESLint
 
 ## Testing
+
 `vitest.config.ts` defines two projects, split by file extension:
 
 - **`unit`** — `src/**/*.test.ts`, node environment. Pure logic only: points, phone
@@ -94,6 +103,7 @@ Three tests in `src/lib/schemas.test.ts` are marked `// BUG:`. They pin current,
 wrong behaviour so the suite stays green; see the comments for what each should do.
 
 ## Customer accounts (Phase 4)
+
 - **Auth is phone + password.** Supabase Auth's password provider is email-keyed, so
   `/register` requires the member's real email and stores it in both `auth.users.email`
   and `customers.email`; `signIn` takes a phone, looks that address up, and hands it to
@@ -112,7 +122,7 @@ wrong behaviour so the suite stays green; see the comments for what each should 
   rewrites the RLS policies around `public.is_admin()`; customers get self-scoped reads
   on their own `customers` row and `transactions`. New admins need the claim set
   manually, e.g. `update auth.users set raw_app_meta_data = raw_app_meta_data ||
-  '{"role":"admin"}'::jsonb where email = '…';`.
+'{"role":"admin"}'::jsonb where email = '…';`.
 - **Redemption** goes through the `redeem_reward` RPC (`0006_redeem_rpc.sql`), which locks
   the reward row before checking stock and balance. `lifetime_points` is never reduced, so
   spending cannot demote a tier.
@@ -120,10 +130,12 @@ wrong behaviour so the suite stays green; see the comments for what each should 
   (guarded in `src/lib/supabase/middleware.ts`).
 
 ## Roadmap
+
 - Zalo OTP as the signup ownership proof, replacing the order-code check.
 - Self-serve password reset (today `/login` tells the customer to contact support).
 
 ## Deployment (Vercel + Supabase Cloud)
+
 - **Test env `mia`** = Vercel Preview; **prod `EVA`** = Vercel Production.
 - Set env vars per environment in Vercel (server-side only for
   `SUPABASE_SERVICE_ROLE_KEY`, `PANCAKE_API_KEY`, `WEBHOOK_SECRET`):

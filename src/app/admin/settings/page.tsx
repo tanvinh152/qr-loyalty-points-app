@@ -20,7 +20,7 @@ export default async function SettingsPage() {
   const { data } = await supabase
     .from("loyalty_settings")
     .select(
-      "rounding, claimable_statuses, unmapped_sku_points, welcome_gift_points, checkin_points",
+      "rounding, claimable_statuses, unmapped_sku_points, welcome_gift_points, checkin_points, spin_daily_limit",
     )
     .eq("is_active", true)
     .maybeSingle()
@@ -30,6 +30,8 @@ export default async function SettingsPage() {
     unmapped_sku_points: data?.unmapped_sku_points ?? 0,
     welcome_gift_points: data?.welcome_gift_points ?? 0,
     checkin_points: data?.checkin_points ?? 0,
+    // 0 = the wheel is off, the same convention as checkin_points.
+    spin_daily_limit: data?.spin_daily_limit ?? 0,
     // Nothing saved yet -> pre-tick the recommended set rather than a bare [3],
     // which would reject every order that has moved on to "received_money".
     claimable_statuses: data?.claimable_statuses ?? DEFAULT_CLAIMABLE_STATUSES,

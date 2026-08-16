@@ -38,7 +38,14 @@ const TYPE_VARIANT: Record<TransactionType, "success" | "warning" | "muted"> = {
 }
 
 const TYPES: TransactionType[] = ["EARN", "REDEEM", "ADJUST"]
-const SOURCES: TransactionSource[] = ["claim", "webhook", "admin", "redeem"]
+const SOURCES: TransactionSource[] = [
+  "claim",
+  "webhook",
+  "admin",
+  "redeem",
+  "welcome",
+  "checkin",
+]
 
 export async function generateMetadata() {
   const t = await getMessages()

@@ -83,16 +83,14 @@ export default async function CustomerDetailPage({
   const supabase = await createClient()
   const { data } = await supabase
     .from("customers")
-    .select("*, membership_tiers(name)")
+    .select("*")
     .eq("id", id)
     .maybeSingle()
 
   // A bad id is a 404, not an empty page: the route is only ever reached from a
   // link, so a miss means the row is gone.
   if (!data) notFound()
-  const customer = data as unknown as CustomerRow & {
-    membership_tiers: { name: string } | null
-  }
+  const customer = data as unknown as CustomerRow
 
   const [tiers, totals, ledger, support] = await Promise.all([
     getTiers(),
@@ -161,11 +159,7 @@ export default async function CustomerDetailPage({
         eyebrow={
           <div className="flex items-center gap-3">
             <InitialsAvatar name={name} size="lg" />
-            {customer.membership_tiers && (
-              <Badge variant="secondary">
-                {customer.membership_tiers.name}
-              </Badge>
-            )}
+            {current && <Badge variant="secondary">{current.name}</Badge>}
             <StatusDot
               label={
                 customer.profile_completed_at

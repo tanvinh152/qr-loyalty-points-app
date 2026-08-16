@@ -13,6 +13,7 @@ export function SearchInput({
   defaultValue,
   placeholder,
   label,
+  hidden,
   className,
 }: {
   action: string
@@ -21,10 +22,19 @@ export function SearchInput({
   placeholder: string
   /** Screen-reader label; the design shows no visible label. */
   label: string
+  /**
+   * Extra query params to carry through the submit. A GET form replaces the
+   * whole query string, so anything the page reads besides `name` — the gift
+   * screen's `kind` tab, say — has to ride along or searching resets it.
+   */
+  hidden?: Record<string, string>
   className?: string
 }) {
   return (
     <form action={action} className={cn("w-full sm:w-80", className)}>
+      {Object.entries(hidden ?? {}).map(([key, value]) => (
+        <input key={key} type="hidden" name={key} value={value} />
+      ))}
       <label className="sr-only" htmlFor={`${name}-search`}>
         {label}
       </label>

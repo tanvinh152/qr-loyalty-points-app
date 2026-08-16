@@ -88,3 +88,28 @@ export async function recordAttempt(
     .from("claim_attempts")
     .insert({ ip, order_code: orderCode, succeeded })
 }
+
+const MAX_LOGIN_FAILURES_PER_IP = 5
+
+// Same IP-throttle shape as above, on its own table (0021): the admin login is
+// the highest-privilege credential in the system and had no throttle at all.
+export async function isLoginRateLimited(ip: string): Promise<boolean> {
+  const supabase = createAdminClient()
+  const { count, error } = await supabase
+    .from("admin_login_attempts")
+    .select("*", { count: "exact", head: true })
+    .eq("ip", ip)
+    .eq("succeeded", false)
+    .gte("created_at", windowStart())
+
+  if (error) return false
+  return (count ?? 0) >= MAX_LOGIN_FAILURES_PER_IP
+}
+
+export async function recordLoginAttempt(
+  ip: string,
+  succeeded: boolean,
+): Promise<void> {
+  const supabase = createAdminClient()
+  await supabase.from("admin_login_attempts").insert({ ip, succeeded })
+}

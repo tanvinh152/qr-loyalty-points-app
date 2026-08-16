@@ -3,7 +3,14 @@ import type { Rounding } from "@/lib/points"
 // Hand-maintained mirror of supabase/migrations/0001_schema.sql.
 
 export type TransactionType = "EARN" | "REDEEM" | "ADJUST"
-export type TransactionSource = "claim" | "webhook" | "admin" | "redeem"
+export type TransactionSource =
+  | "claim"
+  | "webhook"
+  | "admin"
+  | "redeem"
+  | "welcome"
+  | "checkin"
+  | "spin"
 
 export type LoyaltySettingsRow = {
   id: string
@@ -14,6 +21,8 @@ export type LoyaltySettingsRow = {
   welcome_gift_points: number
   /** Points for one daily check-in. 0 = feature off. */
   checkin_points: number
+  /** Free spins granted per VN calendar day (0022). 0 = feature off. */
+  spin_daily_limit: number
   is_active: boolean
   updated_at: string
 }
@@ -39,6 +48,43 @@ export type CheckinResult = {
   points_awarded: number
   current_points: number
   checkin_date: string
+}
+
+/**
+ * What winning a wheel slice grants (0022). `points` credits the balance from
+ * inside the RPC; `gift` is settled by hand at the counter; `none` is the
+ * "better luck next time" wedge, which still occupies a slice and a weight.
+ */
+export type SpinPrizeType = "points" | "gift" | "none"
+
+/**
+ * One win. The `prize_*` columns are frozen copies, not a join: renaming or
+ * deleting a slice must never rewrite what a member already won.
+ * Doubles as the per-day spin counter, keyed by `spin_date`.
+ */
+export type SpinResultRow = {
+  id: string
+  customer_id: string
+  prize_id: string | null
+  prize_name: string
+  prize_type: SpinPrizeType
+  points_awarded: number
+  spin_date: string
+  /** Gift slices only: when a staff member handed the prize over. */
+  fulfilled_at: string | null
+  fulfilled_by: string | null
+  created_at: string
+}
+
+/** Return shape of the spin_wheel RPC. */
+export type SpinResult = {
+  result_id: string
+  prize_id: string
+  prize_name: string
+  prize_type: SpinPrizeType
+  points_awarded: number
+  current_points: number
+  spins_left: number
 }
 
 /** One row of the tier screen's benefit grid. Stored in `membership_tiers.perks`. */
@@ -71,11 +117,24 @@ export type ProductPointRow = {
   updated_at: string
 }
 
+/**
+ * Which kind of gift a `rewards` row is (0022). The two are mutually exclusive
+ * and use disjoint column sets: 'redeem' is bought in the shop with points,
+ * 'spin' is a wedge of the lucky wheel. Every shop query must filter on this.
+ */
+export type RewardKind = "redeem" | "spin"
+
+/**
+ * One gift, of either kind — the admin manages both on /admin/rewards.
+ * Columns below the divider are 'spin'-only and inert on a 'redeem' row.
+ */
 export type RewardRow = {
   id: string
+  kind: RewardKind
   name: string
   description: string | null
   points_cost: number
+  /** Stock. 0 = sold out, for a shop reward AND for a 'gift' slice. */
   quantity: number
   image_url: string | null
   /** Free-text slug; the shop's tab bar is built from the distinct values. */
@@ -87,6 +146,16 @@ export type RewardRow = {
   /** Minimum tier required to redeem, by spend_threshold. Null = unrestricted. */
   min_tier_id: string | null
   created_at: string
+
+  // ---- kind = 'spin' only ----
+  /** What winning this wedge grants. Meaningless on a 'redeem' row. */
+  prize_type: SpinPrizeType
+  /** Points credited by a 'points' wedge. */
+  points_amount: number
+  /** Relative odds — the chance is weight/sum(weight). 0 keeps it off the draw. */
+  weight: number
+  /** Render order of the wedges; must match the draw's ordering in spin_wheel. */
+  sort_order: number
 }
 
 export type PetType = "dog" | "cat" | "other"

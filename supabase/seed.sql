@@ -48,3 +48,17 @@ insert into public.rewards
   ('Túi cát 2,5kg',   'Tặng 1 túi cát sắn Chicha',   1500, 20,  'Sản phẩm',       false, true),
   ('Combo chăm sóc',  'Bộ quà tặng thú cưng',        4000, 5,   'Phong cách sống', true,  false)
 on conflict do nothing;
+
+-- Spin wheel slices — same table, kind = 'spin' (0022). `weight` is relative,
+-- not a percentage: the odds below are 20 / 8 / 1 / 40 / 6 out of 75. A 'gift'
+-- slice is the only kind that spends `quantity`, and a sold-out one drops out
+-- of the draw, so it needs real stock to ever be won. The wheel is still off
+-- until an admin sets loyalty_settings.spin_daily_limit above zero.
+insert into public.rewards
+  (name, kind, points_cost, prize_type, points_amount, quantity, weight, sort_order) values
+  ('50 điểm',                   'spin', 0, 'points', 50,   0,  20, 1),
+  ('200 điểm',                  'spin', 0, 'points', 200,  0,   8, 2),
+  ('1.000 điểm',                'spin', 0, 'points', 1000, 0,   1, 3),
+  ('Chúc bạn may mắn lần sau',  'spin', 0, 'none',   0,    0,  40, 4),
+  ('Túi cát sắn Chicha 2,5kg',  'spin', 0, 'gift',   0,    20,  6, 5)
+on conflict do nothing;

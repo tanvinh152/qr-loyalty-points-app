@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
+  FerrisWheel,
   Gift,
   HelpCircle,
   History,
@@ -30,6 +31,7 @@ const ICONS = {
   history: History,
   help: HelpCircle,
   profile: UserRound,
+  spin: FerrisWheel,
   // Admin
   dashboard: LayoutDashboard,
   products: Package,

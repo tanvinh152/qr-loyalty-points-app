@@ -30,6 +30,7 @@ type Props = {
     unmapped_sku_points: number
     welcome_gift_points: number
     checkin_points: number
+    spin_daily_limit: number
     claimable_statuses: number[]
   }
 }
@@ -204,6 +205,25 @@ export function SettingsForm({ initial }: Props) {
           step="1"
           min="0"
           defaultValue={initial.checkin_points}
+          required
+          className="h-11 max-w-sm"
+        />
+      </fieldset>
+
+      <fieldset className="grid gap-3">
+        <div className="grid gap-1">
+          <Label htmlFor="spin_daily_limit">{s.spinDailyLimit}</Label>
+          <p className="text-muted-foreground text-body-sm">
+            {s.spinDailyLimitHelper}
+          </p>
+        </div>
+        <Input
+          id="spin_daily_limit"
+          name="spin_daily_limit"
+          type="number"
+          step="1"
+          min="0"
+          defaultValue={initial.spin_daily_limit}
           required
           className="h-11 max-w-sm"
         />

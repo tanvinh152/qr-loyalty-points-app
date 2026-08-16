@@ -1,10 +1,20 @@
 "use client"
 
-import { useTransition } from "react"
+import { useState, useTransition } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { FormError } from "@/components/form-error"
 import { Button } from "@/components/ui/button"
 import {
@@ -56,6 +66,8 @@ export function AdjustForm({
   const t = useT()
   const m = t.admin.customers.detail.adjust
   const [isPending, startTransition] = useTransition()
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [pendingValues, setPendingValues] = useState<AdjustInput | null>(null)
 
   const form = useForm<AdjustFormValues, unknown, AdjustInput>({
     resolver: zodResolver(makeAdjustSchema(t.validation)),
@@ -95,12 +107,22 @@ export function AdjustForm({
     )
   const nextTier = grantable.find((tier) => tier.id === grantId) ?? null
 
-  function onSubmit(values: AdjustInput) {
+  // Validated by handleSubmit as before — only the actual write moves behind
+  // the confirmation dialog below, since this is the largest-blast-radius
+  // action in the admin (unbounded balance/tier change, applied immediately).
+  function openConfirm(values: AdjustInput) {
+    setPendingValues(values)
+    setConfirmOpen(true)
+  }
+
+  function confirmSubmit() {
+    if (!pendingValues) return
     startTransition(async () => {
-      const state = await adjustPoints(values)
+      const state = await adjustPoints(pendingValues)
       if (!state?.ok) {
         form.setError("root", { message: state?.message ?? m.saveFailed })
         toast.error(state?.message ?? m.saveFailed)
+        setConfirmOpen(false)
         return
       }
       toast.success(state.message)
@@ -111,12 +133,13 @@ export function AdjustForm({
         grant_tier_id: NO_TIER,
         reason: "",
       })
+      setConfirmOpen(false)
     })
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
+      <form onSubmit={form.handleSubmit(openConfirm)} className="grid gap-6">
         <p className="text-body-sm text-muted-foreground">{m.helper}</p>
 
         <FormField
@@ -239,6 +262,23 @@ export function AdjustForm({
           </Button>
         </div>
       </form>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{m.confirmTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{m.confirmBody}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>
+              {t.common.cancel}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSubmit} disabled={isPending}>
+              {isPending ? t.common.saving : m.confirmCta}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Form>
   )
 }

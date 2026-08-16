@@ -8,8 +8,11 @@
 --     moves up. A raised threshold must never demote a member (see 0010).
 --
 -- The point arithmetic itself is untouched, including the multiplier, which
--- still comes from the tier the customer holds when the order lands. It MUST
--- still stay in sync with calcOrderPoints() in src/lib/points.ts.
+-- still comes from the tier the customer holds when the order lands. This is now
+-- the ONLY implementation of it: the TypeScript copy 0003/0004 pointed at
+-- (calcOrderPoints() in src/lib/points.ts) has been deleted, because no admin
+-- screen ever called it and a duplicate nobody runs cannot catch a divergence.
+-- Do not reintroduce one; if the admin UI needs a preview, call this RPC.
 --
 -- The 7-arg overload is dropped first: adding a defaulted parameter would leave
 -- both signatures resolvable and make every call ambiguous. The grant does not
