@@ -172,7 +172,7 @@ export default async function HistoryPage({
           />
         </div>
         <div className="flex gap-2">
-          <Button type="submit" className="h-12 grow rounded-xl px-8 md:grow-0">
+          <Button type="submit" className="h-12 grow px-8 md:grow-0">
             <SlidersHorizontal className="size-4" aria-hidden />
             {h.filterCta}
           </Button>

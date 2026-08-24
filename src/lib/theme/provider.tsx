@@ -27,7 +27,10 @@ function useOsOrInitial(initial: Theme | null): Theme {
     },
     () =>
       initial ?? (window.matchMedia(MEDIA).matches ? "dark" : "light"),
-    () => initial ?? "dark",
+    // Server snapshot: light is the CSS baseline (`:root` in globals.css), so an
+    // undecided visitor renders light on the server. Returning "dark" here would
+    // make the toggle show the wrong icon for one hydration frame.
+    () => initial ?? "light",
   )
 }
 

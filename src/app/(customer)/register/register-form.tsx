@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useActionState } from "react"
 import {
   ArrowRight,
@@ -121,18 +122,26 @@ export function RegisterForm() {
 
       <div className="flex items-start gap-3">
         <Checkbox id="terms" name="terms" required className="mt-1" />
-        {/* The policies are not published as routes yet, so they are named in
-            plain text rather than styled as links that go nowhere. */}
         {/* Prose, not an overline: undo Label's uppercase flex row so the
-            sentence wraps as one block instead of four spaced-out fragments. */}
+            sentence wraps as one block instead of four spaced-out fragments.
+            Both links are real routes now — /terms carries the privacy section
+            as an anchor rather than a separate page, so neither leads nowhere. */}
         <Label
           htmlFor="terms"
           className="text-body-sm block gap-0 px-0 font-normal normal-case"
         >
           {r.terms}
-          <span className="font-semibold">{r.termsLink}</span>
+          <Link href="/terms" className="text-primary font-semibold underline">
+            {r.termsLink}
+          </Link>
           {r.termsAnd}
-          <span className="font-semibold">{r.privacyLink}</span>.
+          <Link
+            href="/terms#privacy"
+            className="text-primary font-semibold underline"
+          >
+            {r.privacyLink}
+          </Link>
+          .
         </Label>
       </div>
 

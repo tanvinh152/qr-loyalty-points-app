@@ -2,26 +2,29 @@
 -- Orders are NOT seeded — they come from Pancake POS live.
 
 -- Tier thresholds are LIFETIME SPEND in đồng, not points (see 0010_spend_tiers).
--- 0010 already writes this exact ladder so an existing database converges on it;
--- the same rows are repeated here so a fresh `db reset` reads as one story.
+-- These are the numbers from docs/Tich_Diem_ChiCha_Tong_Hop.md §8.2. 0010 wrote
+-- an earlier placeholder ladder and 0023 corrects an existing database onto
+-- these values, so the two paths converge and a fresh `db reset` reads as one
+-- story. Keep this block and 0023 in step if the programme ever changes again.
+-- Note there is no 0đ floor tier: under 1.000.000đ a member holds NO tier.
 insert into public.membership_tiers (name, spend_threshold, multiplier, sort_order, benefits, perks) values
-  ('Bạc',       0,        1.0, 1, 'Tích điểm mọi đơn hàng', '[
+  ('Bạc',       1000000,  1.0, 1, 'Tích điểm mọi đơn hàng', '[
      {"icon":"percent","title":"Tích điểm mọi đơn","detail":"Áp dụng cho toàn bộ sản phẩm"}
    ]'::jsonb),
-  ('Vàng',      3000000,  1.2, 2, 'Nhân 1.2 điểm mỗi đơn', '[
-     {"icon":"percent","title":"Tích điểm 1.2×","detail":"Trên mọi đơn hàng"},
+  ('Vàng',      2000000,  1.1, 2, 'Nhân 1.1 điểm mỗi đơn', '[
+     {"icon":"percent","title":"Tích điểm 1.1×","detail":"Trên mọi đơn hàng"},
      {"icon":"gift","title":"Quà chào hạng","detail":"Voucher khi lên hạng Vàng"}
    ]'::jsonb),
-  ('Bạch kim',  8000000,  1.5, 3, 'Nhân 1.5 điểm mỗi đơn', '[
-     {"icon":"percent","title":"Tích điểm 1.5×","detail":"Trên mọi đơn hàng"},
+  ('Bạch kim',  4000000,  1.2, 3, 'Nhân 1.2 điểm mỗi đơn', '[
+     {"icon":"percent","title":"Tích điểm 1.2×","detail":"Trên mọi đơn hàng"},
      {"icon":"truck","title":"Miễn phí vận chuyển","detail":"3 mã mỗi tháng"}
    ]'::jsonb),
-  ('Kim cương', 20000000, 1.8, 4, 'Nhân 1.8 điểm + quà sinh nhật', '[
-     {"icon":"percent","title":"Tích điểm 1.8×","detail":"Trên mọi đơn hàng"},
+  ('Kim cương', 8000000,  1.4, 4, 'Nhân 1.4 điểm + quà sinh nhật', '[
+     {"icon":"percent","title":"Tích điểm 1.4×","detail":"Trên mọi đơn hàng"},
      {"icon":"truck","title":"Miễn phí vận chuyển","detail":"Không giới hạn"},
      {"icon":"cake","title":"Quà sinh nhật","detail":"Voucher 10% + quà tặng"}
    ]'::jsonb),
-  ('Ruby',      50000000, 2.0, 5, 'Nhân 2 điểm + đặc quyền cao nhất', '[
+  ('Ruby',      40000000, 2.0, 5, 'Nhân 2 điểm + đặc quyền cao nhất', '[
      {"icon":"percent","title":"Tích điểm 2×","detail":"Trên mọi đơn hàng"},
      {"icon":"truck","title":"Miễn phí vận chuyển","detail":"Không giới hạn"},
      {"icon":"cake","title":"Quà sinh nhật","detail":"Quà cao cấp cho bé cưng"},

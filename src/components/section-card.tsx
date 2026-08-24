@@ -30,7 +30,7 @@ export function SectionCard({
   return (
     <section
       className={cn(
-        "border-border bg-card overflow-hidden rounded-xl border",
+        "border-border bg-card shadow-soft overflow-hidden rounded-3xl border",
         className,
       )}
     >

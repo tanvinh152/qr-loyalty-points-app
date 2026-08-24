@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 // Stitch buttons: solid primary, white-with-primary-border secondary, text-only
 // tertiary. Radius is always `lg` (6px); only the claim CTA goes wider.
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-transparent font-semibold whitespace-nowrap transition-colors outline-none select-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:pointer-events-none disabled:opacity-40 aria-invalid:border-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-transparent font-semibold whitespace-nowrap transition-colors outline-none select-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:pointer-events-none disabled:opacity-40 aria-invalid:border-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -24,7 +24,7 @@ const buttonVariants = cva(
         muted: "bg-surface-container text-foreground hover:bg-surface-high",
         // The auth CTA: brand indigo under a soft primary glow (dangnhap.html).
         brand:
-          "bg-brand text-white shadow-[0_0_20px_rgba(173,198,255,0.4)] hover:bg-brand/90",
+          "bg-brand text-white shadow-glow hover:bg-brand/90",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

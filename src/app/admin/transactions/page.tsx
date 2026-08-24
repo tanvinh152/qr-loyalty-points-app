@@ -56,7 +56,7 @@ const PAGE_SIZE = 20
 
 /** Shared field chrome for the two native selects in the filter bar. */
 const SELECT_CLASS =
-  "border-input bg-card text-body-sm h-12 rounded-lg border px-3 outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+  "border-input bg-card text-body-sm h-12 rounded-full border px-5 outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
 
 export default async function TransactionsPage({
   searchParams,
@@ -217,7 +217,7 @@ export default async function TransactionsPage({
           </select>
         </div>
         <div className="flex gap-2">
-          <Button type="submit" className="h-12 rounded-xl px-6">
+          <Button type="submit" className="h-12 px-6">
             <SlidersHorizontal className="size-4" aria-hidden />
             {tx.filterCta}
           </Button>

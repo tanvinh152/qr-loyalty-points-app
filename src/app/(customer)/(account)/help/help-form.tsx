@@ -83,7 +83,7 @@ export function HelpForm({
           defaultValue=""
           required
           // Sized like Input so the three controls share one height and radius.
-          className="border-input bg-card text-body-sm ring-offset-background focus-visible:ring-ring h-11 rounded-lg border px-4 focus-visible:ring-2 focus-visible:outline-none"
+          className="border-input bg-card text-body-sm ring-offset-background focus-visible:ring-ring h-12 rounded-full border px-6 focus-visible:ring-2 focus-visible:outline-none"
         >
           <option value="" disabled>
             {h.topicPlaceholder}

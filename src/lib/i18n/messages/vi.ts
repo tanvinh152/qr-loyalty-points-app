@@ -68,7 +68,7 @@ export const vi: Messages = {
     unknown: (n) => `Trạng thái #${n}`,
   },
   brand: {
-    name: "Chicha Label",
+    name: "ChiCha Membership",
   },
   theme: {
     light: "Sáng",
@@ -79,7 +79,7 @@ export const vi: Messages = {
   admin: {
     metaTitle: "Quản trị",
     nav: {
-      brand: "Chicha Label",
+      brand: "ChiCha Membership",
       brandSub: "Quản trị hệ thống",
       dashboard: "Tổng quan",
       settings: "Cài đặt",
@@ -617,6 +617,8 @@ export const vi: Messages = {
       // Nhãn thanh tab dưới cùng chỉ có ~90px và tối đa 2 dòng, nên dùng dạng
       // ngắn — vẫn cùng gốc từ với "hạng thành viên" ở các màn hình khác.
       home: "Trang chủ",
+      upgradeCta: "Nâng hạng",
+      avatarLabel: "Tài khoản của bạn",
       rewards: "Quà tặng",
       spin: "Vòng quay",
       tiers: "Hạng",
@@ -922,6 +924,123 @@ export const vi: Messages = {
     backToBlog: "Quay lại blog",
     notFoundTitle: "Không tìm thấy bài viết",
     notFoundBody: "Bài viết có thể đã bị gỡ hoặc chuyển về bản nháp.",
+  },
+  footer: {
+    label: "Liên kết",
+    copyright: (year: number) => `© ${year} ChiCha Membership`,
+    help: "Trợ giúp",
+    faq: "Câu hỏi thường gặp",
+    terms: "Thể lệ chương trình",
+    blog: "Cộng đồng",
+  },
+  faq: {
+    metaTitle: "Câu hỏi thường gặp",
+    title: "Câu hỏi thường gặp",
+    subtitle: "Cách tích điểm, thăng hạng và đổi quà.",
+    groups: [
+      {
+        title: "Về tích điểm",
+        items: [
+          {
+            q: "Điểm được cộng như thế nào?",
+            a: "Sau khi tài khoản đã được liên kết, mọi đơn hàng bạn đặt bằng số điện thoại đã đăng ký đều được cộng điểm tự động. Bạn không cần nhập gì thêm — mã đơn hàng chỉ được hỏi một lần duy nhất lúc đăng ký, để xác minh số điện thoại là của bạn.",
+          },
+          {
+            q: "Bao lâu tôi nhận được điểm?",
+            a: "Điểm được cộng khi đơn hàng đạt trạng thái hoàn tất tại cửa hàng — đã giao hoặc đã thanh toán. Đơn còn đang chuẩn bị hoặc đang vận chuyển thì chưa được tính.",
+          },
+          {
+            q: "Tôi đã mua hàng nhưng chưa được cộng điểm?",
+            a: "Nguyên nhân thường gặp nhất là đơn hàng được đặt bằng số điện thoại khác với số trên tài khoản của bạn. Bạn kiểm tra lại số điện thoại trên đơn, sau đó liên hệ hỗ trợ kèm mã đơn hàng để chúng tôi kiểm tra giúp.",
+          },
+          {
+            q: "Điểm có hết hạn không?",
+            a: "Không. Điểm ở lại trong tài khoản cho tới khi bạn dùng để đổi quà.",
+          },
+        ],
+      },
+      {
+        title: "Về sản phẩm",
+        items: [
+          {
+            q: "Cát sắn ChiCha dùng được bao lâu?",
+            a: "Nội dung đang được cập nhật. Trong lúc chờ, bạn liên hệ hỗ trợ để được giải đáp nhé.",
+          },
+          {
+            q: "Cát sắn ChiCha có dùng được cho máy vệ sinh tự động không?",
+            a: "Nội dung đang được cập nhật. Trong lúc chờ, bạn liên hệ hỗ trợ để được giải đáp nhé.",
+          },
+          {
+            q: "Vì sao cát sắn ChiCha khử mùi chưa tốt?",
+            a: "Nội dung đang được cập nhật. Trong lúc chờ, bạn liên hệ hỗ trợ để được giải đáp nhé.",
+          },
+        ],
+      },
+    ],
+    stillStuckTitle: "Chưa tìm thấy câu trả lời?",
+    stillStuckBody: "Gửi câu hỏi cho ChiCha, chúng tôi sẽ phản hồi bạn sớm.",
+    stillStuckCta: "Liên hệ hỗ trợ",
+  },
+  terms: {
+    metaTitle: "Thể lệ chương trình",
+    title: "Thể lệ ChiCha Membership",
+    subtitle: "Cách chương trình khách hàng thân thiết vận hành.",
+    tierTableTitle: "Phân hạng thành viên",
+    colTier: "Hạng",
+    colCondition: "Mức chi tiêu tích luỹ",
+    colMultiplier: "Hệ số điểm",
+    sections: [
+      {
+        id: "eligibility",
+        title: "Đối tượng tham gia",
+        paragraphs: [
+          "Tất cả khách hàng mua sản phẩm hoặc sử dụng dịch vụ tại ChiCha. Chương trình dành cho khách lẻ; đơn sỉ không được tính điểm.",
+          "Đăng ký bằng số điện thoại, họ tên, ngày sinh của bé cưng và mã đơn hàng gần nhất. Một số điện thoại là một tài khoản — không gộp hay tách đơn giữa các tài khoản.",
+        ],
+      },
+      {
+        id: "earning",
+        title: "Tích điểm",
+        paragraphs: [
+          "Điểm được tính từ các sản phẩm trong đơn hàng, nhân với hệ số của hạng bạn đang giữ. Chỉ tính trên số tiền bạn thực trả — sau khi đã trừ mọi khuyến mãi và voucher.",
+          "Đơn hàng được tính điểm khi đã hoàn tất tại cửa hàng. Đơn bị huỷ hoặc trả hàng thì không được tính.",
+        ],
+      },
+      {
+        id: "tiers",
+        title: "Hạng thành viên",
+        paragraphs: [
+          "Hạng của bạn được xác định bằng tổng chi tiêu tích luỹ, không phải bằng số điểm đang có. Điểm là thứ bạn dùng để đổi quà; chi tiêu mới là thứ đưa bạn lên hạng.",
+          "Hạng có giá trị trong 365 ngày. Bạn duy trì mức chi tiêu để giữ hạng hiện tại hoặc lên hạng cao hơn.",
+        ],
+      },
+      {
+        id: "redeeming",
+        title: "Đổi quà",
+        paragraphs: [
+          "Bạn chọn phần quà trong mục Đổi thưởng rồi bấm xác nhận. Điểm được trừ ngay tại thời điểm đó.",
+          "Giao dịch đổi quà đã xác nhận thì không thể thay đổi, không thể huỷ và không được hoàn lại điểm. Bạn cân nhắc kỹ trước khi xác nhận nhé.",
+          "Mỗi phần quà có số lượng giới hạn, và một số phần quà chỉ dành cho thành viên từ một hạng nhất định trở lên.",
+        ],
+      },
+      {
+        id: "delivery",
+        title: "Nhận quà vật lý",
+        paragraphs: [
+          "Với những phần quà cần vận chuyển, ChiCha sẽ liên hệ để xác nhận địa chỉ giao hàng. Chúng tôi sẽ liên hệ tối đa ba lần.",
+          "Thời gian giao thường là 3-7 ngày làm việc kể từ ngày xác nhận đổi quà. Bạn vui lòng kiểm tra kỹ phần quà trước khi ký nhận.",
+          "Trong trường hợp hết quà, ChiCha xin phép được thay thế bằng một phần quà khác có giá trị tương đương.",
+        ],
+      },
+      {
+        id: "privacy",
+        title: "Dữ liệu của bạn",
+        paragraphs: [
+          "Chúng tôi dùng số điện thoại, họ tên và lịch sử mua hàng của bạn để vận hành chương trình, liên hệ về phần quà và hỗ trợ bạn. Chúng tôi không bán dữ liệu của bạn.",
+          "Để biết chúng tôi đang lưu những gì về bạn, hoặc để yêu cầu xoá tài khoản, bạn liên hệ hỗ trợ.",
+        ],
+      },
+    ],
   },
   validation: {
     orderRequired: "Vui lòng nhập mã đơn hàng",

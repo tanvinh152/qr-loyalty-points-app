@@ -2,17 +2,28 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* The Stitch mockups are Tailwind CDN pages full of arbitrary values
+/* Every mockup folder under design/ — stitch-v2 (dark) and stitch-light
+   (Vibrant Paw) alike — is a Tailwind CDN page full of arbitrary values
    (`from-[#0b1326]`, `bg-[url(...)]`). They are reference art, not sources —
    without this, automatic content detection compiles their classes into the
-   app bundle and the `url()` references fail to resolve at build time. */
+   app bundle and the `url()` references fail to resolve at build time.
+   This one line covers all of design/, so new mockup folders need no change. */
 @source not "../../design";
 
-/* Design system: Stitch "Chicha Pet Members" (design/stitch-v2/README.md).
-   Dark mode only — every screen in that project ships `<html class="dark">`, so
-   there is no light palette to port and no `dark` variant to declare. The token
-   NAMES are inherited from the previous light "Loyalty Core" system so no page
-   markup had to change when the values flipped.
+/* Design system: Stitch "Vibrant Paw" (design/stitch-light/README.md and the
+   four design/stitch-light/html/*-vibrant-paw.html files).
+
+   LIGHT is the baseline — it lives in `:root` and is the theme the mockups were
+   drawn in. DARK is an override and is FROZEN at the "Chicha Pet Members" set
+   from design/stitch-v2: the client supplied a light design only, so there is
+   no dark mockup to derive a new dark palette from. Keep the two dark blocks
+   (`@media (prefers-color-scheme: dark)` and `[data-theme="dark"]`) in sync.
+
+   Shape, type and shadow tokens are theme-INVARIANT — they follow Vibrant Paw
+   in both themes, so dark keeps its old colours but takes the new geometry.
+
+   The token NAMES are inherited from the previous "Loyalty Core" system so no
+   page markup has had to change through two palette swaps.
    Colors stay as the hex the design spec states: Tailwind v4 composes opacity
    with color-mix(), so `/50` modifiers work on hex just as well as on oklch,
    and keeping the literal values makes the file diffable against the spec. */
@@ -20,9 +31,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-hanken);
+  --font-sans: var(--font-jakarta);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-hanken);
+  --font-heading: var(--font-jakarta);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -57,8 +68,8 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  /* Stitch tonal surfaces. Depth comes from these layers plus a 1px outline,
-     never from a shadow. */
+  /* Tonal surfaces. Vibrant Paw carries depth with these layers, a 1px
+     outline AND a soft blue-tinted shadow — see --shadow-* below. */
   --color-surface-low: var(--surface-low);
   --color-surface-container: var(--surface-container);
   --color-surface-high: var(--surface-high);
@@ -75,30 +86,33 @@
   --color-tier-4: var(--tier-4);
   --color-tier-5: var(--tier-5);
 
-  /* Shape language is soft: 8px hairline, 12px controls, 1rem cards,
-     2rem panels, 3rem hero surfaces. */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.25rem;
-  --radius-3xl: 2rem;
-  --radius-4xl: 3rem;
+  /* Shape language, Vibrant Paw. Changing the SCALE (rather than rewriting 130
+     class usages) is what rounds the whole app at once. rounded-3xl = 32px is
+     the mockups' widget radius and rounded-4xl = 48px their tier card, so both
+     land exactly on the design without an arbitrary value.
+     Fields and buttons are `rounded-full` pills — see ui/input.tsx, ui/button.tsx. */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-3xl: 32px;
+  --radius-4xl: 48px;
 
   /* Semantic type scale — page markup reads like the design spec. */
   /* The mockups' hero numerals (points balance, tier title) sit a step above
      headline-lg; without this they render at 30px and read as a section title. */
   --text-display: 48px;
   --text-display--line-height: 56px;
-  --text-display--letter-spacing: -0.02em;
-  --text-display--font-weight: 700;
-  --text-headline-lg: 30px;
-  --text-headline-lg--line-height: 38px;
-  --text-headline-lg--letter-spacing: -0.02em;
+  --text-display--letter-spacing: -0.03em;
+  --text-display--font-weight: 800;
+  --text-headline-lg: 32px;
+  --text-headline-lg--line-height: 40px;
+  --text-headline-lg--letter-spacing: -0.01em;
   --text-headline-lg--font-weight: 700;
-  --text-headline-md: 20px;
-  --text-headline-md--line-height: 28px;
-  --text-headline-md--font-weight: 600;
+  --text-headline-md: 24px;
+  --text-headline-md--line-height: 32px;
+  --text-headline-md--font-weight: 700;
   --text-body-lg: 16px;
   --text-body-lg--line-height: 24px;
   --text-body-lg--font-weight: 400;
@@ -116,18 +130,203 @@
   --text-label-md--line-height: 16px;
   --text-label-md--letter-spacing: 0.02em;
   --text-label-md--font-weight: 600;
+  --text-label-lg: 14px;
+  --text-label-lg--line-height: 18px;
+  --text-label-lg--letter-spacing: 0.02em;
+  --text-label-lg--font-weight: 700;
+
+  /* Vibrant Paw's named shadows. The colour is a per-theme custom property, so
+     one utility renders a blue-tinted glow on light and near-black on dark. */
+  --shadow-soft: 0 4px 20px var(--shadow-color-soft);
+  --shadow-elevated: 0 10px 40px var(--shadow-color-elevated);
+  --shadow-nav: 4px 0 24px var(--shadow-color-nav);
+  --shadow-glow: 0 0 20px var(--shadow-color-glow);
 }
 
-/* ── Dark theme (the baseline) ────────────────────────────────────────────
-   docs/color_palette_theme.md § Dark Theme drives the ACCENTS — bright blue
-   #0075e3 (--primary-container), cyan #04cdf8 (--ring), deep blue #001eb6
-   (--brand), text #f0f4f8. The SURFACE ladder below is deliberately NOT the
-   spec's navies: putting #000f5b behind every card turned the whole app blue
-   and tiring to read. Surfaces are a low-chroma neutral with a faint blue
-   undertone; the brand blue earns its place on buttons and focus rings, not on
-   the paper. Do not "restore" #00082e/#000f5b here. */
+/* ── Light theme (the baseline) ───────────────────────────────────────────
+   Light is `:root`, so it is what an undecided visitor on a light or unknown
+   OS gets, and it is the theme the Stitch mockups were drawn in. Dark is the
+   OVERRIDE below.
+
+   Source: design/stitch-light/html/*-vibrant-paw.html ("Vibrant Paw"), whose
+   own tailwind.config is the authority for every value here.
+
+   Note the inversion of --primary between the themes: on light it is the
+   saturated blue so it works both as a filled-button background (with white
+   ink) and as `text-primary`; on dark it becomes a pale tint that plays the
+   same two roles against a dark canvas. */
 
 :root {
+  /* Surfaces. The canvas is the palest tint; cards sit on pure white above it. */
+  --background: #fcf8ff;
+  --foreground: #1a1a2a;
+  --card: #ffffff;
+  --card-foreground: #1a1a2a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a2a;
+  /* --primary is the saturated blue: it is BOTH the filled-button background
+     (with white ink, 10.7:1) and `text-primary` on a light surface. */
+  --primary: #1000c7;
+  /* This one ink sits on --primary AND --primary-container; white clears both
+     (10.7:1 and 7.9:1). */
+  --primary-foreground: #ffffff;
+  --primary-container: #2f2fe4;
+  /* Vibrant Paw's magenta is the SECOND accent hue. 6.5:1 on white, so it works
+     as `text-secondary` (17 sites), not just as a fill. */
+  --secondary: #b80662;
+  --secondary-foreground: #ffffff;
+  --secondary-container: #fd4b95;
+  --muted: #efecff;
+  --muted-foreground: #454556;
+  /* accent == the tint behind active nav and chips, one step above --card. */
+  --accent: #e1e0ff;
+  --accent-foreground: #04006d;
+  --destructive: #ba1a1a;
+  --destructive-container: #ffdad6;
+  /* NOT Vibrant Paw's literal #00C853 / #FFC107. Those are decorative fills in
+     the mockups, but this app uses --success/--warning as TEXT (`text-success`,
+     `text-warning` — 13 sites) and on white they measure 2.2:1 and 1.7:1, which
+     fails WCAG outright. These are the same hues darkened to 4.5:1+. Use the
+     mockups' bright values as backgrounds (`bg-success/12`) instead — do not
+     "restore" them here as the text colour. */
+  --success: #00893f;
+  --warning: #9a6a00;
+  /* --border is a hairline divider (Vibrant Paw draws every divider with
+     outline-variant). --input is heavier on purpose: a field outline is a
+     control boundary and must clear 3:1 against both bg and card. */
+  --border: #c6c4d9;
+  --input: #767588;
+  --ring: #1000c7;
+  --outline: #767588;
+  --surface-low: #f5f2ff;
+  --surface-container: #efecff;
+  --surface-high: #e8e6fc;
+  --surface-highest: #e3e0f7;
+  /* The logo mark's own blue. NOT a palette token — exempt from theme swaps. */
+  --chicha-blue: #001b8f;
+  --brand: #1000c7;
+  /* Tier accents, keyed by membership_tiers.sort_order and never by name.
+     Vibrant Paw ships no tier ladder, so these are built from its own hues and
+     darkened until each clears 4.9:1 on white (they render as `text-tier`).
+     Hue assignment matches the dark set: rank 4 = Kim cương (cyan gem),
+     rank 5 = Ruby (magenta gem) — do not swap those two. */
+  --tier-1: #6f6e85;
+  --tier-2: #a06a00;
+  --tier-3: #6d28d9;
+  --tier-4: #00738f;
+  --tier-5: #b80662;
+  /* Charts are fill-only (`fill-chart-N/20` on the spin wheel), so these stay
+     fully saturated — no contrast obligation. */
+  --chart-1: #2f2fe4;
+  --chart-2: #fd4b95;
+  --chart-3: #ffc107;
+  --chart-4: #3cd7ff;
+  --chart-5: #b80662;
+  /* Load-bearing: portal-nav draws the floating tab bubble with `border-sidebar`
+     as a 4px ring meant to punch through the bar, so this MUST equal the bar's
+     own background. */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1a1a2a;
+  --sidebar-primary: #2f2fe4;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e1e0ff;
+  --sidebar-accent-foreground: #04006d;
+  --sidebar-border: #c6c4d9;
+  --sidebar-ring: #1000c7;
+  /* The page canvas ramp (Vibrant Paw paints this on <body>). */
+  --canvas-from: #f0f3ff;
+  --canvas-to: #ffebf5;
+  /* Vibrant Paw tints every shadow with its brand blue at 2–20% alpha. */
+  --shadow-color-soft: rgb(47 47 228 / 0.05);
+  --shadow-color-elevated: rgb(47 47 228 / 0.08);
+  --shadow-color-nav: rgb(47 47 228 / 0.03);
+  --shadow-color-glow: rgb(47 47 228 / 0.2);
+  /* The auth canvas dot grid. */
+  --paw-dot: color-mix(in oklab, var(--primary) 8%, transparent);
+  /* Theme-invariant: shape does not change between light and dark. */
+  --radius: 1rem;
+}
+
+/* ── Dark theme (the override) ────────────────────────────────────────────
+   These values are the "Chicha Pet Members" dark set from design/stitch-v2 and
+   they are FROZEN: the client supplied a light design only, so dark keeps the
+   palette it has always shipped. Do not re-derive it from the Vibrant Paw
+   mockups — there is no dark mockup to derive it from.
+
+   docs/color_palette_theme.md § Dark Theme drives the ACCENTS here — bright
+   blue #0075e3 (--primary-container), cyan #04cdf8 (--ring), deep blue #001eb6
+   (--brand), text #f0f4f8. The SURFACE ladder is deliberately NOT the spec's
+   navies: putting #000f5b behind every card turned the whole app blue and
+   tiring to read. Surfaces are a low-chroma neutral with a faint blue
+   undertone; the brand blue earns its place on buttons and focus rings, not on
+   the paper. Do not "restore" #00082e/#000f5b here.
+
+   Two selectors carry the SAME values on purpose — keep them in sync:
+     • @media (prefers-color-scheme: dark) :not([data-theme])   OS default, no-JS
+     • :root[data-theme="dark"]                                 explicit choice */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    /* mirror of the explicit block below — see note above */
+    --background: #0a1020;
+    --foreground: #f0f4f8;
+    --card: #141b2e;
+    --card-foreground: #f0f4f8;
+    --popover: #141b2e;
+    --popover-foreground: #f0f4f8;
+    --primary: #d8e2ff;
+    --primary-foreground: #00082e;
+    --primary-container: #0075e3;
+    --secondary: #4edea3;
+    --secondary-foreground: #003824;
+    --secondary-container: #00b47d;
+    --muted: #141b2e;
+    --muted-foreground: #a6b1c6;
+    --accent: #1e2740;
+    --accent-foreground: #f0f4f8;
+    --destructive: #ffb4ab;
+    --destructive-container: #93000a;
+    --success: #4edea3;
+    --warning: #ffb95f;
+    --border: #3a4667;
+    --input: #5f6d95;
+    --ring: #04cdf8;
+    --outline: #8b96ae;
+    --surface-low: #0a1020;
+    --surface-container: #141b2e;
+    --surface-high: #1e2740;
+    --surface-highest: #2a3550;
+    --chicha-blue: #261cc1;
+    --brand: #001eb6;
+    --tier-1: #cbd5e1;
+    --tier-2: #fbbf24;
+    --tier-3: #a5b4fc;
+    --tier-4: #67e8f9;
+    --tier-5: #f43f5e;
+    --chart-1: #04cdf8;
+    --chart-2: #4edea3;
+    --chart-3: #ffb95f;
+    --chart-4: #7ea6ff;
+    --chart-5: #d8e2ff;
+    --sidebar: #070c18;
+    --sidebar-foreground: #f0f4f8;
+    --sidebar-primary: #0075e3;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #1e2740;
+    --sidebar-accent-foreground: #f0f4f8;
+    --sidebar-border: #3a4667;
+    --sidebar-ring: #04cdf8;
+    --canvas-from: #0a1020;
+    --canvas-to: #141b2e;
+    --shadow-color-soft: rgb(0 0 0 / 0.45);
+    --shadow-color-elevated: rgb(0 0 0 / 0.55);
+    --shadow-color-nav: rgb(0 0 0 / 0.4);
+    --shadow-color-glow: rgb(120 160 255 / 0.35);
+    --paw-dot: rgb(216 226 255 / 0.05);
+  }
+}
+
+:root[data-theme="dark"] {
   /* The canvas is the darkest layer; every surface above it steps lighter. */
   --background: #0a1020;
   --foreground: #f0f4f8;
@@ -192,7 +391,6 @@
   --chart-3: #ffb95f;
   --chart-4: #7ea6ff;
   --chart-5: #d8e2ff;
-  --radius: 1rem;
   --sidebar: #070c18;
   --sidebar-foreground: #f0f4f8;
   --sidebar-primary: #0075e3;
@@ -201,136 +399,43 @@
   --sidebar-accent-foreground: #f0f4f8;
   --sidebar-border: #3a4667;
   --sidebar-ring: #04cdf8;
+  /* Dark keeps a FLAT canvas: these two are the existing surface values, so the
+     bg-canvas utility renders as the near-solid background dark always had. */
+  --canvas-from: #0a1020;
+  --canvas-to: #141b2e;
+  /* A blue-tinted shadow is invisible on a dark canvas, so dark uses near-black
+     at a higher alpha. If shadows turn out to muddy the dark theme, setting
+     these four to `transparent` restores stitch-v2's no-shadow look without
+     touching a single class. */
+  --shadow-color-soft: rgb(0 0 0 / 0.45);
+  --shadow-color-elevated: rgb(0 0 0 / 0.55);
+  --shadow-color-nav: rgb(0 0 0 / 0.4);
+  --shadow-color-glow: rgb(120 160 255 / 0.35);
+  /* Exactly the value pattern-paws used to hardcode — dark is unchanged. */
+  --paw-dot: rgb(216 226 255 / 0.05);
 }
 
-/* ── Light theme ──────────────────────────────────────────────────────────
-   The dark `:root` above is the baseline and is never touched, so the app is
-   unchanged for anyone on dark. Light is an OVERRIDE of the same token names,
-   derived from docs/color_palette_theme.md (Primary Blue #0049ed, Dark Navy
-   #00215b, off-white #f0f4f8, Teal #38c6bf). Colours the spec does not name —
-   neutrals, muted, and the tier/chart accents — are re-tuned here for contrast
-   on a light canvas (the dark tier hexes are near-invisible on off-white).
-
-   Two selectors carry the SAME values on purpose:
-     • :root[data-theme="light"]                       explicit choice / age-seed
-     • @media (prefers-color-scheme: light) :not([data-theme])   OS default, no-JS
-
-   Note the inversion of --primary: on dark it is a pale tint used both as the
-   filled-button background AND as `text-primary`; on light it becomes the
-   saturated blue so it still works in both roles (blue button + white text,
-   blue text on a light surface). Keep the two blocks in sync when editing. */
-
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme]) {
-    /* mirror of the explicit block below — see note above */
-    --background: #f0f4f8;
-    --foreground: #00215b;
-    --card: #ffffff;
-    --card-foreground: #00215b;
-    --popover: #ffffff;
-    --popover-foreground: #00215b;
-    --primary: #0049ed;
-    --primary-foreground: #ffffff;
-    --primary-container: #0049ed;
-    --secondary: #38c6bf;
-    --secondary-foreground: #00215b;
-    --secondary-container: #0e9e97;
-    --muted: #e6eef7;
-    --muted-foreground: #475569;
-    --accent: #d7e8fd;
-    --accent-foreground: #00215b;
-    --destructive: #b3261e;
-    --destructive-container: #f9dedc;
-    --success: #0e9e97;
-    --warning: #b45309;
-    --border: #c9d6e5;
-    --input: #c9d6e5;
-    --ring: #0049ed;
-    --outline: #64748b;
-    --surface-low: #f0f4f8;
-    --surface-container: #ffffff;
-    --surface-high: #e4edf7;
-    --surface-highest: #d3e3f5;
-    --chicha-blue: #001b8f;
-    --brand: #0049ed;
-    --tier-1: #94a3b8;
-    --tier-2: #d97706;
-    --tier-3: #6366f1;
-    --tier-4: #0891b2;
-    --tier-5: #e11d48;
-    --chart-1: #0049ed;
-    --chart-2: #0e9e97;
-    --chart-3: #d97706;
-    --chart-4: #6366f1;
-    --chart-5: #38c6bf;
-    --sidebar: #f5f9fd;
-    --sidebar-foreground: #00215b;
-    --sidebar-primary: #0049ed;
-    --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #d7e8fd;
-    --sidebar-accent-foreground: #00215b;
-    --sidebar-border: #c9d6e5;
-    --sidebar-ring: #0049ed;
-  }
-}
-
-:root[data-theme="light"] {
-  --background: #f0f4f8;
-  --foreground: #00215b;
-  --card: #ffffff;
-  --card-foreground: #00215b;
-  --popover: #ffffff;
-  --popover-foreground: #00215b;
-  --primary: #0049ed;
-  --primary-foreground: #ffffff;
-  --primary-container: #0049ed;
-  --secondary: #38c6bf;
-  --secondary-foreground: #00215b;
-  --secondary-container: #0e9e97;
-  --muted: #e6eef7;
-  --muted-foreground: #475569;
-  --accent: #d7e8fd;
-  --accent-foreground: #00215b;
-  --destructive: #b3261e;
-  --destructive-container: #f9dedc;
-  --success: #0e9e97;
-  --warning: #b45309;
-  --border: #c9d6e5;
-  --input: #c9d6e5;
-  --ring: #0049ed;
-  --outline: #64748b;
-  --surface-low: #f0f4f8;
-  --surface-container: #ffffff;
-  --surface-high: #e4edf7;
-  --surface-highest: #d3e3f5;
-  --chicha-blue: #001b8f;
-  --brand: #0049ed;
-  --tier-1: #94a3b8;
-  --tier-2: #d97706;
-  --tier-3: #6366f1;
-  --tier-4: #0891b2;
-  --tier-5: #e11d48;
-  --chart-1: #0049ed;
-  --chart-2: #0e9e97;
-  --chart-3: #d97706;
-  --chart-4: #6366f1;
-  --chart-5: #38c6bf;
-  --sidebar: #f5f9fd;
-  --sidebar-foreground: #00215b;
-  --sidebar-primary: #0049ed;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #d7e8fd;
-  --sidebar-accent-foreground: #00215b;
-  --sidebar-border: #c9d6e5;
-  --sidebar-ring: #0049ed;
+/* The page canvas. Vibrant Paw paints a blue→pink ramp across the whole
+   document; dark resolves both stops to its own surface values, so it stays the
+   near-flat canvas it has always been. Deliberately NOT
+   `background-attachment: fixed` — that is an iOS Safari paint bug, and every
+   site that uses this utility is a min-h-svh shell, so the ramp already spans
+   the full scroll height without it. */
+@utility bg-canvas {
+  background-image: linear-gradient(
+    to bottom right,
+    var(--canvas-from),
+    var(--canvas-to)
+  );
 }
 
 /* The auth screens' canvas texture (`dangnhap.html`): a faint dot grid that
-   keeps the empty background from reading as flat black. */
+   keeps the empty background from reading as flat. The tint is a token because
+   the old hardcoded pale blue was invisible once light became the baseline. */
 @utility pattern-paws {
   background-image: radial-gradient(
     circle at 10px 10px,
-    rgba(216, 226, 255, 0.05) 2px,
+    var(--paw-dot) 2px,
     transparent 0
   );
   background-size: 30px 30px;
@@ -346,16 +451,22 @@
   html {
     @apply font-sans;
   }
-  /* The spec drops headline-lg to 24/32 on phones. */
+  /* Phone step-downs. headline-md is here because Vibrant Paw's 24px desktop
+     value overflows the phone header, where it sets the brand mark beside the
+     points pill. */
   @media (width < 48rem) {
+    .text-display {
+      font-size: 28px;
+      line-height: 36px;
+    }
     .text-headline-lg {
-      font-size: 24px;
-      line-height: 32px;
+      font-size: 28px;
+      line-height: 36px;
       letter-spacing: -0.01em;
     }
-    .text-display {
-      font-size: 36px;
-      line-height: 44px;
+    .text-headline-md {
+      font-size: 20px;
+      line-height: 28px;
     }
   }
 }

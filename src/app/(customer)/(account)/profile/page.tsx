@@ -66,10 +66,11 @@ export default async function ProfilePage() {
         </div>
         <ProfileForm customer={customer} />
 
-        {/* The rail carries these on a desktop. On a phone the rail is gone,
-            the tab bar is full and the header only had room for history — so
-            without this block there is no way to sign out at all. */}
-        <section className="border-border grid gap-1 border-t pt-6 md:hidden">
+        {/* Shown at EVERY width. The rail used to carry these on a desktop, but
+            the nav is now the mockups' four items, so the rail has only the
+            upgrade CTA and sign-out left. /profile is the avatar's destination
+            at both widths, which makes it the natural home for account settings. */}
+        <section className="border-border grid gap-1 border-t pt-6">
           <h2 className="text-label-md text-muted-foreground mb-2 uppercase">
             {p.settingsSection}
           </h2>

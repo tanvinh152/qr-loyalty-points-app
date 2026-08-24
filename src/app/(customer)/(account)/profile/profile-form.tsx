@@ -29,7 +29,7 @@ const PET_TYPES: { value: PetType; icon: LucideIcon }[] = [
 ]
 
 // The mockup's fields are taller, rounder pills than the shared Input default.
-const FIELD = "h-14 rounded-2xl"
+const FIELD = "h-12 rounded-full"
 
 export function ProfileForm({ customer }: { customer: CustomerRow }) {
   const t = useT()

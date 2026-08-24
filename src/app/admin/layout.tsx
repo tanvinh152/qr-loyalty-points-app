@@ -79,8 +79,8 @@ export default async function AdminLayout({
   )
 
   return (
-    <div className="min-h-svh">
-      <aside className="bg-sidebar border-border fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r py-6 md:flex">
+    <div className="bg-canvas min-h-svh">
+      <aside className="bg-sidebar border-border shadow-nav fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r py-6 md:flex">
         <div className="px-6 pb-12">{brand}</div>
 
         <div className="px-3">

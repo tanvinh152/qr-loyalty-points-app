@@ -68,7 +68,7 @@ export async function SpinPrizeCard({
             <Icon className="size-8" aria-hidden />
           </span>
         )}
-        <span className="bg-card absolute top-3 right-3 rounded-md px-2 py-1 shadow-[0_4px_6px_-1px_rgba(0,0,0,.05)]">
+        <span className="bg-card absolute top-3 right-3 rounded-lg px-2 py-1 shadow-soft">
           <span className="text-primary text-label-md font-bold">
             {drawable ? m.odds(formatOdds(share)) : m.neverDrawn}
           </span>

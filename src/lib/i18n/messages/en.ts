@@ -65,7 +65,7 @@ export const en = {
   },
   // The program's name. Shown on the auth split and the account rail.
   brand: {
-    name: "Chicha Label",
+    name: "ChiCha Membership",
   },
   // Light/dark switch. The label shows the theme the button switches TO.
   theme: {
@@ -77,7 +77,7 @@ export const en = {
   admin: {
     metaTitle: "Admin",
     nav: {
-      brand: "Chicha Label",
+      brand: "ChiCha Membership",
       brandSub: "Loyalty admin",
       dashboard: "Dashboard",
       settings: "Settings",
@@ -632,6 +632,8 @@ export const en = {
   customer: {
     nav: {
       home: "Home",
+      upgradeCta: "Upgrade tier",
+      avatarLabel: "Your account",
       rewards: "Rewards",
       spin: "Spin & win",
       tiers: "Tiers",
@@ -968,6 +970,139 @@ export const en = {
     backToBlog: "Back to blog",
     notFoundTitle: "Post not found",
     notFoundBody: "This post may have been unpublished or removed.",
+  },
+  // Shared by the account shell, the public shell and the auth pages.
+  footer: {
+    label: "Site links",
+    copyright: (year: number) => `© ${year} ChiCha Membership`,
+    help: "Support",
+    faq: "FAQ",
+    terms: "Programme rules",
+    blog: "Community",
+  },
+  // Public. Content lives here rather than in a table because the client spec
+  // still has six of its seven answers blank — there is nothing for an admin to
+  // edit yet. If CMS control is wanted later, reuse blog_posts with a new
+  // post_type = 'faq' and the existing admin editor.
+  //
+  // HOUSE RULE: never describe a flow the code does not have. §9 of the spec
+  // says members "enter an order code to convert it to points" — that is NOT
+  // what happens. Points are credited by the Pancake webhook; an order code is
+  // only used once, at signup, to prove the phone number.
+  faq: {
+    metaTitle: "FAQ",
+    title: "Frequently asked questions",
+    subtitle: "How earning, tiers and redeeming work.",
+    groups: [
+      {
+        title: "Earning points",
+        items: [
+          {
+            q: "How do I earn points?",
+            a: "Once your account is linked, every order you place with your registered phone number earns points automatically. You do not need to enter anything — an order code is only asked for once, when you sign up, to prove the phone number is yours.",
+          },
+          {
+            q: "How long until points appear?",
+            a: "Points are credited once the order reaches a completed state at the shop — delivered, or paid for. Orders that are still being prepared or shipped have not earned yet.",
+          },
+          {
+            q: "I bought something but got no points.",
+            a: "The most common cause is that the order was placed with a different phone number than the one on your account. Check the number on the order, then contact support with the order code and we will look into it.",
+          },
+          {
+            q: "Do points expire?",
+            a: "No. Points stay in your account until you redeem them.",
+          },
+        ],
+      },
+      {
+        title: "Products",
+        items: [
+          {
+            q: "How long does ChiCha cassava litter last?",
+            a: "We are updating this answer. Please contact support in the meantime.",
+          },
+          {
+            q: "Can it be used in an automatic litter box?",
+            a: "We are updating this answer. Please contact support in the meantime.",
+          },
+          {
+            q: "Why does the litter not control odour for me?",
+            a: "We are updating this answer. Please contact support in the meantime.",
+          },
+        ],
+      },
+    ],
+    stillStuckTitle: "Still not answered?",
+    stillStuckBody: "Send us the details and we will get back to you.",
+    stillStuckCta: "Contact support",
+  },
+  // Public. Sections come from spec §7-§8, MINUS anything the system does not
+  // actually enforce: the "1.000đ = 1 point" formula in §8.1 (points come from
+  // the per-product table times the tier multiplier) and the voucher expiry
+  // clauses in §8.3.5 (there is no voucher engine yet). Publishing either would
+  // be an unenforceable promise. Open items for the client: the privacy policy
+  // text, and whether §8.1's formula or the implementation is the one to change.
+  terms: {
+    metaTitle: "Programme rules",
+    title: "ChiCha Membership rules",
+    subtitle: "How the loyalty programme works.",
+    tierTableTitle: "Membership tiers",
+    colTier: "Tier",
+    colCondition: "Lifetime spend",
+    colMultiplier: "Earn rate",
+    sections: [
+      {
+        id: "eligibility",
+        title: "Who can join",
+        paragraphs: [
+          "Anyone who buys products or uses services at ChiCha. The programme is for retail customers; wholesale purchases do not earn points.",
+          "Sign up with your phone number, name, your pet's date of birth and a recent order code. One phone number is one account — orders cannot be merged or split across accounts.",
+        ],
+      },
+      {
+        id: "earning",
+        title: "Earning points",
+        paragraphs: [
+          "Points are worked out from the products in each order and multiplied by your tier's earn rate. Only the amount you actually paid counts — after any discounts or vouchers.",
+          "An order earns once it is completed at the shop. Orders that are cancelled or returned do not earn.",
+        ],
+      },
+      {
+        id: "tiers",
+        title: "Tiers",
+        paragraphs: [
+          "Your tier is set by your lifetime spend, not by your points balance. Points are the currency you redeem; spend is what moves you up.",
+          "A tier is valid for 365 days. Keep your spending up to stay at your tier or move higher.",
+        ],
+      },
+      {
+        id: "redeeming",
+        title: "Redeeming",
+        paragraphs: [
+          "Choose a reward in the Rewards section and confirm. Points are deducted at that moment.",
+          "A confirmed redemption cannot be changed, cancelled or refunded in points. Please check before you confirm.",
+          "Each reward has a limited quantity, and some are only available from a certain tier upwards.",
+        ],
+      },
+      {
+        id: "delivery",
+        title: "Receiving physical rewards",
+        paragraphs: [
+          "For rewards that need shipping, ChiCha will contact you to confirm the delivery address. We will try to reach you up to three times.",
+          "Delivery normally takes 3-7 working days from the day the redemption is confirmed. Please check the parcel before signing for it.",
+          "If a reward is out of stock, ChiCha may substitute another of equivalent value.",
+        ],
+      },
+      {
+        id: "privacy",
+        title: "Your data",
+        paragraphs: [
+          "We use your phone number, name and order history to run the programme, contact you about rewards, and provide support. We do not sell your data.",
+          "To ask what we hold about you, or to have your account removed, contact support.",
+        ],
+      },
+    ],
   },
   validation: {
     orderRequired: "Order code is required",

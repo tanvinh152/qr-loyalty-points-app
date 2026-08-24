@@ -3,10 +3,22 @@ import { NextResponse, type NextRequest } from "next/server"
 
 // Refreshes the Supabase auth session cookie on each request and guards both
 // portals: /admin (staff, app_metadata.role === 'admin') and the customer
-// account area (/dashboard, /rewards, /history — any signed-in user).
+// account area (any signed-in user).
 
-// Kept in sync with the route group src/app/(customer)/(account)/.
-const ACCOUNT_PREFIXES = ["/dashboard", "/rewards", "/history"]
+// Every segment of src/app/(customer)/(account)/. This list used to hold only
+// three of them, so /tiers, /help, /profile and /spin were unguarded at the
+// edge and relied solely on getAccount()'s render-time redirect.
+// NOT listed on purpose: /faq, /terms and /blog are public — /register links to
+// /terms, so gating it would bounce an anonymous signer-up to /login.
+const ACCOUNT_PREFIXES = [
+  "/dashboard",
+  "/rewards",
+  "/tiers",
+  "/history",
+  "/help",
+  "/profile",
+  "/spin",
+]
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
