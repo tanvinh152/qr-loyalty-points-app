@@ -19,7 +19,7 @@ export function AuthSplit({
   children: React.ReactNode
 }) {
   return (
-    <main className="bg-canvas pattern-paws relative grid min-h-svh place-items-center overflow-hidden p-4 md:p-8">
+    <main className="bg-canvas relative grid min-h-svh place-items-center overflow-hidden p-4 md:p-8">
       {/* One floating card holding both halves, as in the mockup — not two
           full-bleed columns. */}
       <div className="border-border bg-card relative z-10 grid w-full max-w-[1200px] overflow-hidden rounded-3xl border md:grid-cols-2">

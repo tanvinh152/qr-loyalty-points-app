@@ -242,7 +242,6 @@
   --shadow-color-nav: rgb(47 47 228 / 0.03);
   --shadow-color-glow: rgb(47 47 228 / 0.2);
   /* The auth canvas dot grid. */
-  --paw-dot: color-mix(in oklab, var(--primary) 8%, transparent);
   /* Theme-invariant: shape does not change between light and dark. */
   --radius: 1rem;
 }
@@ -322,7 +321,6 @@
     --shadow-color-elevated: rgb(0 0 0 / 0.55);
     --shadow-color-nav: rgb(0 0 0 / 0.4);
     --shadow-color-glow: rgb(120 160 255 / 0.35);
-    --paw-dot: rgb(216 226 255 / 0.05);
   }
 }
 
@@ -411,8 +409,6 @@
   --shadow-color-elevated: rgb(0 0 0 / 0.55);
   --shadow-color-nav: rgb(0 0 0 / 0.4);
   --shadow-color-glow: rgb(120 160 255 / 0.35);
-  /* Exactly the value pattern-paws used to hardcode — dark is unchanged. */
-  --paw-dot: rgb(216 226 255 / 0.05);
 }
 
 /* The page canvas. Vibrant Paw paints a blue→pink ramp across the whole
@@ -427,18 +423,6 @@
     var(--canvas-from),
     var(--canvas-to)
   );
-}
-
-/* The auth screens' canvas texture (`dangnhap.html`): a faint dot grid that
-   keeps the empty background from reading as flat. The tint is a token because
-   the old hardcoded pale blue was invisible once light became the baseline. */
-@utility pattern-paws {
-  background-image: radial-gradient(
-    circle at 10px 10px,
-    var(--paw-dot) 2px,
-    transparent 0
-  );
-  background-size: 30px 30px;
 }
 
 @layer base {

@@ -1,12 +1,17 @@
 import Link from "next/link"
-import { Gift, LogOut, Medal, Newspaper, Package, Settings } from "lucide-react"
+import { LogOut, PawPrint } from "lucide-react"
 
+import { AdminMenu } from "@/components/admin-menu"
 import { InitialsAvatar } from "@/components/initials-avatar"
+import { PortalHeader } from "@/components/portal-header"
 import { PortalNav, type PortalNavItem } from "@/components/portal-nav"
+import { SidebarProvider, SidebarRail } from "@/components/portal-sidebar"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/server"
 import { getMessages } from "@/lib/i18n/server"
+import { getSidebarCollapsed } from "@/lib/sidebar/server"
+import { type PortalTitle } from "@/lib/portal-title"
 import { logout } from "./login/actions"
 
 export async function generateMetadata() {
@@ -29,8 +34,12 @@ export default async function AdminLayout({
   // Unauthenticated (login page). Middleware guards all other /admin routes.
   if (!user) return <>{children}</>
 
+  const collapsed = await getSidebarCollapsed()
+
   // `/admin` is the only exact match: as a prefix it would light up on every
-  // sub-route.
+  // sub-route. Settings is one of these rather than a hand-rolled link under
+  // the rail — as a special case it was the one destination that never lit up
+  // when you were standing on it.
   const items: PortalNavItem[] = [
     { href: "/admin", label: nav.dashboard, icon: "dashboard", exact: true },
     { href: "/admin/tiers", label: nav.tiers, icon: "tiers" },
@@ -44,10 +53,11 @@ export default async function AdminLayout({
       icon: "transactions",
     },
     { href: "/admin/support", label: nav.support, icon: "support" },
+    { href: "/admin/settings", label: nav.settings, icon: "settings" },
   ]
-  // The phone tab bar holds four, as the customer's does. The three it drops —
-  // tiers, products and settings — move into the phone header, or those routes
-  // would be unreachable on a phone.
+  // The phone tab bar holds four, as the customer's does. The five it drops are
+  // in AdminMenu, behind the avatar, or those routes would be unreachable on a
+  // phone.
   const bottomItems: PortalNavItem[] = [
     items[0],
     { href: "/admin/customers", label: nav.customers, icon: "customers" },
@@ -58,115 +68,115 @@ export default async function AdminLayout({
     },
     { href: "/admin/support", label: nav.support, icon: "support" },
   ]
-  const headerLinks = [
-    { href: "/admin/rewards", label: nav.rewards, icon: Gift },
-    { href: "/admin/blog", label: nav.blog, icon: Newspaper },
-    { href: "/admin/products", label: nav.products, icon: Package },
-    { href: "/admin/tiers", label: nav.tiers, icon: Medal },
-    { href: "/admin/settings", label: nav.settings, icon: Settings },
-  ]
+
+  // Every rail destination names a section; the header reads this to say which
+  // one you are in, and to point the back chevron at it from a detail route
+  // like /admin/customers/[id].
+  const titles: PortalTitle[] = items
 
   // The design shows a photo avatar; we only have an email, so initials stand in.
   const email = user.email ?? ""
 
-  const brand = (
-    <Link href="/admin" className="grid gap-1">
-      <span className="text-headline-lg text-primary block">{nav.brand}</span>
-      <span className="text-label-md text-muted-foreground uppercase">
-        {nav.brandSub}
-      </span>
-    </Link>
+  // The admin brand is text only, so the rail borrows the member portal's paw
+  // square — same ChiCha, no new asset.
+  const brandMark = (
+    <span className="bg-primary-container grid size-8 place-items-center rounded-xl">
+      <PawPrint className="text-primary-foreground size-4" aria-hidden />
+    </span>
   )
 
   return (
-    <div className="bg-canvas min-h-svh">
-      <aside className="bg-sidebar border-border shadow-nav fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r py-6 md:flex">
-        <div className="px-6 pb-12">{brand}</div>
-
-        <div className="px-3">
-          <PortalNav items={items} label={nav.sidebarLabel} variant="rail" />
-        </div>
-
-        <div className="border-border mt-auto grid gap-4 border-t px-3 pt-6">
-          <div className="grid gap-0.5">
-            <Link
-              href="/admin/settings"
-              className="text-muted-foreground hover:bg-surface-container hover:text-foreground text-label-md flex items-center gap-3 rounded-lg px-3 py-2 transition-colors"
-            >
-              <Settings className="size-5" aria-hidden />
-              {nav.settings}
+    <SidebarProvider initialCollapsed={collapsed}>
+      <div className="bg-canvas flex min-h-svh">
+        <SidebarRail
+          items={items}
+          navLabel={nav.sidebarLabel}
+          brand={
+            <Link href="/admin" className="flex min-w-0 items-center gap-2.5">
+              {brandMark}
+              {/* One line at label size. A 32px title with a subtitle under it
+                  used to live here; the role that subtitle named is on the
+                  identity block at the foot of the rail, said once. */}
+              <span className="text-label-lg truncate font-bold">
+                {nav.brand}
+              </span>
             </Link>
-            <ThemeToggle className="text-muted-foreground gap-3 rounded-lg px-3" />
-            <form action={logout}>
-              <button
-                type="submit"
-                className="text-destructive hover:bg-destructive-container/50 text-label-md flex w-full items-center gap-3 rounded-lg px-3 py-2 transition-colors"
-              >
-                <LogOut className="size-5" aria-hidden />
-                {nav.signOut}
-              </button>
-            </form>
-          </div>
-
-          <div className="border-border/40 flex items-center gap-3 border-t px-1 pt-4">
-            <InitialsAvatar name={email} size="lg" />
-            <div className="min-w-0">
-              <p className="text-label-md truncate font-bold">{email}</p>
-              <p className="text-muted-foreground text-label-sm tracking-tight uppercase">
-                {nav.role}
-              </p>
+          }
+          brandMark={
+            <Link href="/admin" aria-label={nav.brand}>
+              {brandMark}
+            </Link>
+          }
+          footer={
+            <div className="flex items-center gap-3 px-1 group-data-[collapsed=true]/sidebar:justify-center group-data-[collapsed=true]/sidebar:px-0">
+              <InitialsAvatar name={email} size="lg" />
+              {/* hidden, not sr-only: this is not any control's name. */}
+              <div className="min-w-0 group-data-[collapsed=true]/sidebar:hidden">
+                <p className="text-label-md truncate font-bold">{email}</p>
+                <p className="text-muted-foreground text-label-sm tracking-tight uppercase">
+                  {nav.role}
+                </p>
+              </div>
             </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* Below md the sidebar is hidden. The header carries the brand, sign-out
-          and the four destinations the tab bar has no room for. */}
-      <header className="bg-sidebar border-border sticky top-0 z-30 border-b md:hidden">
-        <div className="grid gap-2 px-4 py-3">
-          <div className="flex items-center justify-between gap-4">
-            {brand}
-            <div className="flex items-center gap-2">
-              <ThemeToggle iconOnly />
-              <form action={logout}>
-                <button
-                  type="submit"
-                  className="text-destructive text-body-sm font-semibold"
-                >
-                  {nav.signOut}
-                </button>
-              </form>
-            </div>
-          </div>
-          <nav aria-label={nav.mobileLabel} className="flex gap-1">
-            {headerLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                aria-label={link.label}
-                className={buttonVariants({ variant: "ghost", size: "sm" })}
-              >
-                <link.icon className="size-5" aria-hidden />
-              </Link>
-            ))}
-          </nav>
-        </div>
-      </header>
-
-      <main className="md:pl-64">
-        {/* pb-28 keeps the last row clear of the phone tab bar. */}
-        <div className="mx-auto max-w-[1280px] px-4 py-6 pb-28 sm:px-6 md:px-12 md:py-12 md:pb-12">
-          {children}
-        </div>
-      </main>
-
-      <div className="bg-sidebar border-border fixed inset-x-0 bottom-0 z-40 border-t md:hidden">
-        <PortalNav
-          items={bottomItems}
-          label={nav.bottomLabel}
-          variant="bottom"
+          }
         />
+
+        <div className="flex min-w-0 grow flex-col">
+          <PortalHeader
+            titles={titles}
+            backLabel={t.sidebar.back}
+            brand={
+              <Link
+                href="/admin"
+                className="flex min-w-0 items-center gap-2 md:hidden"
+              >
+                <PawPrint
+                  className="text-primary size-5 shrink-0"
+                  aria-hidden
+                />
+                <span className="text-headline-md truncate">{nav.brand}</span>
+              </Link>
+            }
+            system={
+              <>
+                <ThemeToggle iconOnly className="max-md:hidden" />
+
+                <form action={logout} className="max-md:hidden">
+                  {/* Deliberately not `text-destructive`: signing out destroys
+                      nothing, and the red read as an error in the chrome. */}
+                  <Button
+                    type="submit"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={nav.signOut}
+                    title={nav.signOut}
+                  >
+                    <LogOut className="size-4" aria-hidden />
+                  </Button>
+                </form>
+
+                {/* Phone only — on desktop the rail's footer says who is signed
+                    in, so the header does not repeat it. */}
+                <AdminMenu email={email} className="md:hidden" />
+              </>
+            }
+          />
+
+          {/* The bottom pad clears the phone tab bar, its floating active bubble
+              and the home indicator below it. */}
+          <main className="mx-auto w-full max-w-[1280px] grow px-4 py-6 pb-[calc(--spacing(32)+env(safe-area-inset-bottom))] md:px-12 md:py-12 md:pb-12 lg:px-20">
+            {children}
+          </main>
+        </div>
+
+        <div className="bg-sidebar border-border fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] md:hidden">
+          <PortalNav
+            items={bottomItems}
+            label={nav.bottomLabel}
+            variant="bottom"
+          />
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   )
 }

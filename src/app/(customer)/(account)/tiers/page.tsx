@@ -1,12 +1,25 @@
-import { Award, Cake, Gem, Gift, Percent, Sparkles, Truck } from "lucide-react"
+import {
+  Award,
+  Cake,
+  CalendarClock,
+  CheckCircle,
+  Gem,
+  Gift,
+  Percent,
+  ShoppingBag,
+  Sparkles,
+  Truck,
+} from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
 import { EmptyState } from "@/components/empty-state"
 import { PageHeader } from "@/components/page-header"
 import { cn, formatVnd } from "@/lib/utils"
 import { getLocale, getMessages } from "@/lib/i18n/server"
 import { getLatestTierAward, getTiers, tierProgress } from "@/lib/loyalty"
+import type { MembershipTierRow } from "@/lib/db-types"
 import type { PerkIconKey } from "@/lib/tier-perks"
 import { getAccount } from "../account"
 import { tierAccentClass, tierRank } from "../tier-accent"
@@ -18,8 +31,8 @@ export async function generateMetadata() {
   return { title: t.customer.tiers.metaTitle }
 }
 
-/** Perks repeated inside the hero, as in the member mockups. */
-const HERO_PERKS = 3
+/** Perks named in the ladder table's third column. The rest live in the panel. */
+const TABLE_PERKS = 2
 
 // `perks[].icon` is a string in the DB, so it cannot be a component reference.
 // Unknown keys fall back rather than crashing the page on an admin typo. The
@@ -31,6 +44,18 @@ const PERK_ICONS: Record<PerkIconKey, LucideIcon> = {
   cake: Cake,
   award: Award,
   sparkles: Sparkles,
+}
+
+/**
+ * The two headline benefits shown against a tier in the ladder table. `perks`
+ * is the modern column; `benefits` is the legacy free-text one, still edited in
+ * admin, and is the only thing some rows have.
+ */
+function headlineBenefits(tier: MembershipTierRow): string[] {
+  if (tier.perks.length > 0) {
+    return tier.perks.slice(0, TABLE_PERKS).map((perk) => perk.title)
+  }
+  return tier.benefits ? [tier.benefits] : []
 }
 
 export default async function TiersPage() {
@@ -58,7 +83,6 @@ export default async function TiersPage() {
 
   const rank = tierRank(tiers, current?.id)
   const perks = current?.perks ?? []
-  const heroPerks = perks.slice(0, HERO_PERKS)
 
   const locale = await getLocale()
   const monthYear = new Intl.DateTimeFormat(
@@ -81,14 +105,18 @@ export default async function TiersPage() {
       )}
     >
       <PageHeader
-        title={current ? ti.title(current.name) : ti.noTier}
+        title={ti.pageTitle}
         description={ti.subtitle}
         size="display"
+        // Gated on `current`: "Current tier" printed above an empty state is a
+        // statement that isn't true yet.
         eyebrow={
-          <span className="text-label-md text-tier border-tier/40 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 uppercase">
-            <Gem className="size-3.5" aria-hidden />
-            {ti.eyebrow}
-          </span>
+          current ? (
+            <span className="text-label-md text-tier border-tier/40 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 uppercase">
+              <Gem className="size-3.5" aria-hidden />
+              {ti.eyebrow}
+            </span>
+          ) : undefined
         }
       />
 
@@ -102,74 +130,64 @@ export default async function TiersPage() {
         </div>
       ) : (
         <div className="grid gap-4 sm:gap-6 md:grid-cols-12">
-          <section className="border-border bg-card relative overflow-hidden rounded-3xl border p-4 sm:min-h-[400px] sm:p-6 md:col-span-8 md:p-12">
+          <section className="border-border bg-card relative grid content-start gap-4 overflow-hidden rounded-3xl border p-4 sm:gap-6 sm:p-6 md:col-span-5 md:p-8">
             {/* Decorative gem glow — the accent class set --tier above. */}
             <span
               aria-hidden
               className="bg-tier/20 pointer-events-none absolute -top-16 -right-16 size-56 rounded-full blur-3xl"
             />
-            <div className="relative grid gap-4 sm:gap-6">
-              {/* Status text leads on the left; the gem emblem sits top-right
-                  with its own glow, as in the member mockups. */}
-              <div className="flex items-start justify-between gap-4">
-                <div className="grid min-w-0 gap-1">
-                  <span className="text-label-md text-tier uppercase">
-                    {ti.statusActive(current.name)}
-                  </span>
-                  {/* Spend leads here: it is what the ring below fills with and
-                      what the other tiers are priced in. */}
-                  <div className="flex flex-wrap items-baseline gap-2">
-                    <span className="text-headline-lg text-primary tabular-nums">
-                      {formatVnd(customer.lifetime_spend)}
-                    </span>
-                    <span className="text-body-lg text-muted-foreground">
-                      {ti.spendLabel}
-                    </span>
-                  </div>
-                  <Badge variant="secondary" className="w-fit">
-                    {ti.multiplier(current.multiplier)}
-                  </Badge>
-                  {grandfathered && (
-                    <p className="text-body-sm text-muted-foreground">
-                      {ti.grandfathered(
-                        current.name,
-                        monthYear.format(new Date(grandfathered.awarded_at)),
-                      )}
-                    </p>
+            <div className="relative flex items-center gap-4">
+              <span className="border-tier bg-tier/10 text-tier grid size-24 shrink-0 place-items-center rounded-full border">
+                <Gem className="size-10" aria-hidden />
+              </span>
+              <div className="grid min-w-0 gap-1">
+                <span className="text-headline-lg text-tier truncate">
+                  {current.name}
+                </span>
+                <span className="text-body-sm text-muted-foreground">
+                  {ti.memberSince(memberSince)}
+                </span>
+                <Badge variant="secondary" className="w-fit">
+                  {ti.multiplier(current.multiplier)}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="relative grid gap-1">
+              <span className="text-body-sm text-muted-foreground">
+                {ti.spendLabel}
+              </span>
+              <span className="text-headline-md text-primary tabular-nums">
+                {formatVnd(customer.lifetime_spend)}
+              </span>
+              {grandfathered && (
+                <p className="text-body-sm text-muted-foreground">
+                  {ti.grandfathered(
+                    current.name,
+                    monthYear.format(new Date(grandfathered.awarded_at)),
                   )}
-                </div>
-                <span className="border-tier/30 bg-tier/10 text-tier shadow-tier/30 grid size-14 shrink-0 place-items-center rounded-2xl border shadow-[0_0_30px_-6px] sm:size-20">
-                  <Gem className="size-7 sm:size-9" aria-hidden />
+                </p>
+              )}
+            </div>
+
+            {/* Programme policy, NOT system behaviour: `customers.tier_id` is
+                the highest tier ever held and is only ever raised, so nothing
+                here may read as a promise that the app will demote anyone. */}
+            <div className="border-border relative flex gap-3 border-t pt-4 sm:pt-6">
+              <span className="bg-surface-container text-muted-foreground grid size-10 shrink-0 place-items-center rounded-xl">
+                <CalendarClock className="size-5" aria-hidden />
+              </span>
+              <div className="grid gap-0.5">
+                <span className="text-body-lg font-semibold">
+                  {ti.retentionTitle}
+                </span>
+                <span className="text-body-sm text-muted-foreground">
+                  {ti.retentionBody(current.name)}
                 </span>
               </div>
+            </div>
 
-              {/* The hero repeats the top perks so the tier's value reads without
-                  scrolling to the grid below. */}
-              {heroPerks.length > 0 && (
-                <div className="grid gap-3">
-                  <span className="text-label-md text-muted-foreground uppercase">
-                    {ti.heroPerksLabel}
-                  </span>
-                  <ul className="grid gap-2">
-                    {heroPerks.map((perk, index) => {
-                      const Icon =
-                        PERK_ICONS[perk.icon as PerkIconKey] ?? Sparkles
-                      return (
-                        <li
-                          key={`${perk.title}-${index}`}
-                          className="flex items-center gap-3"
-                        >
-                          <span className="border-tier/30 bg-tier/10 text-tier grid size-9 shrink-0 place-items-center rounded-xl border">
-                            <Icon className="size-4" aria-hidden />
-                          </span>
-                          <span className="text-body-sm">{perk.title}</span>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                </div>
-              )}
-
+            <div className="relative">
               <MemberCardDialog
                 name={customer.full_name ?? customer.phone}
                 tierName={current.name}
@@ -180,23 +198,47 @@ export default async function TiersPage() {
             </div>
           </section>
 
-          <section className="border-border bg-card grid content-center justify-items-center gap-4 rounded-3xl border p-4 text-center sm:p-6 md:col-span-4 md:p-8">
-            <h2 className="text-headline-md">{ti.progressTitle}</h2>
+          <section className="border-border bg-card grid content-center gap-4 rounded-3xl border p-4 sm:p-6 md:col-span-7 md:p-8">
             {next ? (
               <>
-                <TierRing
-                  percent={progress}
-                  label={ti.levelLabel(rank != null ? rank + 1 : 1)}
-                  caption={current.name}
+                <div className="flex flex-wrap items-end justify-between gap-2">
+                  <div className="grid gap-1">
+                    <h2 className="text-headline-md">
+                      {ti.progressTo(next.name)}
+                    </h2>
+                    <p className="text-body-sm text-muted-foreground">
+                      {ti.progressCaption}
+                    </p>
+                  </div>
+                  <p className="text-body-lg tabular-nums">
+                    <span className="text-tier font-semibold">
+                      {formatVnd(customer.lifetime_spend)}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {` / ${formatVnd(next.spend_threshold)}`}
+                    </span>
+                  </p>
+                </div>
+                <Progress
+                  value={progress / 100}
+                  label={ti.progressTo(next.name)}
+                  accent
+                  className="h-4"
                 />
-                <p className="text-body-sm text-muted-foreground">
-                  {ti.spendToNext(formatVnd(toNext), next.name)}
-                </p>
+                <div className="border-tier/30 bg-tier/10 flex items-center gap-3 rounded-full border px-4 py-3">
+                  <span className="text-tier grid size-8 shrink-0 place-items-center">
+                    <ShoppingBag className="size-5" aria-hidden />
+                  </span>
+                  <span className="text-body-sm">
+                    {ti.spendToNext(formatVnd(toNext), next.name)}
+                  </span>
+                </div>
               </>
             ) : (
-              <>
-                {/* Same caption as the other branch — the tier's own name.
-                    A bare "Level" under MAX says nothing. */}
+              // Nothing to fill towards — the ring says MAX rather than a bar
+              // sitting permanently at 100%.
+              <div className="grid justify-items-center gap-4 text-center">
+                <h2 className="text-headline-md">{ti.progressTitle}</h2>
                 <TierRing
                   percent={100}
                   label={ti.maxLabel}
@@ -205,16 +247,145 @@ export default async function TiersPage() {
                 <p className="text-body-sm text-muted-foreground">
                   {ti.atTop(current.name)}
                 </p>
-              </>
+              </div>
             )}
           </section>
         </div>
       )}
 
+      {/* Unguarded on purpose: someone with no tier yet still needs to see what
+          the ladder costs and offers — that is the screen's whole pitch. */}
+      <section className="border-border bg-card shadow-soft overflow-hidden rounded-3xl border">
+        <div className="border-border border-b p-4 sm:p-6">
+          <h2 className="text-headline-md flex items-center gap-2">
+            <Gem className="text-primary size-5" aria-hidden />
+            {ti.benefitsTableTitle}
+          </h2>
+        </div>
+
+        {/* Three columns of Vietnamese do not fit 360px, so a phone gets the
+            same rows as cards — the pattern /history uses. */}
+        <ul className="divide-border divide-y sm:hidden">
+          {tiers.map((tier, index) => (
+            <li
+              key={tier.id}
+              className={cn(
+                "grid gap-2 p-4",
+                tierAccentClass(index),
+                tier.id === current?.id && "border-l-4 border-l-tier",
+              )}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="border-tier/30 bg-tier/10 text-tier grid size-9 shrink-0 place-items-center rounded-xl border">
+                  <Gem className="size-4" aria-hidden />
+                </span>
+                <span className="text-body-lg font-semibold">{tier.name}</span>
+                {tier.id === current?.id && (
+                  <Badge variant="secondary">{ti.currentChip}</Badge>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-body-sm text-muted-foreground tabular-nums">
+                  {ti.thresholdAt(formatVnd(tier.spend_threshold))}
+                </span>
+                <Badge variant="muted">{ti.multiplier(tier.multiplier)}</Badge>
+              </div>
+              <ul className="grid gap-1">
+                {headlineBenefits(tier).map((benefit) => (
+                  <li
+                    key={benefit}
+                    className="text-body-sm flex items-start gap-2"
+                  >
+                    <CheckCircle
+                      className="text-tier mt-0.5 size-4 shrink-0"
+                      aria-hidden
+                    />
+                    {benefit}
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+
+        <div className="hidden overflow-x-auto sm:block">
+          <table className="w-full min-w-[720px] text-left">
+            <caption className="sr-only">{ti.benefitsTableTitle}</caption>
+            <thead>
+              <tr className="border-border text-label-md text-muted-foreground border-b tracking-wider uppercase">
+                <th scope="col" className="px-6 py-3.5">
+                  {ti.colTier}
+                </th>
+                <th scope="col" className="px-6 py-3.5">
+                  {ti.colCondition}
+                </th>
+                <th scope="col" className="px-6 py-3.5">
+                  {ti.colBenefits}
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-border divide-y">
+              {tiers.map((tier, index) => (
+                <tr
+                  key={tier.id}
+                  // The accent goes on the row so both the gem chip and the
+                  // highlight read --tier. It carries a gradient, which is why
+                  // the current row is marked with a border rather than a tint
+                  // that would sit invisibly underneath it.
+                  className={cn(
+                    tierAccentClass(index),
+                    tier.id === current?.id && "border-l-4 border-l-tier",
+                  )}
+                >
+                  <th scope="row" className="px-6 py-4 font-semibold">
+                    <div className="flex items-center gap-3">
+                      <span className="border-tier/30 bg-tier/10 text-tier grid size-10 shrink-0 place-items-center rounded-xl border">
+                        <Gem className="size-5" aria-hidden />
+                      </span>
+                      <span className="text-body-lg">{tier.name}</span>
+                      {tier.id === current?.id && (
+                        <Badge variant="secondary">{ti.currentChip}</Badge>
+                      )}
+                    </div>
+                  </th>
+                  <td className="px-6 py-4">
+                    <div className="grid justify-items-start gap-1.5">
+                      <span className="text-body-sm whitespace-nowrap tabular-nums">
+                        {ti.thresholdAt(formatVnd(tier.spend_threshold))}
+                      </span>
+                      <Badge variant="muted">
+                        {ti.multiplier(tier.multiplier)}
+                      </Badge>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <ul className="grid gap-1.5">
+                      {headlineBenefits(tier).map((benefit) => (
+                        <li
+                          key={benefit}
+                          className="text-body-sm flex items-start gap-2"
+                        >
+                          <CheckCircle
+                            className="text-tier mt-0.5 size-4 shrink-0"
+                            aria-hidden
+                          />
+                          {benefit}
+                        </li>
+                      ))}
+                    </ul>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       {current && (
         // Not a SectionCard: the mockup's privileges panel carries a full-height
         // tier rail down its left edge, which the shared header strip has no
-        // room for.
+        // room for. This panel is also the ONLY place `perk.detail` is rendered
+        // — the table above has room for titles alone.
         <section className="border-border bg-card relative overflow-hidden rounded-3xl border p-4 sm:p-6 md:p-8">
           <span aria-hidden className="bg-tier absolute inset-y-0 left-0 w-1" />
           <h2 className="text-headline-md mb-4 sm:mb-6">
@@ -251,37 +422,6 @@ export default async function TiersPage() {
           )}
         </section>
       )}
-
-      <section className="grid gap-4">
-        <h2 className="text-label-sm text-muted-foreground tracking-[0.2em] uppercase">
-          {ti.othersTitle}
-        </h2>
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {tiers.map((tier, index) => (
-            <li
-              key={tier.id}
-              className={cn(
-                "border-border grid gap-1 rounded-3xl border p-4 sm:p-6",
-                tierAccentClass(index),
-                tier.id === current?.id && "border-tier ring-tier ring-1",
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <span className="border-tier/30 bg-tier/10 text-tier grid size-10 shrink-0 place-items-center rounded-xl border">
-                  <Gem className="size-5" aria-hidden />
-                </span>
-                <span className="text-headline-md">{tier.name}</span>
-              </div>
-              <span className="text-body-sm text-muted-foreground">
-                {ti.multiplier(tier.multiplier)}
-              </span>
-              <span className="text-body-xs text-muted-foreground tabular-nums">
-                {ti.thresholdAt(formatVnd(tier.spend_threshold))}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
     </div>
   )
 }

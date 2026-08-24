@@ -1738,7 +1738,9 @@ children (yêu cầu của Base UI).
 | `PageLink`       | Nút phân trang; thành `<span>` mờ khi không có đích. **Đây là mẫu `buttonVariants`-trên-Link**                                                                               |
 | `PageSkeleton`   | Khung mà `loading.tsx` render                                                                                                                                                |
 | `Pagination`     | "hiển thị N / M" + prev/next                                                                                                                                                 |
-| `PortalNav`      | **Dùng chung cả hai portal.** Map `ICONS` nằm phía client vì component lucide không vượt được ranh giới RSC — layout truyền xuống một chuỗi khoá. Variant `rail` \| `bottom` |
+| `PortalNav`      | **Dùng chung cả hai portal.** Map `ICONS` nằm phía client vì component lucide không vượt được ranh giới RSC — layout truyền xuống một chuỗi khoá. Variant `rail` \| `bottom`; prop `collapsed` (chỉ `rail`) làm nhãn thành `sr-only` + thêm `title` |
+| `PortalSidebar`  | **Dùng chung cả hai portal.** `SidebarProvider` (context, vì nút thu gọn ở header còn rail là `<aside>` — hai anh em) + `SidebarToggle` + `SidebarRail`. Sở hữu padding ngang của rail: `group-data` chỉ khớp *hậu duệ*, nên class trên chính `<aside>` không phản ứng theo state của nó. Prop cho slot server-rendered, `group-data-[collapsed=true]/sidebar:*` cho phần còn lại |
+| `AccountMenu`    | Sheet tài khoản trên phone (Base UI `Drawer`) sau avatar: nâng hạng / hồ sơ / hỗ trợ / theme / đăng xuất. Từ `md` lên, những thứ này là control riêng trên header |
 | `SearchInput`    | Form GET một ô — điều hướng, không cần client component                                                                                                                      |
 | `SectionCard`    | Panel có viền: header + body (tràn viền để bảng vừa) + footer                                                                                                                |
 | `StatCard`       | Ô số liệu; `href` biến cả ô thành `Link`                                                                                                                                     |
@@ -1754,7 +1756,7 @@ Hai project Vitest tách theo phần mở rộng file.
 | Project   | Môi trường                                           | File                                                                                                                                                                                                                       |
 | --------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Unit      | node                                                 | `lib/{loyalty,media,phone,rate-limit,schemas,storage,utils}.test.ts`, `lib/theme/config.test.ts`, `lib/pancake/client.test.ts`, `(account)/tier-accent.test.ts`, `(customer)/auth/actions.test.ts`, `api/webhooks/pancake/route.test.ts`, `api/cron/reconcile-tiktok-orders/route.test.ts` |
-| Component | jsdom (`renderWithProviders`, `src/test/render.tsx`) | `components/{portal-nav,theme-toggle,truncated-text}.test.tsx`, `admin/customers/[id]/adjust-form.test.tsx`                                                                                                                |
+| Component | jsdom (`renderWithProviders`, `src/test/render.tsx`) | `components/{portal-nav,portal-sidebar,theme-toggle,truncated-text}.test.tsx`, `admin/customers/[id]/adjust-form.test.tsx`                                                                                                                |
 
 Chạy: `npm test` · `npm run test:watch` · `npm run test:coverage`.
 

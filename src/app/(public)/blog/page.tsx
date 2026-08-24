@@ -1,11 +1,11 @@
 import Link from "next/link"
-import { Newspaper, Sparkles } from "lucide-react"
+import { Newspaper } from "lucide-react"
 
 import { EmptyState } from "@/components/empty-state"
 import { PageHeader } from "@/components/page-header"
-import { Badge } from "@/components/ui/badge"
+import { PostCard } from "@/components/post-card"
 import { cn } from "@/lib/utils"
-import { getLocale, getMessages } from "@/lib/i18n/server"
+import { getMessages } from "@/lib/i18n/server"
 import { getPublishedPosts } from "@/lib/blog"
 import type { BlogPostType } from "@/lib/db-types"
 
@@ -25,13 +25,7 @@ export default async function BlogListPage({
   const postType: BlogPostType | undefined =
     type === "article" || type === "promotion" ? type : undefined
 
-  const [posts, locale] = await Promise.all([
-    getPublishedPosts({ postType }),
-    getLocale(),
-  ])
-  const dateFormat = new Intl.DateTimeFormat(locale === "vi" ? "vi-VN" : "en-GB", {
-    dateStyle: "medium",
-  })
+  const posts = await getPublishedPosts({ postType })
 
   const tabs = [
     { key: undefined, label: b.tabAll },
@@ -75,47 +69,7 @@ export default async function BlogListPage({
       ) : (
         <div className="grid gap-4">
           {posts.map((post) => (
-            <Link
-              key={post.id}
-              href={`/blog/${post.slug}`}
-              className="border-border bg-card grid gap-4 overflow-hidden rounded-3xl border transition-colors sm:grid-cols-[200px_1fr]"
-            >
-              {post.cover_image_url ? (
-                // Admin-entered URLs from any host — a plain <img>, same
-                // reasoning as the reward cards.
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={post.cover_image_url}
-                  alt=""
-                  width={400}
-                  height={225}
-                  className="h-40 w-full object-cover sm:h-full"
-                />
-              ) : (
-                <div className="bg-surface-container text-muted-foreground grid h-40 place-items-center sm:h-full">
-                  <Newspaper className="size-8" aria-hidden />
-                </div>
-              )}
-              <div className="grid content-center gap-2 p-4 sm:p-6">
-                {post.post_type === "promotion" && (
-                  <Badge className="bg-warning/20 text-warning w-fit gap-1">
-                    <Sparkles className="size-3" aria-hidden />
-                    {b.promotionChip}
-                  </Badge>
-                )}
-                <h2 className="text-headline-md">{post.title}</h2>
-                {post.excerpt && (
-                  <p className="text-body-sm text-muted-foreground line-clamp-2">
-                    {post.excerpt}
-                  </p>
-                )}
-                {post.published_at && (
-                  <p className="text-label-sm text-muted-foreground uppercase">
-                    {dateFormat.format(new Date(post.published_at))}
-                  </p>
-                )}
-              </div>
-            </Link>
+            <PostCard key={post.id} post={post} />
           ))}
         </div>
       )}

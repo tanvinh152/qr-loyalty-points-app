@@ -1,5 +1,13 @@
 import Link from "next/link"
-import { Ban, Coins, FerrisWheel, Gift, History, Sparkles } from "lucide-react"
+import {
+  ArrowLeft,
+  Ban,
+  Coins,
+  FerrisWheel,
+  Gift,
+  History,
+  Sparkles,
+} from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
@@ -104,7 +112,18 @@ export default async function SpinPage() {
             {spinsLeft > 0 ? s.spinsLeft(spinsLeft) : s.spinsLeftHint}
           </Badge>
         }
-      />
+      >
+        {/* /spin is reachable from the dashboard card only — it is not in the
+            rail or the bottom bar — so the way back has to be on the page. The
+            wheel-is-off branch above already carries the same link. */}
+        <Link
+          href="/dashboard"
+          className={cn(buttonVariants({ variant: "muted" }))}
+        >
+          <ArrowLeft className="size-4" aria-hidden />
+          {s.backToDashboard}
+        </Link>
+      </PageHeader>
 
       <SectionCard bodyClassName="p-4 sm:p-6 md:p-10">
         <Wheel slices={slices} initialSpinsLeft={spinsLeft} />

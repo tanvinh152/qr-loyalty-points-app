@@ -58,20 +58,30 @@ export type PortalNavItem = {
 }
 
 /**
- * The navigation both portals render: a desktop rail marked by a left bar, and
- * the phone tab bar from the mockups whose active item floats its icon above
- * the bar. Kept in one component so the two portals cannot drift apart.
+ * The navigation both portals render: a desktop rail whose active item is a
+ * filled pill, and the phone tab bar from the mockups whose active item floats
+ * its icon above the bar. Kept in one component so the two portals cannot drift
+ * apart.
  */
 export function PortalNav({
   items,
   label,
   variant,
+  collapsed = false,
 }: {
   items: PortalNavItem[]
   /** Accessible name — both variants can be in the DOM at once. */
   label: string
   /** `rail` = desktop sidebar, `bottom` = the phone tab bar. */
   variant: "rail" | "bottom"
+  /**
+   * Icons-only rail. Ignored by the `bottom` variant, which is never collapsed.
+   * A real prop rather than a CSS `group-data` variant because `PortalNavItem`
+   * is fully serializable (the icon is a string key — that is what ICONS is
+   * for), so SidebarRail can render this from inside the client boundary; and
+   * because `title` must be set ONLY when collapsed, which CSS cannot do.
+   */
+  collapsed?: boolean
 }) {
   const pathname = usePathname()
   const bottom = variant === "bottom"
@@ -98,20 +108,33 @@ export function PortalNav({
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
+            // The label goes `sr-only` when collapsed, so the link keeps its
+            // accessible name and needs no aria-label; `title` is what a
+            // sighted mouse user gets instead.
+            title={!bottom && collapsed ? item.label : undefined}
             className={cn(
               "transition-colors",
               bottom
                 ? "relative grid h-full content-end justify-items-center gap-1 px-1 pb-3 text-center"
-                : // The active rail item is marked by a left bar, not a filled
-                  // pill, so the row keeps the mockup's flush-left rhythm.
-                  "text-body-sm flex items-center gap-3 rounded-r-xl border-l-4 px-4 py-3",
+                : // A filled pill, per the Vibrant Paw rail. The old left bar
+                  // plus tint said the same thing twice, and the bar could
+                  // never hug the rail edge from inside the nav's gutter.
+                  "text-body-sm flex items-center rounded-xl py-3",
+              !bottom &&
+                (collapsed ? "justify-center gap-0 px-0" : "gap-3 px-4"),
               active
                 ? bottom
                   ? "text-primary"
-                  : "border-primary bg-primary/15 text-foreground font-semibold"
+                  : // The --sidebar-* pair, not --primary-container: its
+                    // foreground is white in BOTH themes, where
+                    // --primary-foreground on --primary-container is dark navy
+                    // on bright blue in dark mode and fails contrast as text.
+                    "bg-sidebar-primary text-sidebar-primary-foreground font-semibold"
                 : cn(
-                    "text-muted-foreground hover:text-foreground hover:bg-surface-high",
-                    !bottom && "border-transparent",
+                    "text-muted-foreground",
+                    bottom
+                      ? "hover:text-foreground"
+                      : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                   ),
             )}
           >
@@ -122,7 +145,12 @@ export function PortalNav({
                 className={cn(
                   "grid place-items-center transition-all",
                   active
-                    ? "bg-primary-container border-sidebar text-primary-foreground -mt-7 mb-1 size-11 rounded-full border-4"
+                    ? // Same token family as the rail's active pill; in both
+                      // themes these resolve to the same hex the bubble already
+                      // used. `border-sidebar` must stay — globals.css keeps
+                      // --sidebar equal to this bar's background so the 4px
+                      // ring punches through it.
+                      "bg-sidebar-primary border-sidebar text-sidebar-primary-foreground -mt-7 mb-1 size-11 rounded-full border-4"
                     : "size-5",
                 )}
               >
@@ -140,7 +168,11 @@ export function PortalNav({
                 {item.label}
               </span>
             ) : (
-              item.label
+              // `sr-only`, never `hidden`: display:none would strip the link's
+              // accessible name and leave a screen reader with a nameless icon.
+              <span className={cn("truncate", collapsed && "sr-only")}>
+                {item.label}
+              </span>
             )}
           </Link>
         )

@@ -20,8 +20,9 @@
 | `pattern-paws` dùng `var(--paw-dot)` thay literal | `globals.css` |
 | `t.brand.name` → `"ChiCha Membership"` (cả khách lẫn admin) | `messages/{en,vi}.ts` |
 | Nav còn **đúng 4 mục** (dashboard → tiers → rewards → history), rail và bottom bar dùng chung một mảng | `(customer)/(account)/layout.tsx` |
-| Header ở **mọi bề rộng**: pill điểm → ThemeToggle → avatar → `/profile` | cùng file |
-| Rail: CTA "Nâng hạng" + **giữ nút đăng xuất** (mockup không có, bỏ đi là bẫy người dùng) | cùng file |
+| Header ở **mọi bề rộng**: nút thu gọn (md+) → pill điểm → "Nâng hạng" (md+) → ThemeToggle (md+) → đăng xuất (md+) → avatar `/profile` (md+) / `AccountMenu` (phone) | cùng file |
+| "Nâng hạng" + **đăng xuất** đã rời rail lên header. Ràng buộc cũ ("bỏ đi là bẫy người dùng") nay được thoả **hơn** trước: đăng xuất có ở *mọi* bề rộng, thay vì chỉ desktop-rail. Dưới `md` cả hai nằm trong sheet tài khoản sau avatar | cùng file + `src/components/account-menu.tsx` |
+| Rail thu gọn được (cookie `sidebar_collapsed`, đọc phía server nên không nháy); khi thu gọn nhãn thành `sr-only` + `title`, **không bao giờ** `hidden` | `src/components/portal-sidebar.tsx`, `src/lib/sidebar/` |
 | `PortalFooter` 4 link (Trợ giúp / FAQ / Thể lệ / Cộng đồng) | `src/components/portal-footer.tsx` |
 | Route group `(public)` + `/faq` + `/terms`; `/blog` chuyển vào (URL không đổi) | `src/app/(public)/` |
 | Link "Điều khoản" / "Chính sách bảo mật" ở form đăng ký trỏ `/terms` và `/terms#privacy` | `register-form.tsx` |
@@ -255,8 +256,10 @@ Soi ở **390px** và **1440px**, **cả hai theme**. Riêng bản tối: màu p
 bo góc / font / đổ bóng. Nếu bóng làm bẩn nền tối, cách rút lui rẻ là đặt `--shadow-color-*` của
 khối tối thành `transparent` — bản tối về "không đổ bóng" mà không phải sửa một class nào.
 
-**Regression bắt buộc:** mở `/admin` và `/admin/tiers` — rail và tab bar phải y hệt trước, đó là
-bằng chứng `portal-nav.tsx` không bị đụng. `/admin` cũng chưa từng được review trên nền sáng.
+**Regression bắt buộc:** `portal-nav.tsx` và shell admin ĐÃ bị đụng (rail thu gọn được, admin
+chuyển từ `fixed` + `md:pl-64` sang shell flex/`sticky` như customer), nên phải soi lại: `/admin`
+và `/admin/tiers` ở 1440 ở **cả hai** trạng thái thu gọn/mở rộng, `/dashboard` ở 390 và 1440, cả
+hai theme. `/admin` cũng chưa từng được review trên nền sáng.
 
 ---
 

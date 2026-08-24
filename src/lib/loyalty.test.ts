@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   adjustMeta,
+  orderTotal,
   resolveDisplayTier,
   resolveTiers,
   tierProgress,
@@ -178,5 +179,47 @@ describe("adjustMeta", () => {
       lifetime_delta: 0,
       granted_tier_id: null,
     })
+  })
+})
+
+describe("orderTotal", () => {
+  it("reads the money claim_points wrote onto an EARN row", () => {
+    expect(
+      orderTotal({
+        type: "EARN",
+        meta: { items: [], multiplier: 1.1, base: 45, order_total: 450_000 },
+      }),
+    ).toBe(450_000)
+  })
+
+  it("accepts a numeric string, since jsonb carries no type", () => {
+    expect(orderTotal({ type: "EARN", meta: { order_total: "450000" } })).toBe(
+      450_000,
+    )
+  })
+
+  it("returns null for an EARN row written before 0011", () => {
+    // Those rows have a meta object, just no money in it.
+    expect(
+      orderTotal({ type: "EARN", meta: { items: [], multiplier: 1 } }),
+    ).toBeNull()
+  })
+
+  it("returns null for rows that never carry an order total", () => {
+    const meta = { order_total: 450_000 }
+    expect(orderTotal({ type: "REDEEM", meta })).toBeNull()
+    expect(orderTotal({ type: "ADJUST", meta })).toBeNull()
+  })
+
+  it("returns null when there is no meta at all", () => {
+    expect(orderTotal({ type: "EARN", meta: null })).toBeNull()
+    expect(orderTotal({ type: "EARN", meta: undefined })).toBeNull()
+    expect(orderTotal({ type: "EARN", meta: "450000" })).toBeNull()
+  })
+
+  it("returns null rather than NaN for an unparseable value", () => {
+    expect(orderTotal({ type: "EARN", meta: { order_total: "abc" } })).toBeNull()
+    expect(orderTotal({ type: "EARN", meta: { order_total: "" } })).toBeNull()
+    expect(orderTotal({ type: "EARN", meta: { order_total: null } })).toBeNull()
   })
 })

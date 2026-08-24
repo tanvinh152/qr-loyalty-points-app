@@ -57,6 +57,36 @@ export function adjustMeta(row: {
   }
 }
 
+/**
+ * The order's money off an EARN row, in đồng.
+ *
+ * `claim_points` (0011) writes it into `meta.order_total` and
+ * `reconcile_order_spend` (0016) updates that same key in place. Rows written
+ * before 0011 have no such key and no other row type ever carries one, so this
+ * is probed exactly like `adjustMeta` rather than asserted. Returns null when
+ * there is no trustworthy number; the caller renders its own placeholder, which
+ * keeps this side of the line free of message strings.
+ */
+export function orderTotal(row: {
+  type: TransactionType
+  meta: unknown
+}): number | null {
+  if (row.type !== "EARN") return null
+  const meta = row.meta
+  if (!meta || typeof meta !== "object") return null
+
+  const value = (meta as Record<string, unknown>).order_total
+  // jsonb_build_object on a numeric yields a JSON number, but a string is
+  // cheap to accept and is what a hand-patched row would most likely hold.
+  const total =
+    typeof value === "number"
+      ? value
+      : typeof value === "string" && value.trim() !== ""
+        ? Number(value)
+        : NaN
+  return Number.isFinite(total) ? total : null
+}
+
 export type ActiveSettings = LoyaltyRules & {
   claimable_statuses: number[]
 }

@@ -10,14 +10,24 @@ import type { BlogPostRow, BlogPostType } from "@/lib/db-types"
 
 export async function getPublishedPosts({
   postType,
-}: { postType?: BlogPostType } = {}): Promise<BlogPostRow[]> {
+  limit,
+}: {
+  postType?: BlogPostType
+  /** The dashboard shows three; /blog shows the lot. */
+  limit?: number
+} = {}): Promise<BlogPostRow[]> {
   const supabase = await createClient()
   let query = supabase
     .from("blog_posts")
     .select("*")
     .eq("is_published", true)
   if (postType) query = query.eq("post_type", postType)
-  const { data } = await query.order("published_at", { ascending: false })
+  // `nullsFirst: false` matters: Postgres sorts DESC as NULLS FIRST, so a post
+  // published without a date would otherwise head the list — and monopolise the
+  // dashboard, which only has room for the first three.
+  query = query.order("published_at", { ascending: false, nullsFirst: false })
+  if (limit) query = query.limit(limit)
+  const { data } = await query
   return (data ?? []) as BlogPostRow[]
 }
 

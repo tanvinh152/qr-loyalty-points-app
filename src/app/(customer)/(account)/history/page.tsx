@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils"
 import { getLocale, getMessages } from "@/lib/i18n/server"
 import { getTransactionTotals, getTransactions } from "@/lib/loyalty"
 import { getAccount } from "../account"
+import { transactionCode, transactionTitle } from "../transactions"
 
 export async function generateMetadata() {
   const t = await getMessages()
@@ -88,22 +89,15 @@ export default async function HistoryPage({
     return `/history?${params}`
   }
 
-  // Derived once so the phone list and the desktop table cannot drift: the
-  // ledger has no transaction-code column, so the mockup's code comes from the
-  // row id, which is stable and unique already.
+  // Derived once so the phone list and the desktop table cannot drift. The code
+  // and the label come from `../transactions`, which the dashboard's activity
+  // table reads too — the two screens show the same rows and must name them the
+  // same way.
   const entries = rows.map((row) => ({
     row,
     credit: row.amount >= 0,
-    code: `${row.type === "REDEEM" ? "RDM" : "TXN"}-${row.id
-      .replace(/-/g, "")
-      .slice(-6)
-      .toUpperCase()}`,
-    title:
-      row.type === "EARN"
-        ? h.earn(row.order_code)
-        : row.type === "REDEEM"
-          ? (row.reward?.name ?? h.redeem)
-          : h.adjust,
+    code: transactionCode(row),
+    title: transactionTitle(row, h),
   }))
 
   return (

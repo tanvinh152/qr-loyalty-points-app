@@ -74,3 +74,7 @@ vi.mock("next/navigation", async () => {
 vi.mock("@/lib/theme/actions", () => ({
   setThemeCookie: vi.fn().mockResolvedValue(undefined),
 }))
+
+vi.mock("@/lib/sidebar/actions", () => ({
+  setSidebarCollapsed: vi.fn().mockResolvedValue(undefined),
+}))

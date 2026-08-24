@@ -74,11 +74,19 @@ export const en = {
     switchToLight: "Switch to light theme",
     switchToDark: "Switch to dark theme",
   },
+  // The desktop rail's collapse switch. Chrome shared by both portals, so it
+  // sits at the top level rather than under `admin` or `customer`. The label
+  // describes the ACTION, matching the theme keys above.
+  sidebar: {
+    collapse: "Collapse sidebar",
+    expand: "Expand sidebar",
+    // The header's back chevron, shown only on a detail route.
+    back: "Back to section",
+  },
   admin: {
     metaTitle: "Admin",
     nav: {
       brand: "ChiCha Membership",
-      brandSub: "Loyalty admin",
       dashboard: "Dashboard",
       settings: "Settings",
       tiers: "Tiers",
@@ -91,10 +99,13 @@ export const en = {
       support: "Support",
       signOut: "Sign out",
       role: "Administrator",
-      // Three navigations can be in the DOM at once on a phone, so each needs
+      // The phone sheet behind the avatar — the member portal's AccountMenu
+      // equivalent, holding every section the four-slot tab bar cannot carry.
+      accountLabel: "Your account",
+      menuTitle: "Admin",
+      // Both navigations can be in the DOM at once on a phone, so each needs
       // its own accessible name.
       sidebarLabel: "Admin sections",
-      mobileLabel: "More admin sections",
       bottomLabel: "Main admin sections",
     },
     dashboard: {
@@ -641,6 +652,9 @@ export const en = {
       help: "Help",
       profile: "Profile",
       signOut: "Sign out",
+      // Title of the phone-only account sheet behind the avatar, which is where
+      // upgradeCta / profile / help / theme / signOut live below md.
+      accountMenuTitle: "Account",
       pointsUnit: "points",
       mainLabel: "Main",
       bottomLabel: "Quick links",
@@ -701,18 +715,13 @@ export const en = {
       lifetimeLabel: "Lifetime points",
       noTier: "Not a member yet",
       tierProgressLabel: "Progress to the next tier",
-      // Spend, not points: the tier tile must not imply points move the tier.
-      spendHint: (amount: string) => `${amount} spent`,
       topTier: "You're at the highest tier 🎉",
       /** The same fact at the end of the progress bar, where a sentence would
        *  be truncated to nonsense. */
       topTierShort: "MAX",
-      tierLabel: "Current tier",
       lifetimeSpend: "Total spent",
       spendAway: (amount: string) => `${amount} more to go`,
-      journeyTitle: "Your tier journey",
       percentComplete: (pct: number) => `${pct}% complete`,
-      tiersCta: "View membership tiers",
       recentTitle: "Recent activity",
       viewAll: "View all",
       emptyTitle: "No activity yet",
@@ -733,6 +742,23 @@ export const en = {
       spinCta: "Go to the wheel",
       spinPendingGifts: (n: number) =>
         n === 1 ? "1 gift waiting to be collected" : `${n} gifts waiting to be collected`,
+      // The five figures the programme spec opens on, in one panel.
+      summaryTitle: "Your account at a glance",
+      summarySpend: "Total spent",
+      summaryEarned: "Points earned all time",
+      summaryUsed: "Points used",
+      summaryBalance: "Points available",
+      summaryTier: "Current tier",
+      // Column heads for the recent-activity table.
+      colOrder: "Reference",
+      colDate: "Date",
+      colTotal: "Order total",
+      colPoints: "Points",
+      /** A row with no money behind it — a redemption, or an order from before 0011. */
+      noOrderTotal: "—",
+      featuredTitle: "Featured reward",
+      updatesTitle: "Latest updates",
+      updatesViewAll: "See all posts",
     },
     spin: {
       metaTitle: "Spin & win",
@@ -827,12 +853,10 @@ export const en = {
     tiers: {
       metaTitle: "Tiers & benefits",
       eyebrow: "Current tier",
-      title: (name: string) => `${name} member`,
       subtitle:
         "Every đồng you spend moves you up. Higher tiers earn points faster and unlock more.",
       noTier: "No tier yet",
       noTierBody: "Place your first order to join the program.",
-      statusActive: (name: string) => `${name} status active`,
       progressTitle: "Tier progress",
       maxLabel: "MAX",
       atTop: (name: string) => `You're at the top tier, ${name}.`,
@@ -844,10 +868,7 @@ export const en = {
         `You reached ${name} in ${date} and it's yours to keep, whatever the requirement becomes.`,
       perksTitle: (name: string) => `${name} privileges`,
       noPerks: "Benefits for this tier are being finalized.",
-      othersTitle: "All membership tiers",
       thresholdAt: (amount: string) => `From ${amount} spent`,
-      levelLabel: (level: number) => `LV.${level}`,
-      heroPerksLabel: "Exclusive benefits",
       cardCta: "View digital card",
       cardTitle: "Membership card",
       // No counter flow exists: points are credited from the phone number on
@@ -856,6 +877,19 @@ export const en = {
         "Your membership card. Points are credited automatically to this phone number.",
       memberSince: (date: string) => `Member since ${date}`,
       multiplier: (value: number) => `${value}× points`,
+      pageTitle: "Tiers & privileges",
+      // A PROGRAMME rule, not something the system enforces: customers.tier_id
+      // only ever rises, so nothing here may promise a downgrade.
+      retentionTitle: "Keeping your tier",
+      retentionBody: (tierName: string) =>
+        `Under the programme rules, ${tierName} is reviewed every 365 days. Your tier is never lowered automatically — talk to us if anything looks wrong.`,
+      progressTo: (name: string) => `Progress to ${name}`,
+      progressCaption: "Every đồng you spend counts towards the next tier.",
+      benefitsTableTitle: "Tier benefits",
+      colTier: "Tier",
+      colCondition: "Requirement & earning",
+      colBenefits: "Headline benefits",
+      currentChip: "Current",
     },
     help: {
       metaTitle: "Support",

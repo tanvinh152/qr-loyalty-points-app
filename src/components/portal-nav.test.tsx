@@ -74,4 +74,47 @@ describe("PortalNav", () => {
       .map((nav) => nav.getAttribute("aria-label"))
     expect(names).toEqual(["Thanh bên", "Thanh dưới"])
   })
+
+  describe("collapsed rail", () => {
+    it("keeps each link's accessible name", () => {
+      // The whole point of hiding the label with `sr-only` rather than
+      // `hidden`. Swap it for display:none and a collapsed rail becomes a
+      // column of nameless icons — a regression no sighted reviewer can see.
+      route.pathname = "/admin"
+      renderWithProviders(
+        <PortalNav
+          items={ITEMS}
+          label="Thanh bên"
+          variant="rail"
+          collapsed
+        />,
+      )
+      for (const item of ITEMS) {
+        expect(screen.getByRole("link", { name: item.label })).toBeTruthy()
+      }
+    })
+
+    it("adds a title only when collapsed", () => {
+      route.pathname = "/admin"
+      const { unmount } = renderWithProviders(
+        <PortalNav items={ITEMS} label="Thanh bên" variant="rail" />,
+      )
+      expect(
+        screen.getByRole("link", { name: "Hạng" }).getAttribute("title"),
+      ).toBeNull()
+      unmount()
+
+      renderWithProviders(
+        <PortalNav
+          items={ITEMS}
+          label="Thanh bên"
+          variant="rail"
+          collapsed
+        />,
+      )
+      expect(
+        screen.getByRole("link", { name: "Hạng" }).getAttribute("title"),
+      ).toBe("Hạng")
+    })
+  })
 })

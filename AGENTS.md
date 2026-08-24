@@ -88,4 +88,21 @@ QR loyalty-point app. Next.js 16 (App Router) + Supabase + Pancake POS + shadcn/
   mark's own blue and is exempt from the palette. `globals.css` carries
   `@source not "../../design"`: without it Tailwind compiles the mockups' CDN classes and the
   build fails on their `url()` references.
+- **Portal shells**: both portals use the SAME flex + `sticky` shell — a `SidebarRail` flex item
+  (`shrink-0`) and a grow column, so `<main>` reflows structurally. Admin's old `fixed` aside +
+  `md:pl-64` is GONE; never reintroduce a hardcoded mirror of the rail's width, it cannot survive a
+  width that is state. `src/components/portal-sidebar.tsx` owns the rail and the collapse context
+  (the toggle lives in the header, the rail is an `<aside>` — siblings, hence context, not props).
+  Collapse is a cookie (`src/lib/sidebar/`) read SERVER-side so the first HTML has the real width;
+  it deliberately does NOT `router.refresh()` like the theme does — nothing server-rendered depends
+  on it, and a refresh would re-run the layouts' account/tier queries on every click. A collapsed
+  rail label is `sr-only` + `title`, NEVER `hidden`: `display:none` strips the link's accessible
+  name and leaves a screen reader a column of nameless icons (`portal-nav.test.tsx` guards this).
+  The rail owns its own horizontal padding because `group-data` variants match DESCENDANTS, so a
+  class on the `<aside>` can never react to the `<aside>`'s own state.
+- **Account actions live in the header**, not the rail: "Nâng hạng" + sign-out, at every width.
+  Below `md` they move into `AccountMenu` (`src/components/account-menu.tsx`), a Base UI `Drawer`
+  bottom sheet behind the avatar — the phone header cannot fit them (the arithmetic at 390px
+  overflows). The labelled sign-out on `/profile` and in the no-customer `EmptyState` is what backs
+  up the icon-only one in the header; keep both.
 - shadcn Button is Base UI: NO `asChild`. Use `buttonVariants` on a Link (see `src/components/page-link.tsx`).
