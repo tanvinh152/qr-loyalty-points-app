@@ -36,7 +36,7 @@ export default async function BlogPostPage({
   const backLink = (
     <Link
       href="/blog"
-      className={cn(buttonVariants({ variant: "muted" }), "rounded-full")}
+      className={cn(buttonVariants({ variant: "muted" }))}
     >
       <ArrowLeft className="size-4" aria-hidden />
       {b.backToBlog}

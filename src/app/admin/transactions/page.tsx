@@ -56,7 +56,7 @@ const PAGE_SIZE = 20
 
 /** Shared field chrome for the two native selects in the filter bar. */
 const SELECT_CLASS =
-  "border-input bg-card text-body-sm h-12 rounded-full border px-5 outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+  "border-input bg-card text-body-sm h-12 rounded-md border px-4 outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
 
 export default async function TransactionsPage({
   searchParams,

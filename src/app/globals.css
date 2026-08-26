@@ -2,24 +2,28 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* Every mockup folder under design/ — stitch-v2 (dark) and stitch-light
-   (Vibrant Paw) alike — is a Tailwind CDN page full of arbitrary values
-   (`from-[#0b1326]`, `bg-[url(...)]`). They are reference art, not sources —
+/* Every mockup folder under design/ is a Tailwind CDN page full of arbitrary
+   values (`from-[#5C5CFF]`, `bg-[url(...)]`).
+   They are reference art, not sources —
    without this, automatic content detection compiles their classes into the
    app bundle and the `url()` references fail to resolve at build time.
    This one line covers all of design/, so new mockup folders need no change. */
 @source not "../../design";
 
-/* Design system: Stitch "Vibrant Paw" (design/stitch-light/README.md and the
-   four design/stitch-light/html/*-vibrant-paw.html files).
+/* Design system: Stitch "Azure Paw"
+   (design/stitch_remix_of_loyalty_rewards_dashboard/azure_paw/DESIGN.md — the
+   only mockup set left; the older stitch-v2 / stitch-light / stitch-v3 folders
+   were deleted on 2026-08-25).
 
    LIGHT is the baseline — it lives in `:root` and is the theme the mockups were
-   drawn in. DARK is an override and is FROZEN at the "Chicha Pet Members" set
-   from design/stitch-v2: the client supplied a light design only, so there is
-   no dark mockup to derive a new dark palette from. Keep the two dark blocks
+   drawn in. DARK is an override and is FROZEN at the "Chicha Pet Members" set:
+   the client supplied a light design only, so there is no dark mockup to derive
+   a new dark palette from. Its provenance is copied into
+   docs/color_palette_theme.md — that is now the ONLY record of it, since the
+   folder it came from is gone. Keep the two dark blocks
    (`@media (prefers-color-scheme: dark)` and `[data-theme="dark"]`) in sync.
 
-   Shape, type and shadow tokens are theme-INVARIANT — they follow Vibrant Paw
+   Shape, type and shadow tokens are theme-INVARIANT — they follow Azure Paw
    in both themes, so dark keeps its old colours but takes the new geometry.
 
    The token NAMES are inherited from the previous "Loyalty Core" system so no
@@ -68,7 +72,7 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  /* Tonal surfaces. Vibrant Paw carries depth with these layers, a 1px
+  /* Tonal surfaces. Azure Paw carries depth with these layers, a 1px
      outline AND a soft blue-tinted shadow — see --shadow-* below. */
   --color-surface-low: var(--surface-low);
   --color-surface-container: var(--surface-container);
@@ -85,8 +89,18 @@
   --color-tier-3: var(--tier-3);
   --color-tier-4: var(--tier-4);
   --color-tier-5: var(--tier-5);
+  /* The /dashboard hero paints a saturated brand gradient and reads its text in
+     white, so it needs its own ink + accent pair: nothing on the normal surface
+     ladder is legible on top of #1000c7. `--hero-accent` is a bright gold and is
+     a FILL ONLY — never `text-hero-accent` on a light surface, it fails there. */
+  --color-hero-ink: var(--hero-ink);
+  --color-hero-accent: var(--hero-accent);
+  /* The gradient's dark end, exposed so a white plate ON the hero has an ink
+     that is dark in BOTH themes. `text-primary` is not: on dark it is the pale
+     #d8e2ff, which on a white button measures 1.29:1. */
+  --color-hero-from: var(--hero-from);
 
-  /* Shape language, Vibrant Paw. Changing the SCALE (rather than rewriting 130
+  /* Shape language, Azure Paw. Changing the SCALE (rather than rewriting 130
      class usages) is what rounds the whole app at once. rounded-3xl = 32px is
      the mockups' widget radius and rounded-4xl = 48px their tier card, so both
      land exactly on the design without an arbitrary value.
@@ -135,7 +149,7 @@
   --text-label-lg--letter-spacing: 0.02em;
   --text-label-lg--font-weight: 700;
 
-  /* Vibrant Paw's named shadows. The colour is a per-theme custom property, so
+  /* Azure Paw's named shadows. The colour is a per-theme custom property, so
      one utility renders a blue-tinted glow on light and near-black on dark. */
   --shadow-soft: 0 4px 20px var(--shadow-color-soft);
   --shadow-elevated: 0 10px 40px var(--shadow-color-elevated);
@@ -148,8 +162,11 @@
    OS gets, and it is the theme the Stitch mockups were drawn in. Dark is the
    OVERRIDE below.
 
-   Source: design/stitch-light/html/*-vibrant-paw.html ("Vibrant Paw"), whose
-   own tailwind.config is the authority for every value here.
+   Source: the Stitch "Azure Paw" design system, now at
+   design/stitch_remix_of_loyalty_rewards_dashboard/azure_paw/DESIGN.md, which
+   is the authority for every value here. Note the three code.html exports in
+   that folder each carry a DIFFERENT inline tailwind.config — DESIGN.md wins
+   over any one of them.
 
    Note the inversion of --primary between the themes: on light it is the
    saturated blue so it works both as a filled-button background (with white
@@ -171,7 +188,7 @@
      (10.7:1 and 7.9:1). */
   --primary-foreground: #ffffff;
   --primary-container: #2f2fe4;
-  /* Vibrant Paw's magenta is the SECOND accent hue. 6.5:1 on white, so it works
+  /* Azure Paw's magenta is the SECOND accent hue. 6.5:1 on white, so it works
      as `text-secondary` (17 sites), not just as a fill. */
   --secondary: #b80662;
   --secondary-foreground: #ffffff;
@@ -183,7 +200,7 @@
   --accent-foreground: #04006d;
   --destructive: #ba1a1a;
   --destructive-container: #ffdad6;
-  /* NOT Vibrant Paw's literal #00C853 / #FFC107. Those are decorative fills in
+  /* NOT Azure Paw's literal #00C853 / #FFC107. Those are decorative fills in
      the mockups, but this app uses --success/--warning as TEXT (`text-success`,
      `text-warning` — 13 sites) and on white they measure 2.2:1 and 1.7:1, which
      fails WCAG outright. These are the same hues darkened to 4.5:1+. Use the
@@ -191,7 +208,7 @@
      "restore" them here as the text colour. */
   --success: #00893f;
   --warning: #9a6a00;
-  /* --border is a hairline divider (Vibrant Paw draws every divider with
+  /* --border is a hairline divider (Azure Paw draws every divider with
      outline-variant). --input is heavier on purpose: a field outline is a
      control boundary and must clear 3:1 against both bg and card. */
   --border: #c6c4d9;
@@ -206,7 +223,7 @@
   --chicha-blue: #001b8f;
   --brand: #1000c7;
   /* Tier accents, keyed by membership_tiers.sort_order and never by name.
-     Vibrant Paw ships no tier ladder, so these are built from its own hues and
+     Azure Paw ships no tier ladder, so these are built from its own hues and
      darkened until each clears 4.9:1 on white (they render as `text-tier`).
      Hue assignment matches the dark set: rank 4 = Kim cương (cyan gem),
      rank 5 = Ruby (magenta gem) — do not swap those two. */
@@ -233,10 +250,23 @@
   --sidebar-accent-foreground: #04006d;
   --sidebar-border: #c6c4d9;
   --sidebar-ring: #1000c7;
-  /* The page canvas ramp (Vibrant Paw paints this on <body>). */
+  /* The /dashboard hero gradient. The mockup runs --primary → #5C5CFF. That
+     light end is kept as close as the contrast budget allows: the hero's
+     secondary labels are `text-hero-ink/85`, and measured against the ramp's
+     lightest point white-at-85% gives 4.61:1 on #4b4bf7 but only 3.90:1 on the
+     mockup's own #5C5CFF. #4b4bf7 is therefore the last stop that still clears
+     4.5:1 — going lighter means either failing the labels or opaquing them.
+     (Pure white is 11.4:1 at the dark end, 5.76:1 at the light end.)
+     The gold is the mockup's #FFD700 nudged up: 4.08:1 against the light end,
+     comfortably past the 3:1 bar a graphical object has to clear. */
+  --hero-from: #1000c7;
+  --hero-to: #4b4bf7;
+  --hero-ink: #ffffff;
+  --hero-accent: #ffd54a;
+  /* The page canvas ramp (Azure Paw paints this on <body>). */
   --canvas-from: #f0f3ff;
   --canvas-to: #ffebf5;
-  /* Vibrant Paw tints every shadow with its brand blue at 2–20% alpha. */
+  /* Azure Paw tints every shadow with its brand blue at 2–20% alpha. */
   --shadow-color-soft: rgb(47 47 228 / 0.05);
   --shadow-color-elevated: rgb(47 47 228 / 0.08);
   --shadow-color-nav: rgb(47 47 228 / 0.03);
@@ -247,9 +277,10 @@
 }
 
 /* ── Dark theme (the override) ────────────────────────────────────────────
-   These values are the "Chicha Pet Members" dark set from design/stitch-v2 and
+   These values are the "Chicha Pet Members" dark set (provenance copied into
+   docs/color_palette_theme.md; the design/stitch-v2 folder it came from is gone) and
    they are FROZEN: the client supplied a light design only, so dark keeps the
-   palette it has always shipped. Do not re-derive it from the Vibrant Paw
+   palette it has always shipped. Do not re-derive it from the Azure Paw
    mockups — there is no dark mockup to derive it from.
 
    docs/color_palette_theme.md § Dark Theme drives the ACCENTS here — bright
@@ -315,6 +346,12 @@
     --sidebar-accent-foreground: #f0f4f8;
     --sidebar-border: #3a4667;
     --sidebar-ring: #04cdf8;
+    /* Hero gradient, dark. Built from the dark set's own blues (--brand →
+       --primary-container) rather than the light ramp, which would glare. */
+    --hero-from: #001eb6;
+    --hero-to: #0075e3;
+    --hero-ink: #ffffff;
+    --hero-accent: #ffb95f;
     --canvas-from: #0a1020;
     --canvas-to: #141b2e;
     --shadow-color-soft: rgb(0 0 0 / 0.45);
@@ -399,11 +436,17 @@
   --sidebar-ring: #04cdf8;
   /* Dark keeps a FLAT canvas: these two are the existing surface values, so the
      bg-canvas utility renders as the near-solid background dark always had. */
+  /* Hero gradient, dark. Built from the dark set's own blues (--brand →
+     --primary-container) rather than the light ramp, which would glare. */
+  --hero-from: #001eb6;
+  --hero-to: #0075e3;
+  --hero-ink: #ffffff;
+  --hero-accent: #ffb95f;
   --canvas-from: #0a1020;
   --canvas-to: #141b2e;
   /* A blue-tinted shadow is invisible on a dark canvas, so dark uses near-black
      at a higher alpha. If shadows turn out to muddy the dark theme, setting
-     these four to `transparent` restores stitch-v2's no-shadow look without
+     these four to `transparent` restores the old dark no-shadow look without
      touching a single class. */
   --shadow-color-soft: rgb(0 0 0 / 0.45);
   --shadow-color-elevated: rgb(0 0 0 / 0.55);
@@ -411,7 +454,7 @@
   --shadow-color-glow: rgb(120 160 255 / 0.35);
 }
 
-/* The page canvas. Vibrant Paw paints a blue→pink ramp across the whole
+/* The page canvas. Azure Paw paints a blue→pink ramp across the whole
    document; dark resolves both stops to its own surface values, so it stays the
    near-flat canvas it has always been. Deliberately NOT
    `background-attachment: fixed` — that is an iOS Safari paint bug, and every
@@ -425,6 +468,47 @@
   );
 }
 
+/* The /dashboard hero surface. Its own utility rather than
+   `bg-gradient-to-br from-… to-…` because the two stops are theme variables:
+   Tailwind's gradient utilities want colour tokens, and wiring
+   --hero-from/--hero-to through the colour scale would expose two `bg-*` names
+   that must never be used on their own (neither is legible under body text). */
+/* The one claimable rung on /rewards/roadmap: a halo that breathes outward, per
+   the mockup. A box-shadow rather than a scaled pseudo-element so it costs no
+   layout and cannot nudge the rail beside it. Silenced under
+   prefers-reduced-motion — a permanently repeating animation is exactly what
+   that setting exists to stop. */
+@keyframes milestone-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--pulse-color);
+  }
+  70% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@utility animate-milestone-pulse {
+  --pulse-color: color-mix(in srgb, var(--primary-container) 40%, transparent);
+  animation: milestone-pulse 2s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-milestone-pulse {
+    animation: none;
+  }
+}
+
+@utility bg-hero {
+  background-image: linear-gradient(
+    to bottom right,
+    var(--hero-from),
+    var(--hero-to)
+  );
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -435,7 +519,7 @@
   html {
     @apply font-sans;
   }
-  /* Phone step-downs. headline-md is here because Vibrant Paw's 24px desktop
+  /* Phone step-downs. headline-md is here because Azure Paw's 24px desktop
      value overflows the phone header, where it sets the brand mark beside the
      points pill. */
   @media (width < 48rem) {

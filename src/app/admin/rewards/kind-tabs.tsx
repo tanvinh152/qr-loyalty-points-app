@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 import type { RewardKind } from "@/lib/db-types"
 
 /**
- * The two kinds of gift, as links rather than client-side tabs: the grid below
+ * The three kinds of gift, as links rather than client-side tabs: the grid below
  * is a server render per kind, so the tab IS the navigation. Button is Base UI
  * here, so there is no `asChild` — `buttonVariants` on a Link is the house
  * pattern (see `src/components/page-link.tsx`).
@@ -18,11 +18,12 @@ export function KindTabs({
   active: RewardKind
   /** Carried across so switching tabs does not silently drop the query. */
   search?: string
-  labels: { redeem: string; spin: string }
+  labels: { redeem: string; spin: string; milestone: string }
 }) {
   const tabs: { kind: RewardKind; label: string }[] = [
     { kind: "redeem", label: labels.redeem },
     { kind: "spin", label: labels.spin },
+    { kind: "milestone", label: labels.milestone },
   ]
 
   return (

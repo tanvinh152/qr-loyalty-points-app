@@ -5,6 +5,7 @@ import {
   Gift,
   PackageCheck,
   PieChart,
+  Route,
   Scale,
   Trophy,
 } from "lucide-react"
@@ -24,6 +25,8 @@ import type { RewardKind, RewardRow } from "@/lib/db-types"
 import { KindTabs } from "./kind-tabs"
 import { RewardCard } from "./reward-card"
 import { RewardDialog } from "./reward-form"
+import { MilestoneCard } from "./milestone-card"
+import { MilestoneDialog } from "./milestone-form"
 import { SpinPrizeCard } from "./spin-prize-card"
 import { SpinPrizeDialog } from "./spin-prize-form"
 
@@ -33,10 +36,11 @@ export async function generateMetadata() {
 }
 
 /**
- * Every gift, of both kinds, on one screen (0022). `kind` picks the tab: the
- * shop's catalog or the wheel's slices. They share a table but not a single
- * column beyond name/image/active, so each tab gets its own stats, its own
- * grid and its own dialog rather than one form full of inapplicable fields.
+ * Every gift, of all three kinds, on one screen (0022, 0024). `kind` picks the
+ * tab: the shop's catalog, the wheel's slices or the spend ladder's rungs. They
+ * share a table but not a single column beyond name/image/active, so each tab
+ * gets its own stats, its own grid and its own dialog rather than one form full
+ * of inapplicable fields.
  */
 export default async function RewardsPage({
   searchParams,
@@ -47,7 +51,12 @@ export default async function RewardsPage({
   const m = t.admin.rewards
   const { q, kind: kindParam } = await searchParams
   const search = q?.trim()
-  const kind: RewardKind = kindParam === "spin" ? "spin" : "redeem"
+  const kind: RewardKind =
+    kindParam === "spin"
+      ? "spin"
+      : kindParam === "milestone"
+        ? "milestone"
+        : "redeem"
 
   const supabase = await createClient()
   let query = supabase.from("rewards").select("*").eq("kind", kind)
@@ -57,7 +66,11 @@ export default async function RewardsPage({
   query =
     kind === "spin"
       ? query.order("sort_order").order("id")
-      : query.order("points_cost", { ascending: true })
+      : kind === "milestone"
+        // Cheapest rung first — the ladder's own order, matching
+        // rewards_milestone_threshold_idx and the customer's roadmap.
+        ? query.order("spend_threshold", { ascending: true })
+        : query.order("points_cost", { ascending: true })
 
   const [{ data }, categories, tiers, spinDailyLimit] = await Promise.all([
     query,
@@ -71,7 +84,11 @@ export default async function RewardsPage({
     <KindTabs
       active={kind}
       search={search}
-      labels={{ redeem: m.tabRedeem, spin: m.tabSpin }}
+      labels={{
+        redeem: m.tabRedeem,
+        spin: m.tabSpin,
+        milestone: m.tabMilestone,
+      }}
     />
   )
   const searchBox = (
@@ -79,8 +96,15 @@ export default async function RewardsPage({
       action="/admin/rewards"
       defaultValue={search}
       label={t.common.search}
-      placeholder={kind === "spin" ? m.spin.searchPlaceholder : m.searchPlaceholder}
-      hidden={kind === "spin" ? { kind } : undefined}
+      placeholder={
+        kind === "spin"
+          ? m.spin.searchPlaceholder
+          : kind === "milestone"
+            ? m.milestone.searchPlaceholder
+            : m.searchPlaceholder
+      }
+      // Without this the search form posts without `kind` and drops the tab.
+      hidden={kind === "redeem" ? undefined : { kind }}
       className="sm:w-96"
     />
   )
@@ -182,6 +206,92 @@ export default async function RewardsPage({
                 key={prize.id}
                 prize={prize}
                 totalWeight={totalWeight}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  if (kind === "milestone") {
+    const mm = m.milestone
+
+    // Claims per rung, counted in JS from one narrow query — the same trade
+    // `getRewardCategories` makes: PostgREST has no GROUP BY, and one query for
+    // a single uuid column beats one HEAD request per rung.
+    const [{ data: awardRows }, { count: pending }] = await Promise.all([
+      supabase.from("milestone_awards").select("milestone_id"),
+      supabase
+        .from("milestone_awards")
+        .select("id", { count: "exact", head: true })
+        .is("fulfilled_at", null),
+    ])
+    const claimsBy = new Map<string, number>()
+    for (const row of awardRows ?? []) {
+      const id = (row as { milestone_id: string | null }).milestone_id
+      if (id) claimsBy.set(id, (claimsBy.get(id) ?? 0) + 1)
+    }
+    const pendingCount = pending ?? 0
+
+    return (
+      <div className="grid gap-6">
+        <PageHeader title={m.title} description={mm.helper}>
+          {/* The hand-over queue has no other entry point: a rung is configured
+              here but settled on its own screen, exactly like a wheel gift. */}
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/admin/milestones/awards"
+              className={buttonVariants({ variant: "secondary" })}
+            >
+              <Trophy className="size-4" aria-hidden />
+              {mm.viewAwards}
+            </Link>
+            <MilestoneDialog />
+          </div>
+        </PageHeader>
+
+        {tabs}
+
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label={mm.statMilestones}
+            value={rows.length}
+            hint={mm.statMilestonesHint}
+            icon={Route}
+          />
+          <StatCard
+            label={mm.statActive}
+            value={rows.filter((r) => r.is_active).length}
+            icon={PackageCheck}
+            tone="secondary"
+          />
+          <StatCard
+            label={mm.statClaimed}
+            value={awardRows?.length ?? 0}
+            hint={mm.statClaimedHint}
+            icon={Gift}
+          />
+          <StatCard
+            label={mm.statPending}
+            value={pendingCount}
+            hint={mm.statPendingHint}
+            icon={Trophy}
+            highlight={pendingCount > 0}
+          />
+        </div>
+
+        {searchBox}
+
+        {rows.length === 0 ? (
+          <EmptyState title={search ? mm.noMatch : mm.empty} icon={Route} />
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            {rows.map((milestone) => (
+              <MilestoneCard
+                key={milestone.id}
+                milestone={milestone}
+                claims={claimsBy.get(milestone.id) ?? 0}
               />
             ))}
           </div>

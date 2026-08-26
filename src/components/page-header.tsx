@@ -10,7 +10,9 @@ export function PageHeader({
   className,
   children,
 }: {
-  title: string
+  /** A node rather than a string so a page can colour part of the headline —
+   * the roadmap splits its title across two tones, as the mockup does. */
+  title: React.ReactNode
   /** A node rather than a string so a page can hang a link off the subtitle. */
   description?: React.ReactNode
   /** Status chip that sits above the title on the customer screens. */

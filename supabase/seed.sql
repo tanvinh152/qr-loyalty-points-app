@@ -65,3 +65,25 @@ insert into public.rewards
   ('Chúc bạn may mắn lần sau',  'spin', 0, 'none',   0,    0,  40, 4),
   ('Túi cát sắn Chicha 2,5kg',  'spin', 0, 'gift',   0,    20,  6, 5)
 on conflict do nothing;
+
+-- Spend milestones — same table again, kind = 'milestone' (0024). An
+-- INDEPENDENT ladder from the tiers: measured in đồng of lifetime_spend, but
+-- passing a rung moves no tier.
+--
+-- These are the rungs from §7.2 of docs/Tich_Diem_ChiCha_Tong_Hop.md, NOT the
+-- ones drawn in the remix mockup — the mockup's ladder (800k / 3.2tr / 5.5tr /
+-- 8tr) does not match the spec's, and the spec is the contract. See item 5 in
+-- the plan's open questions: the client still has to confirm the final numbers.
+--
+-- Every inert column is stamped explicitly, exactly as saveMilestone does:
+-- rewards_milestone_fields_check pins them all to zero.
+insert into public.rewards
+  (name, description, kind, points_cost, quantity, spend_threshold) values
+  ('Súp/Pate',        'Quà tặng tại mốc 400.000đ',            'milestone', 0, 0,   400000),
+  ('Voucher 20.000đ', 'Giảm giá trực tiếp cho đơn hàng',      'milestone', 0, 0,   800000),
+  ('Voucher 30.000đ', 'Áp dụng cho mọi sản phẩm',             'milestone', 0, 0,  1200000),
+  ('Voucher 50.000đ', 'Quà tặng tại mốc 2.000.000đ',          'milestone', 0, 0,  2000000),
+  ('1 Túi cát',       'Túi cát sắn Chicha 2,5kg',             'milestone', 0, 0,  3200000),
+  ('Set Quà Lvl 1',   'Bộ quà tặng khi đạt hạng Bạch Kim',    'milestone', 0, 0,  5100000),
+  ('Set Quà Lvl 2',   'Bộ quà tặng khi đạt hạng Kim Cương',   'milestone', 0, 0,  8350000)
+on conflict do nothing;

@@ -1,9 +1,10 @@
 "use client"
 
 import { createContext, useContext, useState } from "react"
+import Link from "next/link"
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { PortalNav, type PortalNavItem } from "@/components/portal-nav"
 import { setSidebarCollapsed } from "@/lib/sidebar/actions"
 import { useT } from "@/lib/i18n/provider"
@@ -82,6 +83,46 @@ export function SidebarToggle({ className }: { className?: string }) {
     >
       <Icon className="size-5" aria-hidden />
     </Button>
+  )
+}
+
+/**
+ * The rail's pinned bottom CTA (the mockups' "Upgrade Tier"). A client
+ * component rather than another server-rendered `footer` slot for one reason:
+ * `title` must be set ONLY while collapsed, and CSS cannot express that — the
+ * same rule PortalNav's rail links follow.
+ *
+ * Portal-agnostic on purpose: /admin has no CTA, and the icon arrives as an
+ * ELEMENT because a lucide function cannot cross the RSC boundary.
+ */
+export function SidebarCta({
+  href,
+  label,
+  icon,
+}: {
+  href: string
+  label: string
+  icon: React.ReactNode
+}) {
+  const { collapsed } = useSidebar()
+
+  return (
+    <Link
+      href={href}
+      title={collapsed ? label : undefined}
+      className={cn(
+        buttonVariants({
+          variant: "muted",
+          size: collapsed ? "icon" : "default",
+        }),
+        collapsed ? "mx-auto" : "w-full justify-start gap-3",
+      )}
+    >
+      {icon}
+      {/* sr-only, NEVER hidden: display:none strips the link's accessible name
+          and leaves a screen reader a nameless icon. */}
+      <span className={cn("truncate", collapsed && "sr-only")}>{label}</span>
+    </Link>
   )
 }
 

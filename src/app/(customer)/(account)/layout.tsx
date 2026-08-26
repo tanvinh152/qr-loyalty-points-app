@@ -1,21 +1,24 @@
 import Link from "next/link"
 import { LogOut, PawPrint, Sparkles, TrendingUp, UserX } from "lucide-react"
 
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { AccountMenu } from "@/components/account-menu"
 import { EmptyState } from "@/components/empty-state"
 import { InitialsAvatar } from "@/components/initials-avatar"
 import { PortalFooter } from "@/components/portal-footer"
 import { PortalHeader } from "@/components/portal-header"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { cn } from "@/lib/utils"
 import { getMessages } from "@/lib/i18n/server"
 import { getSidebarCollapsed } from "@/lib/sidebar/server"
 import { getTiers, resolveDisplayTier } from "@/lib/loyalty"
 import { signOut } from "../auth/actions"
 import { type PortalNavItem, PortalNav } from "@/components/portal-nav"
 import { type PortalTitle } from "@/lib/portal-title"
-import { SidebarProvider, SidebarRail } from "@/components/portal-sidebar"
+import {
+  SidebarCta,
+  SidebarProvider,
+  SidebarRail,
+} from "@/components/portal-sidebar"
 import { getAccount } from "./account"
 
 export default async function AccountLayout({
@@ -28,12 +31,14 @@ export default async function AccountLayout({
   const { customer } = await getAccount()
   const collapsed = await getSidebarCollapsed()
 
-  // The Vibrant Paw mockups carry exactly four destinations, in this order, and
+  // The Azure Paw mockups carry exactly four destinations, in this order, and
   // the rail and the phone bar carry the SAME four. Everything that used to be
   // a fifth or sixth rail item now has a specific home:
   //   /profile → the rail's identity footer (desktop) / AccountMenu (phone)
   //   /help    → PortalFooter, with /faq, /terms and /blog
   //   /spin    → the dashboard card, the way check-in already works
+  //   /rewards/roadmap → a sub-route of /rewards, reached from that page and
+  //                      from the dashboard card; it inherits the highlight
   // If you add a fifth item here, the mockups have no pattern for it — design
   // an overflow affordance rather than letting the bar grow.
   const items: PortalNavItem[] = [
@@ -51,6 +56,10 @@ export default async function AccountLayout({
     { href: "/profile", label: nav.profile },
     { href: "/help", label: nav.help },
     { href: "/spin", label: nav.spin },
+    // A SUB-ROUTE of /rewards, not a fifth destination: PortalNav matches by
+    // prefix, so the rail and the phone bar keep "Rewards" lit, and
+    // resolvePortalTitle hands the header a back chevron to the shop.
+    { href: "/rewards/roadmap", label: nav.roadmap },
   ]
 
   // The display tier, not the one the spend earns: a member kept on an old
@@ -70,9 +79,11 @@ export default async function AccountLayout({
   return (
     <SidebarProvider initialCollapsed={collapsed}>
       <div className="bg-canvas flex min-h-svh">
-        {/* Desktop rail. The upgrade CTA and sign-out that used to be pinned to
-            its bottom are in the header now — at EVERY width, where they used
-            to be desktop-only — and the bottom carries the member instead. */}
+        {/* Desktop rail. Its bottom carries the member, then the upgrade CTA
+            pinned under it, as in the mockups. Sign-out stays in the header at
+            every width — where it used to be desktop-only — and below `md`,
+            where there is no rail at all, BOTH the CTA and sign-out live in
+            AccountMenu behind the avatar. */}
         <SidebarRail
           items={items}
           navLabel={nav.mainLabel}
@@ -97,26 +108,36 @@ export default async function AccountLayout({
           }
           footer={
             customer && (
-              <Link
-                href="/profile"
-                aria-label={nav.avatarLabel}
-                className="hover:bg-surface-high flex items-center gap-3 rounded-xl px-1 py-1 transition-colors group-data-[collapsed=true]/sidebar:justify-center group-data-[collapsed=true]/sidebar:px-0"
-              >
-                <InitialsAvatar
-                  name={customer.full_name ?? customer.phone}
-                  size="lg"
-                />
-                <div className="min-w-0 group-data-[collapsed=true]/sidebar:hidden">
-                  <p className="text-label-md truncate font-bold">
-                    {customer.full_name ?? customer.phone}
-                  </p>
-                  {tierName && (
-                    <p className="text-primary text-label-sm truncate uppercase">
-                      {tierName}
+              <div className="grid gap-3">
+                <Link
+                  href="/profile"
+                  aria-label={nav.avatarLabel}
+                  className="hover:bg-surface-high flex items-center gap-3 rounded-xl px-1 py-1 transition-colors group-data-[collapsed=true]/sidebar:justify-center group-data-[collapsed=true]/sidebar:px-0"
+                >
+                  <InitialsAvatar
+                    name={customer.full_name ?? customer.phone}
+                    size="lg"
+                  />
+                  <div className="min-w-0 group-data-[collapsed=true]/sidebar:hidden">
+                    <p className="text-label-md truncate font-bold">
+                      {customer.full_name ?? customer.phone}
                     </p>
-                  )}
-                </div>
-              </Link>
+                    {tierName && (
+                      <p className="text-primary text-label-sm truncate uppercase">
+                        {tierName}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+
+                {/* The mockups pin this to the very bottom of the rail. Below
+                    `md` there is no rail, so AccountMenu carries the same row. */}
+                <SidebarCta
+                  href="/tiers"
+                  label={nav.upgradeCta}
+                  icon={<TrendingUp className="size-5" aria-hidden />}
+                />
+              </div>
             )
           }
         />
@@ -149,18 +170,6 @@ export default async function AccountLayout({
                         cannot push the avatar off the row. */}
                     <span className="max-sm:hidden">{nav.pointsUnit}</span>
                   </span>
-
-                  {/* md+ only: below it, this lives in AccountMenu. */}
-                  <Link
-                    href="/tiers"
-                    className={cn(
-                      buttonVariants({ variant: "muted", size: "sm" }),
-                      "shrink-0 max-md:hidden",
-                    )}
-                  >
-                    <TrendingUp className="size-4" aria-hidden />
-                    {nav.upgradeCta}
-                  </Link>
                 </>
               )
             }

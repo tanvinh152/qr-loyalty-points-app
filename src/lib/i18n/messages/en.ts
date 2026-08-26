@@ -325,6 +325,7 @@ export const en = {
         "Every gift in one place. Redeemable gifts go to the shop; wheel gifts go on the lucky wheel.",
       tabRedeem: "Redeemable",
       tabSpin: "Wheel slices",
+      tabMilestone: "Milestones",
       redeemHelper: "Items customers can redeem with their available points.",
       name: "Name",
       description: "Description",
@@ -370,6 +371,40 @@ export const en = {
       deleteFailed: "Delete failed.",
       // The wheel's slices are gifts too, so they are managed on this same
       // screen under their own tab (0022) — only the fields differ.
+      // The spend ladder (0024). Configured on this screen's third tab; the
+      // hand-over queue is a screen of its own, exactly like the wheel's.
+      milestone: {
+        helper:
+          "Gifts a member unlocks by reaching a lifetime SPEND amount. Independent of the tier ladder — reaching a rung moves no tier.",
+        addTitle: "Add a milestone",
+        name: "Gift name",
+        description: "Description",
+        descriptionHelper:
+          "One line under the name. A combined prize goes here rather than in a second rung.",
+        spendThreshold: "Spend threshold (đ)",
+        spendThresholdHelper:
+          "Lifetime spend in đồng, measured against the member's spend — never their points.",
+        imageUrl: "Image",
+        status: "Status",
+        statusHelper:
+          "An inactive rung disappears from the roadmap. Prizes already claimed still show.",
+        searchPlaceholder: "Search milestones",
+        noMatch: "No milestone matches that search.",
+        empty: "No milestones yet. Add the first rung of the ladder.",
+        statMilestones: "Milestones",
+        statMilestonesHint: "Rungs configured",
+        statActive: "Active",
+        statClaimed: "Claimed",
+        statClaimedHint: "All time",
+        statPending: "Gifts to hand over",
+        statPendingHint: "Claimed but not yet given",
+        viewAwards: "Claims",
+        thresholdConflict:
+          "Another active milestone already sits at that amount. Change the threshold or deactivate the other one.",
+        saved: "Milestone saved.",
+        saveFailed: "Save failed.",
+        deleteFailed: "Delete failed.",
+      },
       spin: {
         helper:
           "Every active slice becomes one wedge. Odds are weights, not percentages — a slice's chance is its weight divided by the total.",
@@ -419,6 +454,35 @@ export const en = {
         saved: "Slice saved.",
         saveFailed: "Save failed.",
         deleteFailed: "Delete failed.",
+      },
+    },
+    // The spend ladder's hand-over queue. Mirrors admin.spin.winners
+    // key-for-key: same screen, different ladder.
+    milestones: {
+      awards: {
+        metaTitle: "Milestone claims",
+        title: "Milestone Claims",
+        subtitle:
+          "Gifts claimed from the spend ladder, newest first. Mark each one once handed over.",
+        backToMilestones: "Back to milestones",
+        customer: "Member",
+        milestone: "Milestone",
+        threshold: "Threshold",
+        claimedAt: "Claimed",
+        status: "Status",
+        statusPending: "Not handed over",
+        statusFulfilled: "Handed over",
+        fulfilledOn: (date: string) => `Handed over ${date}`,
+        markFulfilled: "Mark as handed over",
+        undoFulfilled: "Undo",
+        filterLabel: "Show",
+        filterPending: "Pending",
+        filterAll: "All",
+        empty: "No milestone has been claimed yet.",
+        emptyPending: "Nothing waiting — every gift has been handed over.",
+        marked: "Marked as handed over.",
+        unmarked: "Marked as pending again.",
+        updateFailed: "Could not update that claim.",
       },
     },
     spin: {
@@ -647,6 +711,7 @@ export const en = {
       avatarLabel: "Your account",
       rewards: "Rewards",
       spin: "Spin & win",
+      roadmap: "Reward roadmap",
       tiers: "Tiers",
       history: "History",
       help: "Help",
@@ -664,25 +729,36 @@ export const en = {
       panelTitle: "Every visit earns something back.",
       panelBody:
         "Sign in to track your points, unlock member tiers and redeem rewards for you and your pet.",
-      title: "Welcome back",
-      subtitle: "Sign in to continue",
+      // The mockup's panel check-list. Shared by /register, which sells the
+      // same programme — two copies would drift.
+      //
+      // The mockup's middle line reads "up to 1.4x". Deliberately not repeated:
+      // `membership_tiers.multiplier` is admin data and 0023 already moved the
+      // ladder, so a number baked into a translation becomes a false claim the
+      // moment an admin edits a tier.
+      benefits: [
+        "Lifetime spend adds up — redeem rewards with no cap.",
+        "Climb the tiers for a higher points multiplier.",
+        "Track every order and offer in one place.",
+      ],
+      // The auth card's tab strip. Both pages render the same strip, so it
+      // lives under `login` — a copy under `register` would drift.
+      tabLogin: "Sign in",
+      tabRegister: "Sign up",
       phone: "Phone number",
       phonePlaceholder: "0912345678",
       password: "Password",
       passwordPlaceholder: "••••••••",
-      forgot: "Forgot?",
+      forgot: "Forgot your password?",
       forgotHint: "Contact support to reset your password.",
       showPassword: "Show password",
       hidePassword: "Hide password",
       submit: "Sign in",
       submitting: "Signing in…",
-      noAccount: "Don't have an account?",
-      registerCta: "Sign up now",
     },
     register: {
       metaTitle: "Sign up",
       brandTagline: "Collect points and unlock member perks",
-      title: "Create your account",
       fullName: "Full name",
       fullNamePlaceholder: "e.g. Nguyen Van A",
       email: "Email",
@@ -702,8 +778,6 @@ export const en = {
       privacyLink: "Privacy policy",
       submit: "Sign up",
       submitting: "Processing…",
-      haveAccount: "Already have an account?",
-      loginCta: "Sign in",
     },
     dashboard: {
       metaTitle: "My points",
@@ -740,6 +814,20 @@ export const en = {
           : `You have ${spins} spins left today.`,
       spinBodyEmpty: "You've used every spin today. Come back tomorrow.",
       spinCta: "Go to the wheel",
+      // The milestone card. Deliberately NO second progress bar: the hero
+      // above already shows one measured in đồng (spend towards the next tier),
+      // and a second đồng bar right under it reads as the same journey twice.
+      roadmapTitle: "Reward roadmap",
+      roadmapReady: (n: number) =>
+        n === 1 ? "1 milestone ready to claim" : `${n} milestones ready to claim`,
+      roadmapPending: (n: number) =>
+        n === 1
+          ? "1 prize waiting at the counter"
+          : `${n} prizes waiting at the counter`,
+      roadmapNext: (name: string, amount: string) =>
+        `${amount} more to unlock ${name}.`,
+      roadmapAllDone: "You've reached every milestone.",
+      roadmapCta: "View roadmap",
       spinPendingGifts: (n: number) =>
         n === 1 ? "1 gift waiting to be collected" : `${n} gifts waiting to be collected`,
       // The five figures the programme spec opens on, in one panel.
@@ -790,6 +878,41 @@ export const en = {
       offBody: "There's no spin event running right now. Check back soon.",
       backToDashboard: "Back to home",
     },
+    // The spend-milestone ladder (0024). An INDEPENDENT ladder from the tiers:
+    // it shares the unit (đồng of lifetime spend) and nothing else.
+    roadmap: {
+      metaTitle: "Reward roadmap",
+      eyebrow: "Milestone programme",
+      // Two-tone headline, per the mockup: the second half carries the accent.
+      // Split in the catalogue rather than in JSX so a translator controls
+      // where the colour break falls — it is not the same word in every
+      // language. The trailing space on `title` is load-bearing.
+      title: "Spend, ",
+      titleAccent: "unlock, collect",
+      subtitle:
+        "Lifetime spend adds up for good. Reach a milestone and the gift is yours to claim.",
+      // NOT "points": the mockup labels this figure as points, but the number
+      // and the rungs it is measured against are both đồng of spend.
+      spendLabel: "Lifetime spend",
+      progressLabel: "Milestones reached",
+      // The node's short label — 400k, 1,2tr. The suffix is language, so it
+      // lives here rather than in the helper that computes the magnitude.
+      thresholdShort: (value: number, unit: "thousand" | "million") =>
+        unit === "million" ? `${value}M` : `${value}k`,
+      newlyUnlocked: "Ready to claim",
+      claimCta: "Claim now",
+      claiming: "Claiming…",
+      stateClaimed: "Claimed",
+      shortfall: (amount: string) => `${amount} to go`,
+      pendingChip: "Collect at the counter",
+      collectedChip: "Collected",
+      claimSuccess: (name: string) =>
+        `${name} is yours — show this screen at the counter to collect it.`,
+      emptyTitle: "No milestones yet",
+      emptyBody:
+        "There's no milestone ladder running right now. Check back soon.",
+      backToRewards: "Back to the reward store",
+    },
     rewards: {
       metaTitle: "Reward store",
       title: "Reward store",
@@ -804,6 +927,7 @@ export const en = {
       eyebrow: "Points available",
       earnMoreHint: "Points added automatically",
       historyCta: "Redemption history",
+      roadmapCta: "Reward roadmap",
       filterLabel: "Filter by category",
       outOfStock: "Out of stock",
       notEnough: "Not enough points",
@@ -878,6 +1002,9 @@ export const en = {
       memberSince: (date: string) => `Member since ${date}`,
       multiplier: (value: number) => `${value}× points`,
       pageTitle: "Tiers & privileges",
+      // The mockup's medallion badge. Kept in the catalogue rather than inline
+      // so it can be localised even though today both locales say VIP.
+      vipChip: "VIP",
       // A PROGRAMME rule, not something the system enforces: customers.tier_id
       // only ever rises, so nothing here may promise a downgrade.
       retentionTitle: "Keeping your tier",
@@ -975,6 +1102,13 @@ export const en = {
       serviceUnavailable:
         "Something went wrong on our side. Please try again in a few minutes.",
       sessionExpired: "Your session expired. Please sign in again.",
+      // One per errcode claim_milestone_reward raises (0024). "Locked" and
+      // "already claimed" are the two a member can actually hit by racing the
+      // page against their own spend, so both name the real cause.
+      milestoneLocked: "You haven't reached that milestone yet.",
+      milestoneClaimed: "You've already claimed that milestone.",
+      milestoneUnavailable: "That milestone is no longer available.",
+      milestoneClaimFailed: "Couldn't claim that milestone. Please try again.",
       noCustomer:
         "This login has no loyalty profile yet. Please contact support.",
       rewardNotFound: "This reward is no longer available.",
@@ -999,6 +1133,10 @@ export const en = {
     tabArticles: "Articles",
     tabPromotions: "Promotions",
     promotionChip: "Promotion",
+    // The tile overlays a category chip on the cover, as the mockup does. The
+    // mockup invents three categories the schema has no column for, so the two
+    // real post_type values are what gets labelled.
+    articleChip: "Guide",
     emptyTitle: "Nothing published yet",
     emptyBody: "Check back soon.",
     backToBlog: "Back to blog",
@@ -1151,6 +1289,8 @@ export const en = {
     tierNameRequired: "Tier name is required",
     rewardNameRequired: "Reward name is required",
     spinPrizeNameRequired: "Slice name is required",
+    milestoneNameRequired: "Milestone name is required",
+    milestoneThresholdRequired: "Spend threshold must be above zero",
     spinPointsRequired: "A points slice must award more than 0",
     invalidStatuses: "Enter comma-separated numbers",
     invalidUrl: "Invalid URL",

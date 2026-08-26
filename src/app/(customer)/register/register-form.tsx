@@ -39,7 +39,6 @@ export function RegisterForm() {
           icon={UserRound}
           placeholder={r.fullNamePlaceholder}
           autoComplete="name"
-          className="rounded-full"
           required
         />
       </div>
@@ -56,7 +55,6 @@ export function RegisterForm() {
           icon={Mail}
           placeholder={r.emailPlaceholder}
           autoComplete="email"
-          className="rounded-full"
           required
         />
         <p className="text-body-sm text-muted-foreground">{r.emailHint}</p>
@@ -70,7 +68,6 @@ export function RegisterForm() {
           type="date"
           icon={Cake}
           autoComplete="bday"
-          className="rounded-full"
           required
         />
         <p className="text-body-sm text-muted-foreground">{r.dobHint}</p>
@@ -86,7 +83,6 @@ export function RegisterForm() {
           icon={Smartphone}
           placeholder={l.phonePlaceholder}
           autoComplete="username"
-          className="rounded-full"
           required
         />
       </div>
@@ -100,7 +96,6 @@ export function RegisterForm() {
           icon={Lock}
           placeholder={l.passwordPlaceholder}
           autoComplete="new-password"
-          className="rounded-full"
           minLength={8}
           required
         />
@@ -114,7 +109,6 @@ export function RegisterForm() {
           name="order_code"
           icon={Receipt}
           placeholder={r.orderCodePlaceholder}
-          className="rounded-full"
           required
         />
         <p className="text-body-sm text-muted-foreground">{r.orderCodeHint}</p>
@@ -151,7 +145,6 @@ export function RegisterForm() {
         type="submit"
         variant="brand"
         size="xl"
-        className="rounded-full"
         disabled={isPending}
       >
         {isPending ? r.submitting : r.submit}

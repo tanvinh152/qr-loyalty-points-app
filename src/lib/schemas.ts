@@ -283,6 +283,31 @@ export function makeSpinPrizeSchema(v: V) {
 export type SpinPrizeInput = z.infer<ReturnType<typeof makeSpinPrizeSchema>>
 export type SpinPrizeFormValues = z.input<ReturnType<typeof makeSpinPrizeSchema>>
 
+// Admin: one rung of the spend ladder — a `rewards` row with kind = 'milestone'
+// (0024). `kind` is not a field here; saveMilestone stamps it, along with every
+// inert column the constraint pins to zero.
+//
+// No `sort_order`: the ladder orders itself by threshold, so a second ordering
+// field would be one more thing to drift. No `quantity` either — a milestone is
+// a published promise, not stock (see 0024's header).
+export function makeMilestoneSchema(v: V) {
+  return z.object({
+    id: z.string().uuid().optional(),
+    name: z.string().trim().min(1, v.milestoneNameRequired),
+    description: z.string().trim().max(300).optional().or(z.literal("")),
+    image_url: z.string().trim().url(v.invalidUrl).optional().or(z.literal("")),
+    // Đồng of LIFETIME SPEND, not points. Strictly positive: a rung at 0 is
+    // unlocked for everyone the moment they register, and 0024 refuses it.
+    spend_threshold: z.coerce
+      .number()
+      .int(v.wholeNumber)
+      .positive(v.milestoneThresholdRequired),
+    is_active: z.coerce.boolean(),
+  })
+}
+export type MilestoneInput = z.infer<ReturnType<typeof makeMilestoneSchema>>
+export type MilestoneFormValues = z.input<ReturnType<typeof makeMilestoneSchema>>
+
 // Admin: manual points/tier adjustment. Deltas are signed — the RPC is what
 // refuses to push a balance below zero. `grant_tier_id` IS a direct tier
 // assignment since 0012; it never invents spend or lifetime points.

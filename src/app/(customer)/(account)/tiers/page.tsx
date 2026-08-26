@@ -98,27 +98,14 @@ export default async function TiersPage() {
   const maskedPhone = customer.phone.replace(/^(\d{2})\d+(\d{2})$/, "$1••••$2")
 
   return (
-    <div
-      className={cn(
-        "grid gap-4 rounded-3xl p-4 sm:gap-6 sm:p-6 md:p-10",
-        tierAccentClass(rank),
-      )}
-    >
-      <PageHeader
-        title={ti.pageTitle}
-        description={ti.subtitle}
-        size="display"
-        // Gated on `current`: "Current tier" printed above an empty state is a
-        // statement that isn't true yet.
-        eyebrow={
-          current ? (
-            <span className="text-label-md text-tier border-tier/40 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 uppercase">
-              <Gem className="size-3.5" aria-hidden />
-              {ti.eyebrow}
-            </span>
-          ) : undefined
-        }
-      />
+    // No page-wide tint panel: in the mockup the cards sit straight on the
+    // canvas. `--tier` therefore has to be set on each block that reads it —
+    // the identity card, the progress card and the perks panel. The ladder rows
+    // set their OWN accent from their index, so the table needs none.
+    <div className="grid gap-4 sm:gap-6">
+      {/* The mockup leaves the page title plain and moves "Current tier" onto
+          the identity card below, where it labels the thing it describes. */}
+      <PageHeader title={ti.pageTitle} description={ti.subtitle} size="display" />
 
       {!current ? (
         <div className="border-border bg-card rounded-2xl border">
@@ -130,15 +117,35 @@ export default async function TiersPage() {
         </div>
       ) : (
         <div className="grid gap-4 sm:gap-6 md:grid-cols-12">
-          <section className="border-border bg-card relative grid content-start gap-4 overflow-hidden rounded-3xl border p-4 sm:gap-6 sm:p-6 md:col-span-5 md:p-8">
+          <section
+            className={cn(
+              "border-border bg-card shadow-soft relative grid content-start gap-4 overflow-hidden rounded-3xl border p-4 sm:gap-6 sm:p-6 md:col-span-5 md:p-8",
+              tierAccentClass(rank),
+            )}
+          >
             {/* Decorative gem glow — the accent class set --tier above. */}
             <span
               aria-hidden
               className="bg-tier/20 pointer-events-none absolute -top-16 -right-16 size-56 rounded-full blur-3xl"
             />
+            {/* Gated on `current` by the branch above: "Current tier" printed
+                over an empty state is a statement that isn't true yet. */}
+            <div className="text-label-md text-tier relative flex items-center gap-2 uppercase">
+              <Gem className="size-4 shrink-0" aria-hidden />
+              {ti.eyebrow}
+            </div>
+
             <div className="relative flex items-center gap-4">
-              <span className="border-tier bg-tier/10 text-tier grid size-24 shrink-0 place-items-center rounded-full border">
-                <Gem className="size-10" aria-hidden />
+              {/* Gradient ring around a lit core, per the mockup's medallion.
+                  The ring is built from --tier so a renamed or added tier still
+                  gets its own metal without a new class. */}
+              <span className="from-tier/40 to-tier/10 relative grid size-24 shrink-0 place-items-center rounded-full bg-gradient-to-tr p-1">
+                <span className="bg-card border-card text-tier grid size-full place-items-center rounded-full border-4">
+                  <Gem className="size-10" aria-hidden />
+                </span>
+                <span className="bg-primary text-primary-foreground border-card text-label-sm absolute -right-2 -bottom-2 rounded-full border-2 px-2 py-0.5 uppercase">
+                  {ti.vipChip}
+                </span>
               </span>
               <div className="grid min-w-0 gap-1">
                 <span className="text-headline-lg text-tier truncate">
@@ -198,7 +205,12 @@ export default async function TiersPage() {
             </div>
           </section>
 
-          <section className="border-border bg-card grid content-center gap-4 rounded-3xl border p-4 sm:p-6 md:col-span-7 md:p-8">
+          <section
+            className={cn(
+              "border-border bg-card shadow-elevated grid content-center gap-4 rounded-3xl border p-4 sm:p-6 md:col-span-7 md:p-8",
+              tierAccentClass(rank),
+            )}
+          >
             {next ? (
               <>
                 <div className="flex flex-wrap items-end justify-between gap-2">
@@ -219,14 +231,27 @@ export default async function TiersPage() {
                     </span>
                   </p>
                 </div>
-                <Progress
-                  value={progress / 100}
-                  label={ti.progressTo(next.name)}
-                  accent
-                  className="h-4"
-                />
-                <div className="border-tier/30 bg-tier/10 flex items-center gap-3 rounded-full border px-4 py-3">
-                  <span className="text-tier grid size-8 shrink-0 place-items-center">
+                {/* End-caps live here, not in ui/progress.tsx: the dashboard
+                    renders the same component at h-2, where a size-4 dot would
+                    stand taller than the track it marks. */}
+                <div className="relative">
+                  <Progress
+                    value={progress / 100}
+                    label={ti.progressTo(next.name)}
+                    tone="accent"
+                    className="h-4"
+                  />
+                  <span
+                    aria-hidden
+                    className="bg-tier ring-card absolute top-0 left-0 size-4 rounded-full ring-4"
+                  />
+                  <span
+                    aria-hidden
+                    className="bg-surface-highest ring-card absolute top-0 right-0 size-4 rounded-full ring-4"
+                  />
+                </div>
+                <div className="bg-primary-container/50 flex items-center gap-4 rounded-2xl p-4">
+                  <span className="bg-primary text-primary-foreground grid size-12 shrink-0 place-items-center rounded-full">
                     <ShoppingBag className="size-5" aria-hidden />
                   </span>
                   <span className="text-body-sm">
@@ -256,7 +281,7 @@ export default async function TiersPage() {
       {/* Unguarded on purpose: someone with no tier yet still needs to see what
           the ladder costs and offers — that is the screen's whole pitch. */}
       <section className="border-border bg-card shadow-soft overflow-hidden rounded-3xl border">
-        <div className="border-border border-b p-4 sm:p-6">
+        <div className="border-border bg-surface-low border-b p-4 sm:p-6">
           <h2 className="text-headline-md flex items-center gap-2">
             <Gem className="text-primary size-5" aria-hidden />
             {ti.benefitsTableTitle}
@@ -276,7 +301,7 @@ export default async function TiersPage() {
               )}
             >
               <div className="flex flex-wrap items-center gap-2">
-                <span className="border-tier/30 bg-tier/10 text-tier grid size-9 shrink-0 place-items-center rounded-xl border">
+                <span className="border-tier/30 bg-tier/10 text-tier grid size-9 shrink-0 place-items-center rounded-full border">
                   <Gem className="size-4" aria-hidden />
                 </span>
                 <span className="text-body-lg font-semibold">{tier.name}</span>
@@ -339,7 +364,7 @@ export default async function TiersPage() {
                 >
                   <th scope="row" className="px-6 py-4 font-semibold">
                     <div className="flex items-center gap-3">
-                      <span className="border-tier/30 bg-tier/10 text-tier grid size-10 shrink-0 place-items-center rounded-xl border">
+                      <span className="border-tier/30 bg-tier/10 text-tier grid size-10 shrink-0 place-items-center rounded-full border">
                         <Gem className="size-5" aria-hidden />
                       </span>
                       <span className="text-body-lg">{tier.name}</span>
@@ -386,7 +411,12 @@ export default async function TiersPage() {
         // tier rail down its left edge, which the shared header strip has no
         // room for. This panel is also the ONLY place `perk.detail` is rendered
         // — the table above has room for titles alone.
-        <section className="border-border bg-card relative overflow-hidden rounded-3xl border p-4 sm:p-6 md:p-8">
+        <section
+          className={cn(
+            "border-border bg-card shadow-soft relative overflow-hidden rounded-3xl border p-4 sm:p-6 md:p-8",
+            tierAccentClass(rank),
+          )}
+        >
           <span aria-hidden className="bg-tier absolute inset-y-0 left-0 w-1" />
           <h2 className="text-headline-md mb-4 sm:mb-6">
             {ti.perksTitle(current.name)}

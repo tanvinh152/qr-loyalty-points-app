@@ -35,7 +35,6 @@ export function LoginForm() {
           icon={Smartphone}
           placeholder={l.phonePlaceholder}
           autoComplete="username"
-          className="rounded-full"
           required
         />
       </div>
@@ -50,7 +49,7 @@ export function LoginForm() {
             icon={Lock}
             placeholder={l.passwordPlaceholder}
             autoComplete="current-password"
-            className="rounded-full pr-11"
+            className="pr-11"
             required
           />
           <button
@@ -90,7 +89,6 @@ export function LoginForm() {
         type="submit"
         variant="brand"
         size="xl"
-        className="rounded-full"
         disabled={isPending}
       >
         {isPending ? l.submitting : l.submit}

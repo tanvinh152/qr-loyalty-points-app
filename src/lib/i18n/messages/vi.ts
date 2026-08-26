@@ -309,6 +309,7 @@ export const vi: Messages = {
         "Mọi phần quà ở cùng một chỗ. Quà đổi điểm lên cửa hàng, quà vòng quay lên vòng quay may mắn.",
       tabRedeem: "Quà đổi điểm",
       tabSpin: "Quà vòng quay",
+      tabMilestone: "Cột mốc chi tiêu",
       redeemHelper: "Các phần quà khách có thể đổi bằng điểm khả dụng.",
       name: "Tên quà",
       description: "Mô tả",
@@ -351,6 +352,38 @@ export const vi: Messages = {
       saved: "Đã lưu quà tặng.",
       saveFailed: "Lưu thất bại.",
       deleteFailed: "Xóa thất bại.",
+      milestone: {
+        helper:
+          "Quà mở khóa theo mốc CHI TIÊU tích lũy trọn đời. Độc lập với thang hạng — đạt mốc không làm thay đổi hạng.",
+        addTitle: "Thêm cột mốc",
+        name: "Tên phần quà",
+        description: "Mô tả",
+        descriptionHelper:
+          "Một dòng dưới tên. Quà ghép ghi ở đây thay vì tách thành mốc thứ hai.",
+        spendThreshold: "Mốc chi tiêu (đ)",
+        spendThresholdHelper:
+          "Chi tiêu tích lũy tính bằng đồng, đo theo số tiền khách đã chi — không phải điểm.",
+        imageUrl: "Hình ảnh",
+        status: "Trạng thái",
+        statusHelper:
+          "Mốc tắt sẽ biến khỏi lộ trình. Quà khách đã nhận vẫn hiển thị.",
+        searchPlaceholder: "Tìm cột mốc",
+        noMatch: "Không có cột mốc nào khớp.",
+        empty: "Chưa có cột mốc nào. Thêm bậc đầu tiên của thang.",
+        statMilestones: "Cột mốc",
+        statMilestonesHint: "Số bậc đã cấu hình",
+        statActive: "Đang bật",
+        statClaimed: "Đã nhận",
+        statClaimedHint: "Toàn thời gian",
+        statPending: "Quà cần trao",
+        statPendingHint: "Đã nhận nhưng chưa trao",
+        viewAwards: "Lượt nhận",
+        thresholdConflict:
+          "Đã có một cột mốc đang bật ở mức tiền này. Đổi mốc chi tiêu hoặc tắt mốc kia.",
+        saved: "Đã lưu cột mốc.",
+        saveFailed: "Lưu thất bại.",
+        deleteFailed: "Xóa thất bại.",
+      },
       spin: {
         helper:
           "Mỗi ô đang bật là một phần trên vòng quay. Tỉ lệ tính bằng trọng số, không phải phần trăm — cơ hội của một ô = trọng số của nó chia cho tổng.",
@@ -398,6 +431,33 @@ export const vi: Messages = {
         saved: "Đã lưu ô.",
         saveFailed: "Lưu thất bại.",
         deleteFailed: "Xóa thất bại.",
+      },
+    },
+    milestones: {
+      awards: {
+        metaTitle: "Lượt nhận quà mốc",
+        title: "Lượt nhận quà mốc",
+        subtitle:
+          "Quà đã nhận từ thang chi tiêu, mới nhất trước. Đánh dấu sau khi trao tay.",
+        backToMilestones: "Về danh sách cột mốc",
+        customer: "Thành viên",
+        milestone: "Cột mốc",
+        threshold: "Mốc chi tiêu",
+        claimedAt: "Nhận lúc",
+        status: "Trạng thái",
+        statusPending: "Chưa trao",
+        statusFulfilled: "Đã trao",
+        fulfilledOn: (date: string) => `Đã trao ${date}`,
+        markFulfilled: "Đánh dấu đã trao",
+        undoFulfilled: "Hoàn tác",
+        filterLabel: "Hiển thị",
+        filterPending: "Chờ trao",
+        filterAll: "Tất cả",
+        empty: "Chưa có ai nhận quà mốc.",
+        emptyPending: "Không còn gì chờ — mọi phần quà đã được trao.",
+        marked: "Đã đánh dấu là đã trao.",
+        unmarked: "Đã chuyển lại thành chờ trao.",
+        updateFailed: "Không cập nhật được lượt nhận này.",
       },
     },
     spin: {
@@ -626,6 +686,7 @@ export const vi: Messages = {
       avatarLabel: "Tài khoản của bạn",
       rewards: "Quà tặng",
       spin: "Vòng quay",
+      roadmap: "Lộ trình quà",
       tiers: "Hạng",
       history: "Lịch sử",
       help: "Hỗ trợ",
@@ -641,25 +702,29 @@ export const vi: Messages = {
       panelTitle: "Mỗi lần ghé thăm đều được đền đáp.",
       panelBody:
         "Đăng nhập để theo dõi điểm tích lũy, mở khóa hạng thành viên và đổi quà cho bạn và bé cưng.",
-      title: "Chào mừng trở lại",
-      subtitle: "Đăng nhập để tiếp tục",
+      benefits: [
+        "Tích lũy chi tiêu trọn đời, đổi quà không giới hạn.",
+        "Thăng hạng để nhận hệ số nhân điểm cao hơn.",
+        "Quản lý lịch sử mua hàng và theo dõi ưu đãi dễ dàng.",
+      ],
+      // The auth card's tab strip. Both pages render the same strip, so it
+      // lives under `login` — a copy under `register` would drift.
+      tabLogin: "Đăng nhập",
+      tabRegister: "Đăng ký",
       phone: "Số điện thoại",
       phonePlaceholder: "0912345678",
       password: "Mật khẩu",
       passwordPlaceholder: "••••••••",
-      forgot: "Quên?",
+      forgot: "Quên mật khẩu?",
       forgotHint: "Liên hệ hỗ trợ để đặt lại mật khẩu.",
       showPassword: "Hiện mật khẩu",
       hidePassword: "Ẩn mật khẩu",
       submit: "Đăng nhập",
       submitting: "Đang đăng nhập…",
-      noAccount: "Chưa có tài khoản?",
-      registerCta: "Đăng ký ngay",
     },
     register: {
       metaTitle: "Đăng ký",
       brandTagline: "Tích lũy điểm và tận hưởng ưu đãi đặc quyền",
-      title: "Tạo tài khoản mới",
       fullName: "Họ và tên",
       fullNamePlaceholder: "VD: Nguyễn Văn A",
       email: "Email",
@@ -677,8 +742,6 @@ export const vi: Messages = {
       privacyLink: "Chính sách bảo mật",
       submit: "Đăng ký",
       submitting: "Đang xử lý…",
-      haveAccount: "Đã có tài khoản?",
-      loginCta: "Đăng nhập ngay",
     },
     dashboard: {
       metaTitle: "Điểm của tôi",
@@ -709,6 +772,13 @@ export const vi: Messages = {
       spinBody: (spins: number) => `Bạn còn ${spins} lượt quay hôm nay.`,
       spinBodyEmpty: "Bạn đã dùng hết lượt quay hôm nay. Quay lại vào ngày mai nhé.",
       spinCta: "Vào vòng quay",
+      roadmapTitle: "Lộ trình phần thưởng",
+      roadmapReady: (n: number) => `${n} cột mốc đang chờ bạn nhận quà`,
+      roadmapPending: (n: number) => `${n} phần quà mốc đang chờ tại quầy`,
+      roadmapNext: (name: string, amount: string) =>
+        `Còn thiếu ${amount} để mở khóa ${name}.`,
+      roadmapAllDone: "Bạn đã đạt hết mọi cột mốc.",
+      roadmapCta: "Xem lộ trình",
       spinPendingGifts: (n: number) => `${n} phần quà đang chờ bạn nhận`,
       summaryTitle: "Tổng quan tài khoản",
       summarySpend: "Tổng tiền đã chi tiêu",
@@ -754,6 +824,35 @@ export const vi: Messages = {
       offBody: "Hiện chưa có chương trình quay thưởng nào. Bạn quay lại sau nhé.",
       backToDashboard: "Về trang chủ",
     },
+    roadmap: {
+      metaTitle: "Lộ trình phần thưởng",
+      eyebrow: "Chương trình cột mốc",
+      // Two-tone headline, per the mockup: the second half carries the accent.
+      // Split in the catalogue rather than in JSX so a translator controls
+      // where the colour break falls — it is not the same word in every
+      // language. The trailing space on `title` is load-bearing.
+      title: "Tích chi tiêu, ",
+      titleAccent: "nhận quà",
+      subtitle:
+        "Chi tiêu tích lũy trọn đời. Đạt cột mốc là phần quà thuộc về bạn.",
+      spendLabel: "Chi tiêu tích lũy trọn đời",
+      progressLabel: "Số mốc đã đạt",
+      thresholdShort: (value: number, unit: "thousand" | "million") =>
+        unit === "million" ? `${value}tr` : `${value}k`,
+      newlyUnlocked: "Mới mở khóa",
+      claimCta: "Nhận quà ngay",
+      claiming: "Đang nhận…",
+      stateClaimed: "Đã nhận",
+      shortfall: (amount: string) => `Còn thiếu ${amount}`,
+      pendingChip: "Chờ nhận tại quầy",
+      collectedChip: "Đã trao",
+      claimSuccess: (name: string) =>
+        `${name} đã là của bạn — đưa màn hình này tại quầy để nhận.`,
+      emptyTitle: "Chưa có cột mốc nào",
+      emptyBody:
+        "Hiện chưa có lộ trình cột mốc nào đang chạy. Vui lòng quay lại sau.",
+      backToRewards: "Về cửa hàng đổi quà",
+    },
     rewards: {
       metaTitle: "Cửa hàng quà tặng",
       title: "Cửa hàng quà tặng",
@@ -767,6 +866,7 @@ export const vi: Messages = {
       eyebrow: "Điểm hiện có",
       earnMoreHint: "Điểm được cộng tự động",
       historyCta: "Lịch sử đổi quà",
+      roadmapCta: "Lộ trình phần thưởng",
       filterLabel: "Lọc theo danh mục",
       outOfStock: "Hết hàng",
       notEnough: "Chưa đủ điểm",
@@ -831,6 +931,9 @@ export const vi: Messages = {
       memberSince: (date: string) => `Thành viên từ ${date}`,
       multiplier: (value: number) => `Tích điểm ${value}×`,
       pageTitle: "Thăng hạng & đặc quyền",
+      // The mockup's medallion badge. Kept in the catalogue rather than inline
+      // so it can be localised even though today both locales say VIP.
+      vipChip: "VIP",
       retentionTitle: "Chính sách duy trì hạng",
       retentionBody: (tierName: string) =>
         `Theo thể lệ chương trình, hạng ${tierName} được xét lại mỗi 365 ngày. Hệ thống không tự động hạ hạng của bạn — nếu thấy sai sót, hãy liên hệ với chúng tôi.`,
@@ -918,6 +1021,10 @@ export const vi: Messages = {
       serviceUnavailable:
         "Hệ thống đang gặp sự cố. Vui lòng thử lại sau vài phút.",
       sessionExpired: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+      milestoneLocked: "Bạn chưa đạt cột mốc này.",
+      milestoneClaimed: "Bạn đã nhận phần quà của cột mốc này rồi.",
+      milestoneUnavailable: "Cột mốc này không còn khả dụng.",
+      milestoneClaimFailed: "Không nhận được quà. Vui lòng thử lại.",
       noCustomer:
         "Tài khoản này chưa có hồ sơ tích điểm. Vui lòng liên hệ hỗ trợ.",
       rewardNotFound: "Phần quà này không còn khả dụng.",
@@ -941,6 +1048,7 @@ export const vi: Messages = {
     tabArticles: "Bài viết",
     tabPromotions: "Khuyến mãi",
     promotionChip: "Khuyến mãi",
+    articleChip: "Cẩm nang",
     emptyTitle: "Chưa có bài viết nào",
     emptyBody: "Quay lại sau nhé.",
     backToBlog: "Quay lại blog",
@@ -1077,6 +1185,8 @@ export const vi: Messages = {
     tierNameRequired: "Vui lòng nhập tên hạng",
     rewardNameRequired: "Vui lòng nhập tên quà",
     spinPrizeNameRequired: "Vui lòng nhập tên ô",
+    milestoneNameRequired: "Vui lòng nhập tên phần quà mốc",
+    milestoneThresholdRequired: "Mốc chi tiêu phải lớn hơn 0",
     spinPointsRequired: "Ô cộng điểm phải lớn hơn 0",
     invalidStatuses: "Nhập các số, cách nhau bằng dấu phẩy",
     invalidUrl: "URL không hợp lệ",

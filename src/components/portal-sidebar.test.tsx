@@ -6,7 +6,12 @@ import { setSidebarCollapsed } from "@/lib/sidebar/actions"
 import { renderWithProviders } from "@/test/render"
 import { route } from "@/test/route"
 import { PortalNavItem } from "./portal-nav"
-import { SidebarProvider, SidebarRail, SidebarToggle } from "./portal-sidebar"
+import {
+  SidebarCta,
+  SidebarProvider,
+  SidebarRail,
+  SidebarToggle,
+} from "./portal-sidebar"
 
 // `@/lib/sidebar/actions` is "use server" and pulls next/headers, so it is
 // mocked globally in src/test/setup.ts alongside the theme action.
@@ -27,9 +32,16 @@ function renderShell(initialCollapsed = false) {
         brand={<span>ChiCha Membership</span>}
         brandMark={<span>Dấu thương hiệu</span>}
         footer={
-          <form action="/logout">
-            <button type="submit">Đăng xuất</button>
-          </form>
+          <div>
+            <form action="/logout">
+              <button type="submit">Đăng xuất</button>
+            </form>
+            <SidebarCta
+              href="/tiers"
+              label="Nâng hạng"
+              icon={<span aria-hidden>↑</span>}
+            />
+          </div>
         }
       />
     </SidebarProvider>,
@@ -90,5 +102,22 @@ describe("PortalSidebar", () => {
     expect(screen.getByRole("button", { name: "Đăng xuất" })).toBeTruthy()
     // And the rail's own links keep their names — see portal-nav.test.tsx.
     expect(screen.getByRole("link", { name: "Hạng" })).toBeTruthy()
+  })
+
+  it("keeps the pinned CTA named, and titles it only once collapsed", async () => {
+    // Same rule as the rail's nav links: the label goes `sr-only`, NEVER
+    // `hidden`, or the link is left a nameless icon. The `title` is the
+    // collapsed state's only visible affordance, so it must NOT be there while
+    // the label already is — a tooltip repeating a visible label is noise.
+    const user = userEvent.setup()
+    renderShell(false)
+
+    const expanded = screen.getByRole("link", { name: "Nâng hạng" })
+    expect(expanded).not.toHaveAttribute("title")
+
+    await user.click(screen.getByRole("button", { name: "Thu gọn thanh bên" }))
+
+    const collapsed = screen.getByRole("link", { name: "Nâng hạng" })
+    expect(collapsed).toHaveAttribute("title", "Nâng hạng")
   })
 })

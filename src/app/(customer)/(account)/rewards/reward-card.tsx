@@ -34,8 +34,13 @@ export function RewardCard({
   currentPoints: number
   /** Set when the customer's tier is below reward.min_tier_id — the tier they need. */
   lockedFor?: MembershipTierRow | null
-  /** `bare` drops the frame and image — the shop hero supplies its own. */
-  variant?: "card" | "bare"
+  /** `bare` drops the frame and image — the shop hero supplies its own.
+   * `row` is the dashboard's list line: a 56px thumb instead of a 192px cover,
+   * so three of them fit a 6-column bento tile beside the orders table.
+   * `feature` is the dashboard's 4-column tile: icon-led rather than image-led,
+   * with the CTA as a full-width plate at the bottom. It IS the tile — no
+   * SectionCard wraps it — so it carries its own panel treatment. */
+  variant?: "card" | "row" | "bare" | "feature"
   /** Grid placement from the caller; the bento columns live on the page. */
   className?: string
 }) {
@@ -78,7 +83,19 @@ export function RewardCard({
     // confirmation dialog.
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger
-        render={<Button type="button" size="sm" disabled={disabled} />}
+        render={
+          <Button
+            type="button"
+            // The mockup's list line carries an OUTLINED "Đổi" — the row already
+            // sits inside a card whose own CTA is elsewhere, and a solid button
+            // per row turns the list into a wall of blue. The feature tile and
+            // the shop card both keep the solid one: there the button IS the
+            // card's action.
+            variant={variant === "row" ? "secondary" : "default"}
+            size={variant === "feature" ? "lg" : "sm"}
+            disabled={disabled}
+          />
+        }
       >
         {isPending && <Loader2 className="size-4 animate-spin" aria-hidden />}
         {isPending
@@ -119,7 +136,9 @@ export function RewardCard({
 
   // One chip per card, most urgent first — the mockup never stacks two.
   const chip = reward.is_featured ? (
-    <Badge className="bg-warning/20 text-warning gap-1">
+    // Red, per the mockup's "HOT". Amber reads as a warning here, and the one
+    // actual warning state on this card (low stock) is already amber-adjacent.
+    <Badge variant="destructive" className="gap-1">
       <Flame className="size-3" aria-hidden />
       {r.hotChip}
     </Badge>
@@ -133,8 +152,96 @@ export function RewardCard({
   ) : outOfStock ? (
     <Badge variant="muted">{r.outOfStock}</Badge>
   ) : lowStock ? (
-    <Badge className="bg-destructive/20 text-destructive">{r.lowStock}</Badge>
+    <Badge variant="warning">{r.lowStock}</Badge>
   ) : null
+
+  if (variant === "feature") {
+    return (
+      <div
+        className={cn(
+          "bg-card shadow-soft relative flex flex-col gap-4 overflow-hidden rounded-3xl p-6",
+          className,
+        )}
+      >
+        {/* The mockup's quarter-disc bleeding out of the top-right corner. */}
+        <span
+          aria-hidden
+          className="bg-primary-container/15 pointer-events-none absolute -top-8 -right-8 size-32 rounded-bl-full"
+        />
+        <div className="relative flex items-start justify-between gap-3">
+          {reward.image_url ? (
+            // Admin-entered URLs from any host — see the card variant below.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={reward.image_url}
+              alt=""
+              width={56}
+              height={56}
+              className="size-14 shrink-0 rounded-2xl object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <span className="bg-surface-container text-primary grid size-14 shrink-0 place-items-center rounded-2xl">
+              <Gift className="size-6" aria-hidden />
+            </span>
+          )}
+          {chip}
+        </div>
+
+        <div className="relative mt-auto grid gap-1">
+          <h3 className="text-body-lg font-bold">{reward.name}</h3>
+          <span className="text-headline-md text-primary tabular-nums">
+            {r.cost(reward.points_cost)}
+          </span>
+        </div>
+
+        {/* Full-width plate, per the mockup. `[&>*]:w-full` rather than a prop
+            on RewardCard: `action` is one shared node used by three variants and
+            only this one wants the button to stretch. */}
+        <div className="relative [&>*]:w-full">{action}</div>
+      </div>
+    )
+  }
+
+  if (variant === "row") {
+    return (
+      <div
+        className={cn(
+          "hover:bg-surface-low flex items-center gap-4 rounded-2xl border border-transparent p-3 transition-colors",
+          className,
+        )}
+      >
+        {reward.image_url ? (
+          // Same reasoning as the card: admin-entered URLs from any host.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={reward.image_url}
+            alt=""
+            width={56}
+            height={56}
+            className="size-14 shrink-0 rounded-xl object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="bg-surface-container text-muted-foreground grid size-14 shrink-0 place-items-center rounded-xl">
+            <Gift className="size-5" aria-hidden />
+          </div>
+        )}
+
+        <div className="min-w-0 grow">
+          <h3 className="truncate font-semibold">{reward.name}</h3>
+          <p className="text-body-sm text-primary font-semibold tabular-nums">
+            {r.cost(reward.points_cost)}
+          </p>
+        </div>
+
+        {/* The chip is the first thing to go: at 390px the row has to fit a
+            name, a price and the redeem button, and the button is the point. */}
+        {chip && <div className="max-sm:hidden">{chip}</div>}
+        {action}
+      </div>
+    )
+  }
 
   return (
     <div

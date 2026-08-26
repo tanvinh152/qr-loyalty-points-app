@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Gift, History, Sparkles } from "lucide-react"
+import { Gift, History, Route, Sparkles } from "lucide-react"
 
 import { EmptyState } from "@/components/empty-state"
 import { buttonVariants } from "@/components/ui/button"
@@ -89,9 +89,19 @@ export default async function RewardsPage({
             <Sparkles className="size-4" aria-hidden />
             {r.earnMoreHint}
           </span>
+          {/* The spend ladder is a sub-route of this one, not a nav item: the
+              rail keeps "Rewards" highlighted there and the header gets a back
+              chevron to here for free. */}
+          <Link
+            href="/rewards/roadmap"
+            className={cn(buttonVariants({ variant: "muted" }))}
+          >
+            <Route className="size-4" aria-hidden />
+            {r.roadmapCta}
+          </Link>
           <Link
             href="/history"
-            className={cn(buttonVariants({ variant: "muted" }), "rounded-full")}
+            className={cn(buttonVariants({ variant: "muted" }))}
           >
             <History className="size-4" aria-hidden />
             {r.historyCta}

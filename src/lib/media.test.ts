@@ -39,6 +39,16 @@ describe("mediaPath", () => {
     expect(() => mediaPath("rewards", "text/html")).toThrow()
   })
 
+  it("accepts every folder the allowlist names", () => {
+    // One per feature; a folder missing here means an upload form that cannot
+    // save, and the failure surfaces only at runtime.
+    expect(mediaPath("blog", "image/png")).toMatch(/^blog\//)
+    expect(mediaPath("spin", "image/png")).toMatch(/^spin\//)
+    expect(mediaPath("milestones", "image/png")).toMatch(
+      /^milestones\/[0-9a-f-]{36}\.png$/,
+    )
+  })
+
   // The folder arrives from the browser, so it is an allowlist and not a regex.
   it("refuses a folder outside the allowlist", () => {
     expect(() => mediaPath("../../etc", "image/png")).toThrow()

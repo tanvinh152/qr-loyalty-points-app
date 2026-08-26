@@ -33,7 +33,7 @@ export function MemberCardDialog({
       title={ti.cardTitle}
       description={ti.cardBody}
       trigger={
-        <Button type="button" variant="muted" className="w-fit rounded-full">
+        <Button type="button" variant="muted" className="w-fit">
           <CreditCard className="size-4" aria-hidden />
           {ti.cardCta}
         </Button>

@@ -122,11 +122,12 @@ export type ProductPointRow = {
  * and use disjoint column sets: 'redeem' is bought in the shop with points,
  * 'spin' is a wedge of the lucky wheel. Every shop query must filter on this.
  */
-export type RewardKind = "redeem" | "spin"
+export type RewardKind = "redeem" | "spin" | "milestone"
 
 /**
- * One gift, of either kind — the admin manages both on /admin/rewards.
- * Columns below the divider are 'spin'-only and inert on a 'redeem' row.
+ * One gift, of any of the three kinds — the admin manages all of them on
+ * /admin/rewards. Columns below each divider belong to that kind alone and are
+ * inert (and constrained to their zero value) on the others.
  */
 export type RewardRow = {
   id: string
@@ -156,6 +157,42 @@ export type RewardRow = {
   weight: number
   /** Render order of the wedges; must match the draw's ordering in spin_wheel. */
   sort_order: number
+
+  // ---- kind = 'milestone' only ----
+  /**
+   * Lifetime spend in đồng that unlocks this rung — measured against
+   * `customers.lifetime_spend`, never against points. Null on every other kind,
+   * and non-null on every milestone: 0024 constrains it in both directions.
+   */
+  spend_threshold: number | null
+}
+
+/**
+ * One claimed milestone. The `milestone_name` / `threshold_amount` columns are
+ * frozen copies, not a join: renaming, re-pricing or deleting a rung must never
+ * rewrite what a member already claimed.
+ */
+export type MilestoneAwardRow = {
+  id: string
+  customer_id: string
+  milestone_id: string | null
+  milestone_name: string
+  threshold_amount: number
+  /** The member's lifetime spend at the moment they claimed. */
+  spend_at_claim: number
+  /** When a staff member handed the prize over, and who did. */
+  fulfilled_at: string | null
+  fulfilled_by: string | null
+  created_at: string
+}
+
+/** Return shape of the claim_milestone_reward RPC. */
+export type MilestoneClaimResult = {
+  award_id: string
+  milestone_id: string
+  milestone_name: string
+  threshold_amount: number
+  lifetime_spend: number
 }
 
 export type PetType = "dog" | "cat" | "other"

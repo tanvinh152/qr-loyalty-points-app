@@ -9,7 +9,7 @@ import { getTheme } from "@/lib/theme/server"
 import { ThemeProvider } from "@/lib/theme/provider"
 import { ThemeInitScript } from "@/lib/theme/theme-init-script"
 
-// The Vibrant Paw mockups' typeface. "vietnamese" is not optional here — vi is
+// The Azure Paw mockups' typeface. "vietnamese" is not optional here — vi is
 // the default locale. Plus Jakarta Sans is variable (200-800), so the mockups'
 // 400/600/700/800 all resolve without declaring separate weights.
 const jakarta = Plus_Jakarta_Sans({

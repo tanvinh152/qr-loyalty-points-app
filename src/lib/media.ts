@@ -33,7 +33,7 @@ export const MAX_IMAGE_MB = Math.round(MAX_IMAGE_BYTES / (1024 * 1024))
  * folder arrives from the browser: a caller that could name its own prefix could
  * scatter objects anywhere in the bucket.
  */
-export const MEDIA_FOLDERS = ["rewards", "blog", "spin"] as const
+export const MEDIA_FOLDERS = ["rewards", "blog", "spin", "milestones"] as const
 export type MediaFolder = (typeof MEDIA_FOLDERS)[number]
 
 export function isMediaFolder(value: unknown): value is MediaFolder {

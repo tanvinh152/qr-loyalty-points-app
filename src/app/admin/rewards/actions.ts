@@ -5,8 +5,10 @@ import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import { getMessages } from "@/lib/i18n/server"
 import {
+  makeMilestoneSchema,
   makeRewardSchema,
   makeSpinPrizeSchema,
+  type MilestoneInput,
   type RewardInput,
   type SpinPrizeInput,
 } from "@/lib/schemas"
@@ -14,7 +16,7 @@ import { deleteImageByUrl } from "@/lib/storage"
 
 export type SaveState = { ok: boolean; message: string } | null
 
-// Both kinds of gift live in `public.rewards` since 0022, so every write below
+// All three kinds of gift live in `public.rewards` (0022, 0024), so every write below
 // pins its `kind`: the insert stamps it and the update/delete filter on it. A
 // forged id from the other tab must read as "no such row" rather than quietly
 // turning a shop reward into a wheel slice.
@@ -238,4 +240,120 @@ export async function deleteSpinPrize(id: string): Promise<string | void> {
   await deleteImageByUrl(current?.image_url)
 
   revalidateSpin()
+}
+
+
+/** Every revalidate a rung edit needs. The ladder is read on three routes. */
+function revalidateMilestones() {
+  revalidatePath("/admin/rewards")
+  revalidatePath("/rewards/roadmap")
+  revalidatePath("/dashboard")
+}
+
+/**
+ * The spend-ladder half of the same screen. Writes a `kind = 'milestone'`
+ * reward row, stamping EVERY inert column explicitly: 0024's
+ * `rewards_milestone_fields_check` pins them all to zero, and relying on a
+ * column default would only hold on insert, so an update could trip the check.
+ */
+export async function saveMilestone(input: MilestoneInput): Promise<SaveState> {
+  const t = await getMessages()
+  const m = t.admin.rewards.milestone
+
+  const parsed = makeMilestoneSchema(t.validation).safeParse(input)
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? m.saveFailed,
+    }
+  }
+
+  const { id: rowId, image_url, description, ...rest } = parsed.data
+
+  const payload = {
+    ...rest,
+    kind: "milestone" as const,
+    image_url: image_url || null,
+    description: description || null,
+    // Never bought, never won, never stocked, never the shop's hero, never
+    // tier-gated. A milestone is a published promise, so `quantity` stays 0
+    // rather than becoming a way to run out of it — see 0024's header.
+    points_cost: 0,
+    quantity: 0,
+    weight: 0,
+    points_amount: 0,
+    prize_type: "none" as const,
+    is_featured: false,
+    is_exclusive: false,
+    min_tier_id: null,
+  }
+
+  const supabase = await createClient()
+
+  // Read the outgoing image before the write so a replaced upload does not sit
+  // in the bucket forever. `deleteImageByUrl` ignores anything that is not ours.
+  let replaced: string | null = null
+  if (rowId) {
+    const { data: current } = await supabase
+      .from("rewards")
+      .select("image_url")
+      .eq("id", rowId)
+      .eq("kind", "milestone")
+      .maybeSingle()
+    if (current?.image_url && current.image_url !== payload.image_url) {
+      replaced = current.image_url
+    }
+  }
+
+  const { error } = rowId
+    ? await supabase
+        .from("rewards")
+        .update(payload)
+        .eq("id", rowId)
+        .eq("kind", "milestone")
+    : await supabase.from("rewards").insert(payload)
+
+  if (error) {
+    // The partial unique index from 0024: one ACTIVE rung per threshold. Read
+    // back as a sentence rather than a raw 23505, the way saveReward reports
+    // the featured-slot clash.
+    if (error.code === "23505") {
+      return { ok: false, message: m.thresholdConflict }
+    }
+    return { ok: false, message: m.saveFailed }
+  }
+
+  await deleteImageByUrl(replaced)
+
+  revalidateMilestones()
+  return { ok: true, message: m.saved }
+}
+
+/** Resolves to an error message, or to nothing when the row is gone. */
+export async function deleteMilestone(id: string): Promise<string | void> {
+  const t = await getMessages()
+  if (!id) return t.admin.rewards.milestone.deleteFailed
+
+  const supabase = await createClient()
+  const { data: current } = await supabase
+    .from("rewards")
+    .select("image_url")
+    .eq("id", id)
+    .eq("kind", "milestone")
+    .maybeSingle()
+
+  // milestone_awards.milestone_id is `on delete set null` and carries its own
+  // frozen name and threshold, so deleting a rung never rewrites what a member
+  // already claimed. It does make the rung claimable again if recreated — the
+  // unique index treats the null as distinct, which is the intended reading.
+  const { error } = await supabase
+    .from("rewards")
+    .delete()
+    .eq("id", id)
+    .eq("kind", "milestone")
+  if (error) return t.admin.rewards.milestone.deleteFailed
+
+  await deleteImageByUrl(current?.image_url)
+
+  revalidateMilestones()
 }

@@ -9,6 +9,7 @@ import type {
   CustomerTierHistoryRow,
   LoyaltySettingsRow,
   MembershipTierRow,
+  MilestoneAwardRow,
   RewardRow,
   SpinResultRow,
   TierScheduleRow,
@@ -228,6 +229,74 @@ export async function getUncollectedGiftCount(
     .eq("customer_id", customerId)
     .eq("prize_type", "gift")
     .is("fulfilled_at", null)
+  return count ?? 0
+}
+
+// ---- spend milestones (0024) ----
+// An INDEPENDENT ladder from the tiers: same unit (đồng of lifetime_spend),
+// nothing else shared. Passing a rung moves no tier.
+
+/**
+ * The ladder, cheapest rung first. Active rows only — an inactive rung is one
+ * the admin has withdrawn, and rendering it would promise a gift nobody can
+ * claim. The ordering matches rewards_milestone_threshold_idx and the roadmap's
+ * render order.
+ */
+export async function getMilestones(): Promise<RewardRow[]> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from("rewards")
+    .select("*")
+    .eq("kind", "milestone")
+    .eq("is_active", true)
+    .order("spend_threshold", { ascending: true })
+  return (data ?? []) as RewardRow[]
+}
+
+/**
+ * A member's claims. Reads the frozen `milestone_name` / `threshold_amount`
+ * columns and never joins back to `rewards`: a renamed or deleted rung must not
+ * rewrite what was already claimed.
+ */
+export async function getMilestoneAwards(
+  customerId: string,
+): Promise<MilestoneAwardRow[]> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from("milestone_awards")
+    .select("*")
+    .eq("customer_id", customerId)
+    .order("created_at", { ascending: false })
+  return (data ?? []) as MilestoneAwardRow[]
+}
+
+// Claimed prizes still sitting at the counter — the dashboard's nudge. Unlike
+// the wheel's, every milestone prize is handed over by hand, so there is no
+// prize_type to filter on.
+export async function getUnfulfilledMilestoneCount(
+  customerId: string,
+): Promise<number> {
+  const supabase = createAdminClient()
+  const { count } = await supabase
+    .from("milestone_awards")
+    .select("id", { count: "exact", head: true })
+    .eq("customer_id", customerId)
+    .is("fulfilled_at", null)
+  return count ?? 0
+}
+
+/**
+ * How many rungs exist at all. Lets the dashboard skip two more queries on
+ * every load while the feature is unconfigured — the same conditional-query
+ * discipline as `checkinPoints > 0` and `spinDailyLimit > 0`.
+ */
+export async function getMilestoneCount(): Promise<number> {
+  const supabase = createAdminClient()
+  const { count } = await supabase
+    .from("rewards")
+    .select("id", { count: "exact", head: true })
+    .eq("kind", "milestone")
+    .eq("is_active", true)
   return count ?? 0
 }
 

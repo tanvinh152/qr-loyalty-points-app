@@ -2,7 +2,7 @@ import Link from "next/link"
 
 import { getMessages } from "@/lib/i18n/server"
 
-// The four links the Vibrant Paw mockups put in a page footer. This is the only
+// The four links the Azure Paw mockups put in a page footer. This is the only
 // route to /help, /faq, /terms and /blog now that the main nav is the mockups'
 // four items (dashboard / tiers / rewards / history), so it is load-bearing
 // navigation rather than decoration — do not drop it from a shell.
@@ -21,7 +21,9 @@ export async function PortalFooter() {
   ]
 
   return (
-    <footer className="border-border text-body-sm text-muted-foreground mt-12 flex flex-col items-center gap-4 border-t pt-6 sm:flex-row sm:justify-between">
+    // A filled, rounded bar rather than a hairline rule: that is how the Azure
+    // Paw mockups close every page.
+    <footer className="bg-surface-container text-body-sm text-muted-foreground mt-12 flex flex-col items-center gap-4 rounded-3xl px-6 py-8 sm:flex-row sm:justify-between">
       <p>{f.copyright(new Date().getFullYear())}</p>
       <nav aria-label={f.label}>
         <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">

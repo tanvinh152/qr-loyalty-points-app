@@ -116,7 +116,7 @@ export function PortalNav({
               "transition-colors",
               bottom
                 ? "relative grid h-full content-end justify-items-center gap-1 px-1 pb-3 text-center"
-                : // A filled pill, per the Vibrant Paw rail. The old left bar
+                : // A filled pill, per the Azure Paw rail. The old left bar
                   // plus tint said the same thing twice, and the bar could
                   // never hug the rail edge from inside the nav's gutter.
                   "text-body-sm flex items-center rounded-xl py-3",

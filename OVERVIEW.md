@@ -1668,7 +1668,11 @@ Hai stack song song, cùng kiểu: cookie → server đọc → provider truyề
 
 ## 15. Design system
 
-Hệ "Chicha Pet Members". Bản vẽ gốc: `design/stitch-v2/` (README + 11 mockup HTML + PNG).
+Hệ Stitch **"Azure Paw"**. Bản vẽ gốc: `design/stitch_remix_of_loyalty_rewards_dashboard/`
+(README + `azure_paw/DESIGN.md` + 4 màn desktop) — bộ tham chiếu DUY NHẤT.
+Ba thư mục cũ (`stitch-v2`, `stitch-light`, `stitch-v3`) đã bị xoá 2026-08-25; `design/`
+bị gitignore nên **không khôi phục được**. Xuất xứ bảng màu tối (từ `stitch-v2` cũ) được
+chép lại trong `docs/color_palette_theme.md` — đó là bản ghi duy nhất còn lại.
 
 ### `src/app/globals.css`
 
