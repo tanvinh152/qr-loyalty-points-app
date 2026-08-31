@@ -72,7 +72,7 @@ export function SectionCard({
       )}
       <div className={bodyClassName}>{children}</div>
       {footer && (
-        <div className="border-border/50 flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 sm:gap-4 sm:px-6">
+        <div className="border-border flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 sm:gap-4 sm:px-6">
           {footer}
         </div>
       )}

@@ -711,6 +711,15 @@ export const en = {
       avatarLabel: "Your account",
       rewards: "Rewards",
       spin: "Spin & win",
+      // The header wheel's badge dot has no text of its own; these are its
+      // screen-reader equivalent. A waiting gift outranks an unused spin —
+      // one is owed at the counter, the other only expires tonight.
+      spinLeft: (n: number) =>
+        n === 1 ? "1 spin left today" : `${n} spins left today`,
+      spinPending: (n: number) =>
+        n === 1
+          ? "1 gift waiting at the counter"
+          : `${n} gifts waiting at the counter`,
       roadmap: "Reward roadmap",
       tiers: "Tiers",
       history: "History",
@@ -807,13 +816,6 @@ export const en = {
       checkinPending: "Checking in…",
       checkinDone: "Checked in today",
       checkinSuccess: (points: number) => `+${points.toLocaleString()} points`,
-      spinTitle: "Spin & win",
-      spinBody: (spins: number) =>
-        spins === 1
-          ? "You have 1 spin left today."
-          : `You have ${spins} spins left today.`,
-      spinBodyEmpty: "You've used every spin today. Come back tomorrow.",
-      spinCta: "Go to the wheel",
       // The milestone card. Deliberately NO second progress bar: the hero
       // above already shows one measured in đồng (spend towards the next tier),
       // and a second đồng bar right under it reads as the same journey twice.
@@ -828,8 +830,6 @@ export const en = {
         `${amount} more to unlock ${name}.`,
       roadmapAllDone: "You've reached every milestone.",
       roadmapCta: "View roadmap",
-      spinPendingGifts: (n: number) =>
-        n === 1 ? "1 gift waiting to be collected" : `${n} gifts waiting to be collected`,
       // The five figures the programme spec opens on, in one panel.
       summaryTitle: "Your account at a glance",
       summarySpend: "Total spent",
@@ -849,7 +849,7 @@ export const en = {
       updatesViewAll: "See all posts",
     },
     spin: {
-      metaTitle: "Spin & win",
+      // No metaTitle: the wheel is a dialog, so no route ever carries its name.
       title: "Spin & win",
       subtitle: "One tap, one prize. Free spins reset every day.",
       spinsLeft: (n: number) => (n === 1 ? "1 spin left" : `${n} spins left`),
@@ -876,7 +876,6 @@ export const en = {
       noPrizeLabel: "No prize",
       offTitle: "The wheel is taking a break",
       offBody: "There's no spin event running right now. Check back soon.",
-      backToDashboard: "Back to home",
     },
     // The spend-milestone ladder (0024). An INDEPENDENT ladder from the tiers:
     // it shares the unit (đồng of lifetime spend) and nothing else.

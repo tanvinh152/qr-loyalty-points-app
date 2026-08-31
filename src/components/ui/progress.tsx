@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils"
 // the /dashboard hero, whose saturated gradient hides the whole surface ladder.
 // On the hero both halves must be drawn from `--hero-*` or the bar disappears.
 const TRACK: Record<ProgressTone, string> = {
-  default: "bg-surface-container border-border/40 border",
-  accent: "bg-surface-container border-border/40 border",
+  default: "bg-surface-container border-border border",
+  accent: "bg-surface-container border-border border",
   hero: "bg-hero-ink/25",
 }
 

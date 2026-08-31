@@ -128,10 +128,11 @@ export async function deleteReward(id: string): Promise<string | void> {
   revalidatePath("/rewards")
 }
 
-/** Every revalidate a slice edit needs. The wheel is read on three routes. */
+/** Every revalidate a slice edit needs. The member's wheel is not among them:
+ *  it is a dialog that re-reads its wedges from `loadSpinBoard` each time it
+ *  opens, so there is no cached render of it to invalidate. */
 function revalidateSpin() {
   revalidatePath("/admin/rewards")
-  revalidatePath("/spin")
   revalidatePath("/dashboard")
 }
 

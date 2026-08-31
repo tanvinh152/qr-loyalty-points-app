@@ -53,7 +53,12 @@ export function PortalHeader({
     // not content. Centring its row inside that cap parks the toggle and the
     // account block hundreds of px in from the edges on a wide monitor — the
     // very dead space this padding was tightened to get rid of.
-    <header className="bg-sidebar border-border sticky top-0 z-40 flex min-h-16 items-center border-b pt-[env(safe-area-inset-top)]">
+    // `border-border/60`: the chrome tier. This rule spans the full viewport
+    // width, and at the bare token's weight a line that long reads as a frame.
+    // The rail's edges use the same /60 so the two still meet as one net at the
+    // corner. The group divider below stays at FULL strength on purpose — it is
+    // 20px tall, i.e. content-tier; at /60 it would disappear.
+    <header className="bg-sidebar border-border/60 sticky top-0 z-40 flex min-h-16 items-center border-b pt-[env(safe-area-inset-top)]">
       <div className="flex w-full items-center gap-3 px-4 md:px-6 lg:px-8">
         <SidebarToggle className="max-md:hidden" />
 

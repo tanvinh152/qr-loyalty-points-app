@@ -41,6 +41,5 @@ export async function setSpinResultFulfilled(
   if (error) return { ok: false, message: m.updateFailed }
 
   revalidatePath("/admin/spin/winners")
-  revalidatePath("/spin")
   return { ok: true, message: fulfilled ? m.marked : m.unmarked }
 }

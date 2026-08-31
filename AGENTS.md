@@ -136,7 +136,8 @@ QR loyalty-point app. Next.js 16 (App Router) + Supabase + Pancake POS + shadcn/
   toggle and the account block hundreds of px in from the edges on a wide monitor. It was tried and
   rejected on 2026-08-31 — the header and `<main>` are allowed to disagree about their left edge.
 - **EVERYTHING about your account hides behind the avatar, at every width.** The header's right end
-  is exactly two things: the member portal's points pill (`context`) and, in `system`, the identity
+  is exactly two things: the member portal's live `context` — the wheel pill and the points pill —
+  and, in `system`, the identity
   block — avatar + name + tier (member) or email + role (admin) — which is the TRIGGER for a menu
   holding the theme switch, sign-out, and (member only) `/profile` and `/help`. Theme and sign-out
   were loose icons beside it until 2026-08-31; three ungrouped controls fought for one corner.
@@ -166,9 +167,25 @@ QR loyalty-point app. Next.js 16 (App Router) + Supabase + Pancake POS + shadcn/
 - **`/dashboard` is a 12-column bento** (`lg:grid-cols-12`), and its one hard rule is that a missing
   block must never leave a hole. Two devices do that: the **4-slot always has a tenant** — the featured
   gift if there is one, otherwise the summary `<dl>`, which is what lets the hero stay at a constant
-  `lg:col-span-8` — and the daily-action tiles (check-in / wheel / milestones) take their span from
+  `lg:col-span-8` — and the daily-action tiles (check-in / milestones) take their span from
   `ENGAGEMENT_SPAN[count]`, a lookup of FULL class strings because Tailwind cannot see an interpolated
-  one. "Đơn hàng gần đây" swaps list↔table on a **container query** (`@container/orders` +
+  one. The wheel was a third such tile until 2026-08-31. "Đơn hàng gần đây" swaps list↔table on a **container query** (`@container/orders` +
   `@[30rem]/orders:`), never a viewport breakpoint: that tile's width depends on whether the rail is
   collapsed, and collapse is user state — the same reason a hardcoded `md:pl-64` is banned.
+- **The wheel is a DIALOG, not a route.** `/spin` was a page until 2026-08-31 and is gone: no route,
+  no entry in the layout's `titles`, none in `ACCOUNT_PREFIXES`, and no `revalidatePath("/spin")`
+  anywhere — don't reintroduce one. `src/app/(customer)/(account)/spin/` is a PAGE-LESS folder that
+  keeps `actions.ts` + the two client components, because that is where the app keeps server actions.
+  The trigger is the header's pill (`SpinDialog`, `context` slot, beside the points pill), so the
+  wheel is one control away from every screen. What the layout reads on every route is ONLY what the
+  pill's badge needs — `getSpinDailyLimit` / `getSpinsUsedToday` / `getUncollectedGiftCount`, each
+  gated on the wheel being on and a `customers` row existing. The wedges and the win list come from
+  `loadSpinBoard`, a server action run when the dialog OPENS and again once a spin has STOPPED
+  (`Wheel`'s `onSettled`) — never mid-spin, or a just-sold-out wedge would vanish from under the
+  turn in progress. It proves the session itself: a server action is a public POST endpoint, the same
+  reason `uploadMedia` re-checks the admin claim. The spin result renders INLINE under the wheel
+  rather than in its own dialog — a popup over the popup would hide the wedge that just stopped under
+  the pointer. The pill's badge dot has an `sr-only` twin (`nav.spinPending` / `nav.spinLeft`): an
+  unfulfilled `gift` win is settled by hand at the counter, and the dot is the only place a member is
+  told one is waiting.
 - shadcn Button is Base UI: NO `asChild`. Use `buttonVariants` on a Link (see `src/components/page-link.tsx`).

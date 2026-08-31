@@ -107,7 +107,7 @@ export function SkuPicker({
             icon={Search}
             className="text-body-sm h-10"
           />
-          <div className="border-border/60 max-h-64 overflow-y-auto rounded-lg border">
+          <div className="border-border max-h-64 overflow-y-auto rounded-lg border">
             {options.length === 0 && (
               <p className="text-body-sm text-muted-foreground p-4 text-center">
                 {query.trim() ? m.noSkuMatch : m.noSkusLeft}
@@ -123,7 +123,7 @@ export function SkuPicker({
                   onValueChange?.(v.sku)
                   onSelect?.(v)
                 }}
-                className="border-border/40 hover:bg-accent flex w-full items-start gap-3 border-b p-2 text-left transition-colors last:border-b-0"
+                className="border-border hover:bg-accent flex w-full items-start gap-3 border-b p-2 text-left transition-colors last:border-b-0"
               >
                 <Thumb src={v.image} alt={v.name} />
                 <span className="grid min-w-0 flex-1 gap-0.5">
@@ -167,7 +167,7 @@ function SelectedCard({
   const m = t.admin.products
 
   return (
-    <div className="border-border/60 bg-surface-container/40 flex items-start gap-3 rounded-lg border p-3">
+    <div className="border-border bg-surface-container/40 flex items-start gap-3 rounded-lg border p-3">
       <Thumb src={variation?.image ?? null} alt={variation?.name ?? sku} />
       <div className="grid min-w-0 flex-1 gap-1">
         <TruncatedText className="text-body-sm font-medium">

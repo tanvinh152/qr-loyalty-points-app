@@ -89,7 +89,7 @@ export function ProfileForm({ customer }: { customer: CustomerRow }) {
         </div>
       </fieldset>
 
-      <span aria-hidden className="bg-border/30 h-px w-full" />
+      <span aria-hidden className="bg-border/60 h-px w-full" />
 
       <fieldset className="grid gap-4">
         <legend className="text-headline-md mb-2 flex items-center gap-2">

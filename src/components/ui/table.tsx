@@ -44,7 +44,7 @@ function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
   return (
     <tbody
       data-slot="table-body"
-      className={cn("divide-border/40 divide-y", className)}
+      className={cn("divide-border divide-y", className)}
       {...props}
     />
   )

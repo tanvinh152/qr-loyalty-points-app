@@ -170,7 +170,7 @@ export default async function AdminLayout({
           </main>
         </div>
 
-        <div className="bg-sidebar border-border fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] md:hidden">
+        <div className="bg-sidebar border-border/60 fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] md:hidden">
           <PortalNav
             items={bottomItems}
             label={nav.bottomLabel}

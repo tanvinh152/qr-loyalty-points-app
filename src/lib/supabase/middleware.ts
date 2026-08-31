@@ -6,8 +6,10 @@ import { NextResponse, type NextRequest } from "next/server"
 // account area (any signed-in user).
 
 // Every segment of src/app/(customer)/(account)/. This list used to hold only
-// three of them, so /tiers, /help, /profile and /spin were unguarded at the
-// edge and relied solely on getAccount()'s render-time redirect.
+// three of them, so /tiers, /help and /profile were unguarded at the edge and
+// relied solely on getAccount()'s render-time redirect. /spin was here too
+// until the wheel became a dialog: it is no longer a route, and its one server
+// action proves the session itself.
 // NOT listed on purpose: /faq, /terms and /blog are public — /register links to
 // /terms, so gating it would bounce an anonymous signer-up to /login.
 const ACCOUNT_PREFIXES = [
@@ -17,7 +19,6 @@ const ACCOUNT_PREFIXES = [
   "/history",
   "/help",
   "/profile",
-  "/spin",
 ]
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })

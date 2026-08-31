@@ -30,7 +30,7 @@ export default async function PublicLayout({
 
   return (
     <div className="bg-canvas min-h-svh">
-      <header className="bg-sidebar border-border sticky top-0 z-30 border-b">
+      <header className="bg-sidebar border-border/60 sticky top-0 z-30 border-b">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <Link href={home} className="text-headline-md text-primary">
             {t.brand.name}

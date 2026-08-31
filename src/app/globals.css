@@ -208,10 +208,19 @@
      "restore" them here as the text colour. */
   --success: #00893f;
   --warning: #9a6a00;
-  /* --border is a hairline divider (Azure Paw draws every divider with
-     outline-variant). --input is heavier on purpose: a field outline is a
-     control boundary and must clear 3:1 against both bg and card. */
-  --border: #c6c4d9;
+  /* --border is a hairline divider, and it is the TOP RUNG OF THE SURFACE
+     LADDER (== --surface-highest). The old #c6c4d9 came from the front-matter
+     Material token `outline-variant` and measured 1.71:1 on --card — that is a
+     drawn rule, not a hairline, and it read hardest on the shell's long edges
+     where the eye integrates along the line. This is 1.29:1 on --card /
+     1.23:1 on --background. The weight is the one DESIGN.md's Components
+     section states (#E2E8F0 = 1.23:1) but the HUE is the app's own violet
+     ramp: #e2e8f0 is cool slate and reads grey-green beside --accent, so do
+     not "restore" it. Chrome (header, rail, tab bars) takes this at /60 —
+     see portal-header.tsx / portal-sidebar.tsx.
+     --input is heavier on purpose: a field outline is a control boundary and
+     must clear 3:1 against both bg and card. */
+  --border: #e3e0f7;
   --input: #767588;
   --ring: #1000c7;
   --outline: #767588;
@@ -248,7 +257,7 @@
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #e1e0ff;
   --sidebar-accent-foreground: #04006d;
-  --sidebar-border: #c6c4d9;
+  --sidebar-border: #e3e0f7;
   --sidebar-ring: #1000c7;
   /* The /dashboard hero gradient. The mockup runs --primary → #5C5CFF. That
      light end is kept as close as the contrast budget allows: the hero's
@@ -269,7 +278,11 @@
   /* Azure Paw tints every shadow with its brand blue at 2–20% alpha. */
   --shadow-color-soft: rgb(47 47 228 / 0.05);
   --shadow-color-elevated: rgb(47 47 228 / 0.08);
-  --shadow-color-nav: rgb(47 47 228 / 0.03);
+  /* The rail's edge shadow. At 0.03 it measured 1.051:1 against the canvas —
+     i.e. it did not exist, and the rail was separating on a hard border alone.
+     0.07 gives 1.125:1: a real soft edge, so the border can drop to /60.
+     (Dark keeps 0.4 — proven a no-op there, see that block.) */
+  --shadow-color-nav: rgb(47 47 228 / 0.07);
   --shadow-color-glow: rgb(47 47 228 / 0.2);
   /* The auth canvas dot grid. */
   /* Theme-invariant: shape does not change between light and dark. */
@@ -318,7 +331,7 @@
     --destructive-container: #93000a;
     --success: #4edea3;
     --warning: #ffb95f;
-    --border: #3a4667;
+    --border: #2a3550;
     --input: #5f6d95;
     --ring: #04cdf8;
     --outline: #8b96ae;
@@ -344,7 +357,7 @@
     --sidebar-primary-foreground: #ffffff;
     --sidebar-accent: #1e2740;
     --sidebar-accent-foreground: #f0f4f8;
-    --sidebar-border: #3a4667;
+    --sidebar-border: #2a3550;
     --sidebar-ring: #04cdf8;
     /* Hero gradient, dark. Built from the dark set's own blues (--brand →
        --primary-container) rather than the light ramp, which would glare. */
@@ -356,6 +369,10 @@
     --canvas-to: #141b2e;
     --shadow-color-soft: rgb(0 0 0 / 0.45);
     --shadow-color-elevated: rgb(0 0 0 / 0.55);
+    /* Deliberately NOT raised the way light's was: the dark canvas is already
+       at L~0.006, so black cannot darken it. Measured, the rail's edge shadow
+       goes 1.045:1 -> 1.063:1 between 0.4 and 0.55 — still nothing. In dark the
+       rail edge is carried by the border alone, which is why it stays. */
     --shadow-color-nav: rgb(0 0 0 / 0.4);
     --shadow-color-glow: rgb(120 160 255 / 0.35);
   }
@@ -391,10 +408,16 @@
   --destructive-container: #93000a;
   --success: #4edea3;
   --warning: #ffb95f;
-  /* --border is a hairline divider, tuned to the same visual weight the old
-     #44474f had (~2:1 on the canvas). --input is heavier on purpose: a field
-     outline is a control boundary and clears 3:1 against both bg and card. */
-  --border: #3a4667;
+  /* --border is a hairline divider and, as in light, is the top rung of the
+     surface ladder (== --surface-highest). The old #3a4667 measured 2.03:1 on
+     the canvas — a drawn rule. This is 1.41:1 on --card / 1.56:1 on
+     --background, deliberately a touch above light's ratio because a hairline
+     disappears faster on a dark surface. It is also the value that survives
+     INSIDE a tinted panel: on --surface-high/--accent #1e2740 this reads
+     1.21:1 where a darker pick (#28304a) collapsed to 1.14:1 and vanished.
+     --input is heavier on purpose: a field outline is a control boundary and
+     clears 3:1 against both bg and card. */
+  --border: #2a3550;
   --input: #5f6d95;
   --ring: #04cdf8;
   --outline: #8b96ae;
@@ -432,7 +455,7 @@
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #1e2740;
   --sidebar-accent-foreground: #f0f4f8;
-  --sidebar-border: #3a4667;
+  --sidebar-border: #2a3550;
   --sidebar-ring: #04cdf8;
   /* Dark keeps a FLAT canvas: these two are the existing surface values, so the
      bg-canvas utility renders as the near-solid background dark always had. */
@@ -450,6 +473,10 @@
      touching a single class. */
   --shadow-color-soft: rgb(0 0 0 / 0.45);
   --shadow-color-elevated: rgb(0 0 0 / 0.55);
+  /* Deliberately NOT raised the way light's was: the dark canvas is already at
+     L~0.006, so black cannot darken it. Measured, the rail's edge shadow goes
+     1.045:1 -> 1.063:1 between 0.4 and 0.55 — still nothing. In dark the rail
+     edge is carried by the border alone, which is why it stays. */
   --shadow-color-nav: rgb(0 0 0 / 0.4);
   --shadow-color-glow: rgb(120 160 255 / 0.35);
 }

@@ -6,15 +6,6 @@ import { Ban, Coins, Gift, Loader2, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n/provider"
 import type { SpinPrizeType, SpinResult } from "@/lib/db-types"
@@ -114,10 +105,14 @@ function wedgePath(index: number, step: number) {
 export function Wheel({
   slices,
   initialSpinsLeft,
+  onSettled,
 }: {
   /** Drawable wedges, in the same order the RPC walks them. */
   slices: WheelSlice[]
   initialSpinsLeft: number
+  /** Called once the animation has stopped, so the dialog can re-read the win
+   *  list and the wedges. Never mid-spin — see `spin()`. */
+  onSettled?: () => void
 }) {
   const t = useT()
   const s = t.customer.spin
@@ -178,9 +173,11 @@ export function Wheel({
         setSpinning(false)
         setSpinsLeft(won.spins_left)
         setResult(won)
-        // Now that nothing is animating, let the server re-render the history
-        // list and the spins-left chip below.
+        // Now that nothing is animating: `refresh` for the server-rendered
+        // chrome around the modal (the header's points pill and its badge),
+        // `onSettled` for the modal's own win list.
         router.refresh()
+        onSettled?.()
       }, duration)
     })
   }
@@ -275,72 +272,72 @@ export function Wheel({
         </ul>
       </div>
 
-      <div className="grid justify-items-center gap-2">
-        <Button
-          type="button"
-          size="lg"
-          onClick={handleSpin}
-          disabled={!canSpin}
-          className="min-w-44 rounded-full"
-        >
-          {busy ? (
-            <Loader2 className="size-5 animate-spin" aria-hidden />
-          ) : (
-            <Sparkles className="size-5" aria-hidden />
-          )}
-          {busy ? s.spinning : spinsLeft > 0 ? s.spin : s.noSpinsLeft}
-        </Button>
-        <p className="text-body-sm text-muted-foreground">
-          {spinsLeft > 0 ? s.spinsLeft(spinsLeft) : s.spinsLeftHint}
-        </p>
-      </div>
-
-      <Dialog
-        open={result !== null}
-        onOpenChange={(open) => {
-          if (!open) setResult(null)
-        }}
-      >
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader className="items-center text-center">
-            <span
-              className={cn(
-                "mb-2 grid size-14 place-items-center rounded-full",
-                result?.prize_type === "none"
-                  ? "bg-surface-container text-muted-foreground"
-                  : "bg-primary-container/20 text-primary",
-              )}
-            >
-              <ResultIcon className="size-7" aria-hidden />
-            </span>
-            <DialogTitle>
+      {/* The outcome sits BELOW the wheel rather than in a dialog of its own:
+          this whole component is already inside one, and a second popup over
+          the first would hide the wedge that just came to rest under the
+          pointer — the one thing the animation was for. */}
+      {result ? (
+        <div className="bg-surface-container grid w-full justify-items-center gap-2 rounded-2xl p-4 text-center">
+          <span
+            className={cn(
+              "grid size-12 place-items-center rounded-full",
+              result.prize_type === "none"
+                ? "bg-card text-muted-foreground"
+                : "bg-primary-container/20 text-primary",
+            )}
+          >
+            <ResultIcon className="size-6" aria-hidden />
+          </span>
+          {/* Announced, not just drawn: the spin is a pointer-driven action
+              whose whole answer arrives after the click. */}
+          <div role="status" className="grid gap-1">
+            <p className="text-label-lg font-semibold">
               {/* "You won!" over a blank wedge would be a taunt. */}
-              {result?.prize_type === "none" ? s.noPrizeLabel : s.resultTitle}
-            </DialogTitle>
-            <DialogDescription className="grid gap-2">
-              {result?.prize_type !== "none" && (
-                <span className="text-headline-md text-foreground block">
-                  {result?.prize_name}
-                </span>
-              )}
-              <span className="block">
-                {result?.prize_type === "points"
-                  ? s.resultPoints(result.points_awarded)
-                  : result?.prize_type === "gift"
-                    ? s.resultGift
-                    : spinsLeft > 0
-                      ? s.resultNone
-                      : s.resultNoneDone}
-              </span>
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <DialogClose render={<Button className="w-full" />}>
-              {s.resultClose}
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              {result.prize_type === "none" ? s.noPrizeLabel : s.resultTitle}
+            </p>
+            {result.prize_type !== "none" && (
+              <p className="text-headline-md">{result.prize_name}</p>
+            )}
+            <p className="text-body-sm text-muted-foreground">
+              {result.prize_type === "points"
+                ? s.resultPoints(result.points_awarded)
+                : result.prize_type === "gift"
+                  ? s.resultGift
+                  : spinsLeft > 0
+                    ? s.resultNone
+                    : s.resultNoneDone}
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            className="mt-1 rounded-full"
+            onClick={() => setResult(null)}
+          >
+            {s.resultClose}
+          </Button>
+        </div>
+      ) : (
+        <div className="grid justify-items-center gap-2">
+          <Button
+            type="button"
+            size="lg"
+            onClick={handleSpin}
+            disabled={!canSpin}
+            className="min-w-44 rounded-full"
+          >
+            {busy ? (
+              <Loader2 className="size-5 animate-spin" aria-hidden />
+            ) : (
+              <Sparkles className="size-5" aria-hidden />
+            )}
+            {busy ? s.spinning : spinsLeft > 0 ? s.spin : s.noSpinsLeft}
+          </Button>
+          <p className="text-body-sm text-muted-foreground">
+            {spinsLeft > 0 ? s.spinsLeft(spinsLeft) : s.spinsLeftHint}
+          </p>
+        </div>
+      )}
     </div>
   )
 }

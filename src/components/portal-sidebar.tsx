@@ -164,7 +164,20 @@ export function SidebarRail({
       className={cn(
         // Three fixed zones rather than one scrolling column: only the nav may
         // scroll, so the brand and the identity block stay put.
-        "bg-sidebar border-border shadow-nav group/sidebar sticky top-0 hidden h-svh shrink-0 flex-col border-r transition-[width] duration-200 md:flex",
+        //
+        // `/60`, not the full token, and the two inner rules below match it:
+        // this rule runs the whole viewport height, and the eye integrates
+        // weight along a line's length — at full strength a 1px edge this long
+        // reads as a drawn frame, which is exactly the "thô" complaint. /60 is
+        // 1.17:1 light / 1.28:1 dark against --sidebar, against 1.29 / 1.41 for
+        // the content tier. Dark needs the knock-down MORE, not less: chrome
+        // sits on --sidebar, which is darker than --card, so the same token
+        // reads heavier there. Do not "restore" this to the bare token.
+        //
+        // `shadow-nav` is the other half and is load-bearing in light only —
+        // see --shadow-color-nav in globals.css for why dark cannot use it, and
+        // therefore why `border-r` may not be dropped.
+        "bg-sidebar border-border/60 shadow-nav group/sidebar sticky top-0 hidden h-svh shrink-0 flex-col border-r transition-[width] duration-200 md:flex",
         collapsed ? "w-16" : "w-64",
         className,
       )}
@@ -174,7 +187,7 @@ export function SidebarRail({
           read as one line, instead of stepping where the rail joins the bar. */}
       <div
         className={cn(
-          "border-border flex h-16 shrink-0 items-center border-b",
+          "border-border/60 flex h-16 shrink-0 items-center border-b",
           collapsed ? "justify-center px-1" : "px-3",
         )}
       >
@@ -205,7 +218,7 @@ export function SidebarRail({
       {footer && (
         <div
           className={cn(
-            "border-border shrink-0 border-t py-4",
+            "border-border/60 shrink-0 border-t py-4",
             collapsed ? "px-1" : "px-3",
           )}
         >

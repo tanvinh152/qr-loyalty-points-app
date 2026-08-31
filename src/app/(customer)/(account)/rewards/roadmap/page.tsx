@@ -113,9 +113,14 @@ export default async function RoadmapPage() {
         {/* The rail. Both halves are inset by half a marker (32px) so the track
             starts and ends at the centre of the first and last node rather than
             running past them. */}
+        {/* NOT `bg-border`: this is a 6px-wide track, not a hairline, and it
+            was only ever borrowing that token's hex. When --border was
+            corrected down to a real hairline the track fell to 1.17:1 on the
+            canvas and the fill above looked unmoored. /25 of the ink keeps it
+            at 1.51:1 — what it measured before. */}
         <span
           aria-hidden
-          className="bg-border absolute top-8 bottom-8 left-8 w-1.5 -translate-x-1/2 rounded-full"
+          className="bg-muted-foreground/25 absolute top-8 bottom-8 left-8 w-1.5 -translate-x-1/2 rounded-full"
         />
         {/* Height is DATA, so it is an inline style: an arbitrary-value Tailwind
             class cannot be computed at runtime. */}

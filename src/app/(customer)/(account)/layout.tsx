@@ -23,7 +23,13 @@ import {
 } from "@/components/ui/menu"
 import { getMessages } from "@/lib/i18n/server"
 import { getSidebarCollapsed } from "@/lib/sidebar/server"
-import { getTiers, resolveDisplayTier } from "@/lib/loyalty"
+import {
+  getSpinDailyLimit,
+  getSpinsUsedToday,
+  getTiers,
+  getUncollectedGiftCount,
+  resolveDisplayTier,
+} from "@/lib/loyalty"
 import { signOut } from "../auth/actions"
 import { type PortalNavItem, PortalNav } from "@/components/portal-nav"
 import { type PortalTitle } from "@/lib/portal-title"
@@ -32,6 +38,7 @@ import {
   SidebarProvider,
   SidebarRail,
 } from "@/components/portal-sidebar"
+import { SpinDialog } from "./spin/spin-dialog"
 import { getAccount } from "./account"
 
 export default async function AccountLayout({
@@ -44,12 +51,27 @@ export default async function AccountLayout({
   const { customer } = await getAccount()
   const collapsed = await getSidebarCollapsed()
 
+  // The wheel's entry point is a header control now, not a dashboard tile, so
+  // its state has to be read on EVERY route rather than once on /dashboard.
+  // Same conditional-query discipline the dashboard used: nothing is read for a
+  // visitor with no customer row, and nothing beyond the setting is read while
+  // the admin has the wheel switched off.
+  const spinLimit = customer ? await getSpinDailyLimit() : 0
+  const [spinsUsed, pendingGifts] =
+    customer && spinLimit > 0
+      ? await Promise.all([
+          getSpinsUsedToday(customer.id),
+          getUncollectedGiftCount(customer.id),
+        ])
+      : [0, 0]
+  const spinsLeft = Math.max(0, spinLimit - spinsUsed)
+
   // The Azure Paw mockups carry exactly four destinations, in this order, and
   // the rail and the phone bar carry the SAME four. Everything that used to be
   // a fifth or sixth rail item now has a specific home:
   //   /profile → the header's identity block (desktop) / AccountMenu (phone)
   //   /help    → PortalFooter, with /faq, /terms and /blog
-  //   /spin    → the dashboard card, the way check-in already works
+  //   the wheel → a DIALOG behind the header's pill; it is not a route at all
   //   /rewards/roadmap → a sub-route of /rewards, reached from that page and
   //                      from the dashboard card; it inherits the highlight
   // If you add a fifth item here, the mockups have no pattern for it — design
@@ -62,13 +84,14 @@ export default async function AccountLayout({
   ]
 
   // What the header calls the section you are in. The four nav destinations
-  // plus the three routes that deliberately have no rail item — without them
-  // the header would go blank on exactly the pages reached from the avatar.
+  // plus the routes that deliberately have no rail item — without them the
+  // header would go blank on exactly the pages reached from the avatar. The
+  // wheel is NOT among them: it is a dialog, and the page behind it keeps its
+  // own name in the bar.
   const titles: PortalTitle[] = [
     ...items,
     { href: "/profile", label: nav.profile },
     { href: "/help", label: nav.help },
-    { href: "/spin", label: nav.spin },
     // A SUB-ROUTE of /rewards, not a fifth destination: PortalNav matches by
     // prefix, so the rail and the phone bar keep "Rewards" lit, and
     // resolvePortalTitle hands the header a back chevron to the shop.
@@ -154,6 +177,19 @@ export default async function AccountLayout({
             context={
               customer && (
                 <>
+                  {/* The wheel. A dashboard tile, then a route, now a dialog
+                      behind this pill: one control away from every screen, and
+                      styled to match the points pill beside it so the pair
+                      reads as one group. The component owns the trigger — see
+                      spin/spin-dialog.tsx for why nothing is read until it
+                      opens. */}
+                  {spinLimit > 0 && (
+                    <SpinDialog
+                      spinsLeft={spinsLeft}
+                      pendingGifts={pendingGifts}
+                    />
+                  )}
+
                   <span className="bg-surface-high text-label-md text-primary inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 whitespace-nowrap">
                     <Sparkles className="size-4" aria-hidden />
                     {customer.current_points.toLocaleString()}
@@ -243,7 +279,7 @@ export default async function AccountLayout({
           </main>
         </div>
 
-        <div className="bg-sidebar border-border fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] md:hidden">
+        <div className="bg-sidebar border-border/60 fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] md:hidden">
           <PortalNav items={items} label={nav.bottomLabel} variant="bottom" />
         </div>
       </div>

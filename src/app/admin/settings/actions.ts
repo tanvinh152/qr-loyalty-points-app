@@ -58,6 +58,8 @@ export async function saveSettings(
   // `spin_daily_limit` is what turns the wheel on, and the gift screen renders
   // an "it's off" banner from it.
   revalidatePath("/admin/rewards")
-  revalidatePath("/spin")
+  // Nothing to revalidate on the member side: the wheel is a dialog fed by
+  // `loadSpinBoard` on open, and the header pill it hangs off renders with the
+  // (always dynamic) account layout.
   return { ok: true, message: s.saved }
 }

@@ -3,7 +3,6 @@ import {
   ArrowDownLeft,
   ArrowRight,
   ArrowUpRight,
-  FerrisWheel,
   Gift,
   Info,
   Medal,
@@ -43,12 +42,9 @@ import {
   getMilestoneAwards,
   getMilestoneCount,
   getMilestones,
-  getSpinDailyLimit,
-  getSpinsUsedToday,
   getTiers,
   getTransactionTotals,
   getTransactions,
-  getUncollectedGiftCount,
   getUnfulfilledMilestoneCount,
   hasCheckedInToday,
   orderTotal,
@@ -66,12 +62,13 @@ export async function generateMetadata() {
   return { title: t.customer.dashboard.metaTitle }
 }
 
-// How wide each daily-action tile gets, by how many of them there are. A
-// lookup rather than arithmetic because Tailwind only sees literal classes.
+// How wide each daily-action tile gets, by how many of them there are — two at
+// most now that the wheel is a header control (check-in and the milestone
+// ladder). A lookup rather than arithmetic because Tailwind only sees literal
+// classes; add the rung back if a third tile ever returns.
 const ENGAGEMENT_SPAN: Record<number, string> = {
   1: "lg:col-span-12",
   2: "lg:col-span-6",
-  3: "lg:col-span-4",
 }
 
 // "Xem tất cả" is a text link in the mockup, not a filled chip — a second
@@ -105,7 +102,6 @@ export default async function DashboardPage() {
     featured,
     posts,
     checkinPoints,
-    spinDailyLimit,
     milestoneCount,
   ] = await Promise.all([
     getTiers(),
@@ -115,21 +111,12 @@ export default async function DashboardPage() {
     getFeaturedReward(),
     getPublishedPosts({ limit: POST_COUNT }),
     getCheckinPoints(),
-    getSpinDailyLimit(),
     getMilestoneCount(),
   ])
   // Only queried when the feature is on — an off admin toggle should not cost
   // every dashboard load an extra read.
   const checkedInToday =
     checkinPoints > 0 ? await hasCheckedInToday(customer.id) : false
-  const [spinsUsed, uncollectedGifts] =
-    spinDailyLimit > 0
-      ? await Promise.all([
-          getSpinsUsedToday(customer.id),
-          getUncollectedGiftCount(customer.id),
-        ])
-      : [0, 0]
-  const spinsLeft = Math.max(0, spinDailyLimit - spinsUsed)
   // Same conditional-query discipline: an unconfigured ladder must not cost
   // every dashboard load two extra reads.
   const [milestones, milestoneAwards, pendingMilestones] =
@@ -197,7 +184,6 @@ export default async function DashboardPage() {
   // Full class strings in a lookup: Tailwind cannot see an interpolated one.
   const engagementCount = [
     checkinPoints > 0,
-    spinDailyLimit > 0,
     milestoneNodes.length > 0,
   ].filter(Boolean).length
   const engagementSpan =
@@ -399,33 +385,6 @@ export default async function DashboardPage() {
               {d.checkinBody(checkinPoints)}
             </p>
             <CheckinButton initialCheckedIn={checkedInToday} />
-          </SectionCard>
-        )}
-
-        {spinDailyLimit > 0 && (
-          <SectionCard
-            chrome="plain"
-            title={d.spinTitle}
-            className={cn("flex flex-col", engagementSpan)}
-            bodyClassName="flex grow flex-col items-start gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6"
-          >
-            <div className="grid gap-1">
-              <p className="text-body-sm text-muted-foreground">
-                {spinsLeft > 0 ? d.spinBody(spinsLeft) : d.spinBodyEmpty}
-              </p>
-              {/* A gift won on the wheel is settled by hand at the counter, so
-                  the only way a member learns it is waiting is being told. */}
-              {uncollectedGifts > 0 && (
-                <p className="text-body-sm text-warning flex items-center gap-1.5">
-                  <Gift className="size-4 shrink-0" aria-hidden />
-                  {d.spinPendingGifts(uncollectedGifts)}
-                </p>
-              )}
-            </div>
-            <Link href="/spin" className={cn(buttonVariants({ size: "lg" }))}>
-              <FerrisWheel className="size-5" aria-hidden />
-              {d.spinCta}
-            </Link>
           </SectionCard>
         )}
 
