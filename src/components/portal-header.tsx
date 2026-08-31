@@ -48,38 +48,47 @@ export function PortalHeader({
     // notched phone. On desktop `env()` is 0, so the bar is exactly 64px — the
     // same height as the rail's brand row, which is what makes the two bottom
     // rules meet instead of stepping at the corner.
-    <header className="bg-sidebar border-border sticky top-0 z-40 flex min-h-16 items-center gap-3 border-b px-4 pt-[env(safe-area-inset-top)] md:px-12 lg:px-20">
-      <SidebarToggle className="max-md:hidden" />
+    //
+    // Deliberately NOT capped at <main>'s `max-w-[1280px]`: the bar is chrome,
+    // not content. Centring its row inside that cap parks the toggle and the
+    // account block hundreds of px in from the edges on a wide monitor — the
+    // very dead space this padding was tightened to get rid of.
+    <header className="bg-sidebar border-border sticky top-0 z-40 flex min-h-16 items-center border-b pt-[env(safe-area-inset-top)]">
+      <div className="flex w-full items-center gap-3 px-4 md:px-6 lg:px-8">
+        <SidebarToggle className="max-md:hidden" />
 
-      {brand}
+        {brand}
 
-      {title && (
-        <div className="flex min-w-0 items-center gap-1 max-md:hidden">
-          {title.parent && (
-            <Link
-              href={title.parent}
-              aria-label={backLabel}
-              title={backLabel}
-              className="text-muted-foreground hover:text-foreground hover:bg-surface-container -ml-1 grid size-7 shrink-0 place-items-center rounded-full transition-colors"
-            >
-              <ChevronLeft className="size-4" aria-hidden />
-            </Link>
-          )}
-          {/* A locator, not the page title — the page's own PageHeader is that,
-              and shouting it twice at two sizes helps nobody. */}
-          <h1 className="text-body-lg truncate font-semibold">{title.label}</h1>
-        </div>
-      )}
-
-      <div className="ml-auto flex items-center gap-2 md:gap-3">
-        {context}
-        {context && system && (
-          <span
-            aria-hidden
-            className="bg-border h-5 w-px shrink-0 max-md:hidden"
-          />
+        {title && (
+          <div className="flex min-w-0 items-center gap-1 max-md:hidden">
+            {title.parent && (
+              <Link
+                href={title.parent}
+                aria-label={backLabel}
+                title={backLabel}
+                className="text-muted-foreground hover:text-foreground hover:bg-surface-container -ml-1 grid size-7 shrink-0 place-items-center rounded-full transition-colors"
+              >
+                <ChevronLeft className="size-4" aria-hidden />
+              </Link>
+            )}
+            {/* A locator, not the page title — the page's own PageHeader is
+                that, and shouting it twice at two sizes helps nobody. */}
+            <h1 className="text-body-lg truncate font-semibold">
+              {title.label}
+            </h1>
+          </div>
         )}
-        {system}
+
+        <div className="ml-auto flex min-w-0 items-center gap-2 md:gap-3">
+          {context}
+          {context && system && (
+            <span
+              aria-hidden
+              className="bg-border h-5 w-px shrink-0 max-md:hidden"
+            />
+          )}
+          {system}
+        </div>
       </div>
     </header>
   )

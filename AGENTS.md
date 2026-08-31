@@ -37,7 +37,7 @@ QR loyalty-point app. Next.js 16 (App Router) + Supabase + Pancake POS + shadcn/
   are guarded in `src/lib/supabase/middleware.ts`. Customers still have NO direct write path to
   `public.customers` — redemption goes through `redeem_reward` (`0006`) and the profile form
   through `update_customer_profile` (`0007`), both service-role only like `claim_points`.
-  On `/tiers` and in the rail's member block a tier is read by its GEM COLOUR, picked by tier
+  On `/tiers` and in the header's member block a tier is read by its GEM COLOUR, picked by tier
   *rank*, never by name (`src/app/(customer)/(account)/tier-accent.ts`). That rule is scoped to
   those two places: the `/dashboard` hero is a fixed brand gradient (`bg-hero`), not a tier wash.
 - **Tiers are SPEND, points are currency**: `membership_tiers.spend_threshold` is đồng measured
@@ -130,15 +130,39 @@ QR loyalty-point app. Next.js 16 (App Router) + Supabase + Pancake POS + shadcn/
   name and leaves a screen reader a column of nameless icons (`portal-nav.test.tsx` guards this).
   The rail owns its own horizontal padding because `group-data` variants match DESCENDANTS, so a
   class on the `<aside>` can never react to the `<aside>`'s own state.
-- **Sign-out lives in the header** at every width; **"Nâng hạng" is pinned to the BOTTOM of the
-  rail**, under the member block, via `SidebarCta` (`src/components/portal-sidebar.tsx`). That is a
-  client component and not another server-rendered `footer` slot for one reason: `title` must be set
-  ONLY while collapsed, which CSS cannot express — the same rule the rail's nav links follow, and the
-  label goes `sr-only`, NEVER `hidden`. Below `md` there is no rail at all, so BOTH move into
-  `AccountMenu` (`src/components/account-menu.tsx`), a Base UI `Drawer` bottom sheet behind the
-  avatar — the phone header cannot fit them (the arithmetic at 390px overflows). `account-menu.test.tsx`
-  is the only guard on that phone path; don't weaken it. The labelled sign-out on `/profile` and in the
-  no-customer `EmptyState` backs up the icon-only one in the header; keep both.
+  `PortalHeader` (`src/components/portal-header.tsx`) is the bar both portals wear. It runs
+  FULL-BLEED at `px-4 md:px-6 lg:px-8` and is deliberately NOT capped at the `max-w-[1280px]`
+  `<main>` carries: the bar is chrome, not content, and centring its row inside that cap parks the
+  toggle and the account block hundreds of px in from the edges on a wide monitor. It was tried and
+  rejected on 2026-08-31 — the header and `<main>` are allowed to disagree about their left edge.
+- **EVERYTHING about your account hides behind the avatar, at every width.** The header's right end
+  is exactly two things: the member portal's points pill (`context`) and, in `system`, the identity
+  block — avatar + name + tier (member) or email + role (admin) — which is the TRIGGER for a menu
+  holding the theme switch, sign-out, and (member only) `/profile` and `/help`. Theme and sign-out
+  were loose icons beside it until 2026-08-31; three ungrouped controls fought for one corner.
+  Two surfaces, one per pointer: `PortalIdentity` (`src/components/portal-identity.tsx`) is the
+  `md`-and-up dropdown over `ui/menu.tsx` (Base UI `Menu`), `AccountMenu` / `AdminMenu` over
+  `PortalMenu` + `ui/drawer.tsx` is the phone bottom sheet. They are NOT one responsive component —
+  a sheet is right under a thumb and wrong under a cursor — but they must offer the SAME actions.
+  Rules that bite:
+  - `PortalIdentity` must never use a heading element: `PortalHeader`'s locator `<h1>` is the only
+    one in the bar and `portal-header.test.tsx` looks it up by role with no name.
+  - The sign-out `<form>` sits INSIDE the popup, so its `MenuItem` takes `closeOnClick={false}` —
+    closing would unmount the form out from under its own submit. Same for the theme row, which is
+    not a destination at all.
+  - The theme row is `ThemeMenuItem` (`src/components/theme-toggle.tsx`), not
+    `<MenuItem render={<ThemeToggle/>}>`: Base UI's `render` hands the child props to spread and
+    ThemeToggle's Button swallows them.
+  - The labelled sign-out on `/profile` and in the no-customer `EmptyState` is the backstop now that
+    nothing is signed out in one click; keep both.
+  - `account-menu.test.tsx` is the only guard on the phone path; don't weaken it.
+- **"Nâng hạng" is pinned to the BOTTOM of the rail** via `SidebarCta`
+  (`src/components/portal-sidebar.tsx`) — the whole of the member rail's `footer` slot now that the
+  member block moved to the header (admin's `footer` is GONE entirely). `SidebarCta` is a client
+  component and not another server-rendered slot for one reason: `title` must be set ONLY while
+  collapsed, which CSS cannot express — the same rule the rail's nav links follow, and the label goes
+  `sr-only`, NEVER `hidden`. Below `md` there is no rail at all, so it moves into `AccountMenu`; it is
+  deliberately NOT repeated in the desktop dropdown, where the rail already shows it at all times.
 - **`/dashboard` is a 12-column bento** (`lg:grid-cols-12`), and its one hard rule is that a missing
   block must never leave a hole. Two devices do that: the **4-slot always has a tenant** — the featured
   gift if there is one, otherwise the summary `<dl>`, which is what lets the hero stay at a constant

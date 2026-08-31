@@ -3,6 +3,7 @@
 import { Moon, Sun } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { MenuItem } from "@/components/ui/menu"
 import { useT } from "@/lib/i18n/provider"
 import { useTheme } from "@/lib/theme/provider"
 import { cn } from "@/lib/utils"
@@ -51,5 +52,28 @@ export function ThemeToggle({
       <Icon className="size-4" aria-hidden />
       {isDark ? t.light : t.dark}
     </Button>
+  )
+}
+
+/**
+ * The same switch as a row inside the desktop account dropdown. Its own
+ * component rather than `<MenuItem render={<ThemeToggle />}>` because Base UI's
+ * `render` hands the child its props to spread, and ThemeToggle's Button would
+ * swallow them.
+ *
+ * `closeOnClick={false}`: flipping the theme is not leaving the menu, and
+ * watching the popup vanish under the cursor reads as a misfire.
+ */
+export function ThemeMenuItem() {
+  const { theme, toggle } = useTheme()
+  const t = useT().theme
+  const isDark = theme === "dark"
+  const Icon = isDark ? Sun : Moon
+
+  return (
+    <MenuItem closeOnClick={false} onClick={toggle}>
+      <Icon className="size-5" aria-hidden />
+      {isDark ? t.light : t.dark}
+    </MenuItem>
   )
 }

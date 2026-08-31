@@ -1,13 +1,26 @@
 import Link from "next/link"
-import { LogOut, PawPrint, Sparkles, TrendingUp, UserX } from "lucide-react"
+import {
+  HelpCircle,
+  LogOut,
+  PawPrint,
+  Sparkles,
+  TrendingUp,
+  UserRound,
+  UserX,
+} from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { AccountMenu } from "@/components/account-menu"
 import { EmptyState } from "@/components/empty-state"
-import { InitialsAvatar } from "@/components/initials-avatar"
 import { PortalFooter } from "@/components/portal-footer"
 import { PortalHeader } from "@/components/portal-header"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { PortalIdentity } from "@/components/portal-identity"
+import { ThemeMenuItem } from "@/components/theme-toggle"
+import {
+  MenuItem,
+  MenuLinkItem,
+  MenuSeparator,
+} from "@/components/ui/menu"
 import { getMessages } from "@/lib/i18n/server"
 import { getSidebarCollapsed } from "@/lib/sidebar/server"
 import { getTiers, resolveDisplayTier } from "@/lib/loyalty"
@@ -34,7 +47,7 @@ export default async function AccountLayout({
   // The Azure Paw mockups carry exactly four destinations, in this order, and
   // the rail and the phone bar carry the SAME four. Everything that used to be
   // a fifth or sixth rail item now has a specific home:
-  //   /profile → the rail's identity footer (desktop) / AccountMenu (phone)
+  //   /profile → the header's identity block (desktop) / AccountMenu (phone)
   //   /help    → PortalFooter, with /faq, /terms and /blog
   //   /spin    → the dashboard card, the way check-in already works
   //   /rewards/roadmap → a sub-route of /rewards, reached from that page and
@@ -79,11 +92,11 @@ export default async function AccountLayout({
   return (
     <SidebarProvider initialCollapsed={collapsed}>
       <div className="bg-canvas flex min-h-svh">
-        {/* Desktop rail. Its bottom carries the member, then the upgrade CTA
-            pinned under it, as in the mockups. Sign-out stays in the header at
-            every width — where it used to be desktop-only — and below `md`,
-            where there is no rail at all, BOTH the CTA and sign-out live in
-            AccountMenu behind the avatar. */}
+        {/* Desktop rail. Its bottom carries the upgrade CTA and nothing else:
+            who you are moved up to the header, where a reader looks for their
+            own account, and the theme switch and sign-out went with it into the
+            menu behind the avatar. Below `md` there is no rail at all, so the
+            CTA joins them in AccountMenu. */}
         <SidebarRail
           items={items}
           navLabel={nav.mainLabel}
@@ -108,36 +121,14 @@ export default async function AccountLayout({
           }
           footer={
             customer && (
-              <div className="grid gap-3">
-                <Link
-                  href="/profile"
-                  aria-label={nav.avatarLabel}
-                  className="hover:bg-surface-high flex items-center gap-3 rounded-xl px-1 py-1 transition-colors group-data-[collapsed=true]/sidebar:justify-center group-data-[collapsed=true]/sidebar:px-0"
-                >
-                  <InitialsAvatar
-                    name={customer.full_name ?? customer.phone}
-                    size="lg"
-                  />
-                  <div className="min-w-0 group-data-[collapsed=true]/sidebar:hidden">
-                    <p className="text-label-md truncate font-bold">
-                      {customer.full_name ?? customer.phone}
-                    </p>
-                    {tierName && (
-                      <p className="text-primary text-label-sm truncate uppercase">
-                        {tierName}
-                      </p>
-                    )}
-                  </div>
-                </Link>
-
-                {/* The mockups pin this to the very bottom of the rail. Below
-                    `md` there is no rail, so AccountMenu carries the same row. */}
-                <SidebarCta
-                  href="/tiers"
-                  label={nav.upgradeCta}
-                  icon={<TrendingUp className="size-5" aria-hidden />}
-                />
-              </div>
+              /* Pinned to the very bottom of the rail, as in the mockups —
+                 now the only thing down there. Below `md` there is no rail, so
+                 AccountMenu carries the same row. */
+              <SidebarCta
+                href="/tiers"
+                label={nav.upgradeCta}
+                icon={<TrendingUp className="size-5" aria-hidden />}
+              />
             )
           }
         />
@@ -174,39 +165,60 @@ export default async function AccountLayout({
               )
             }
             system={
-              <>
-                <ThemeToggle iconOnly className="max-md:hidden" />
-
-                <form action={signOut} className="max-md:hidden">
-                  {/* Deliberately not `text-destructive`: signing out destroys
-                      nothing, and the red read as an error in the chrome. */}
-                  <Button
-                    type="submit"
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label={nav.signOut}
-                    title={nav.signOut}
+              customer && (
+                <>
+                  {/* Who you are, from `md` up — and, behind it, the theme
+                      switch and sign-out that used to sit beside it as loose
+                      icons. "Nâng hạng" is NOT repeated here: on desktop the
+                      rail pins it, in view the whole time. */}
+                  <PortalIdentity
+                    className="max-md:hidden"
+                    label={nav.avatarLabel}
+                    name={customer.full_name ?? customer.phone}
+                    caption={tierName}
+                    captionClassName="text-primary"
                   >
-                    <LogOut className="size-4" aria-hidden />
-                  </Button>
-                </form>
+                    <MenuLinkItem render={<Link href="/profile" />}>
+                      <UserRound className="size-5" aria-hidden />
+                      {nav.profile}
+                    </MenuLinkItem>
+                    <MenuLinkItem render={<Link href="/help" />}>
+                      <HelpCircle className="size-5" aria-hidden />
+                      {nav.help}
+                    </MenuLinkItem>
 
-                {/* Phone only — on desktop the rail's footer is where the
-                    member is, and two avatars on one screen is the clutter
-                    this pass exists to remove. */}
-                {customer && (
+                    <MenuSeparator />
+
+                    <ThemeMenuItem />
+
+                    <form action={signOut}>
+                      {/* Deliberately not `text-destructive`: signing out
+                          destroys nothing, and the red read as an error.
+                          `closeOnClick={false}` so the popup does not unmount
+                          the form out from under its own submit. */}
+                      <MenuItem
+                        closeOnClick={false}
+                        render={<button type="submit" />}
+                      >
+                        <LogOut className="size-5" aria-hidden />
+                        {nav.signOut}
+                      </MenuItem>
+                    </form>
+                  </PortalIdentity>
+
+                  {/* Phone only — the same rows, in a bottom sheet. */}
                   <AccountMenu
                     name={customer.full_name ?? customer.phone}
                     className="md:hidden"
                   />
-                )}
-              </>
+                </>
+              )
             }
           />
 
           {/* The bottom pad clears the phone tab bar, its floating active bubble
               and the home indicator below it. */}
-          <main className="mx-auto w-full max-w-[1280px] grow px-4 py-6 pb-[calc(--spacing(32)+env(safe-area-inset-bottom))] md:px-12 md:py-12 md:pb-12 lg:px-20">
+          <main className="mx-auto w-full max-w-[1280px] grow px-4 py-6 pb-[calc(--spacing(32)+env(safe-area-inset-bottom))] md:px-6 md:py-12 md:pb-12 lg:px-8">
             {customer ? (
               <>
                 {children}

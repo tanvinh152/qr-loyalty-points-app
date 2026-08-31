@@ -2,12 +2,12 @@ import Link from "next/link"
 import { LogOut, PawPrint } from "lucide-react"
 
 import { AdminMenu } from "@/components/admin-menu"
-import { InitialsAvatar } from "@/components/initials-avatar"
 import { PortalHeader } from "@/components/portal-header"
+import { PortalIdentity } from "@/components/portal-identity"
 import { PortalNav, type PortalNavItem } from "@/components/portal-nav"
 import { SidebarProvider, SidebarRail } from "@/components/portal-sidebar"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { Button } from "@/components/ui/button"
+import { ThemeMenuItem } from "@/components/theme-toggle"
+import { MenuItem } from "@/components/ui/menu"
 import { createClient } from "@/lib/supabase/server"
 import { getMessages } from "@/lib/i18n/server"
 import { getSidebarCollapsed } from "@/lib/sidebar/server"
@@ -107,18 +107,6 @@ export default async function AdminLayout({
               {brandMark}
             </Link>
           }
-          footer={
-            <div className="flex items-center gap-3 px-1 group-data-[collapsed=true]/sidebar:justify-center group-data-[collapsed=true]/sidebar:px-0">
-              <InitialsAvatar name={email} size="lg" />
-              {/* hidden, not sr-only: this is not any control's name. */}
-              <div className="min-w-0 group-data-[collapsed=true]/sidebar:hidden">
-                <p className="text-label-md truncate font-bold">{email}</p>
-                <p className="text-muted-foreground text-label-sm tracking-tight uppercase">
-                  {nav.role}
-                </p>
-              </div>
-            </div>
-          }
         />
 
         <div className="flex min-w-0 grow flex-col">
@@ -139,24 +127,37 @@ export default async function AdminLayout({
             }
             system={
               <>
-                <ThemeToggle iconOnly className="max-md:hidden" />
+                {/* Who is signed in, from `md` up — and, behind it, the theme
+                    switch and sign-out that used to sit beside it as loose
+                    icons. It used to sit at the foot of the rail; a reader
+                    looks for their account top right, and this way the two
+                    portals say it in the same place. No destinations in here:
+                    on desktop the rail already carries all nine. */}
+                <PortalIdentity
+                  className="max-md:hidden"
+                  label={nav.accountLabel}
+                  name={email}
+                  caption={nav.role}
+                  captionClassName="text-muted-foreground"
+                >
+                  <ThemeMenuItem />
 
-                <form action={logout} className="max-md:hidden">
-                  {/* Deliberately not `text-destructive`: signing out destroys
-                      nothing, and the red read as an error in the chrome. */}
-                  <Button
-                    type="submit"
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label={nav.signOut}
-                    title={nav.signOut}
-                  >
-                    <LogOut className="size-4" aria-hidden />
-                  </Button>
-                </form>
+                  <form action={logout}>
+                    {/* Deliberately not `text-destructive`: signing out
+                        destroys nothing, and the red read as an error.
+                        `closeOnClick={false}` so the popup does not unmount
+                        the form out from under its own submit. */}
+                    <MenuItem
+                      closeOnClick={false}
+                      render={<button type="submit" />}
+                    >
+                      <LogOut className="size-5" aria-hidden />
+                      {nav.signOut}
+                    </MenuItem>
+                  </form>
+                </PortalIdentity>
 
-                {/* Phone only — on desktop the rail's footer says who is signed
-                    in, so the header does not repeat it. */}
+                {/* Phone only — the same rows, in a bottom sheet. */}
                 <AdminMenu email={email} className="md:hidden" />
               </>
             }
@@ -164,7 +165,7 @@ export default async function AdminLayout({
 
           {/* The bottom pad clears the phone tab bar, its floating active bubble
               and the home indicator below it. */}
-          <main className="mx-auto w-full max-w-[1280px] grow px-4 py-6 pb-[calc(--spacing(32)+env(safe-area-inset-bottom))] md:px-12 md:py-12 md:pb-12 lg:px-20">
+          <main className="mx-auto w-full max-w-[1280px] grow px-4 py-6 pb-[calc(--spacing(32)+env(safe-area-inset-bottom))] md:px-6 md:py-12 md:pb-12 lg:px-8">
             {children}
           </main>
         </div>
