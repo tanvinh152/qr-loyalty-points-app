@@ -12,7 +12,6 @@ import {
   Medal,
   MessageSquare,
   Newspaper,
-  Package,
   Receipt,
   Settings,
   UserRound,
@@ -34,7 +33,6 @@ const ICONS = {
   spin: FerrisWheel,
   // Admin
   dashboard: LayoutDashboard,
-  products: Package,
   blog: Newspaper,
   customers: Users,
   transactions: Receipt,

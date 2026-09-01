@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A new push to the same branch cancels the run still in flight.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: lint · typecheck · test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # 22.x is what this repo is developed on and what Vercel runs by default.
+      # There is no `engines` field and no .nvmrc, so this workflow is currently
+      # the only written-down statement of the Node version.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      # `ci`, not `install`: it installs exactly package-lock.json and fails
+      # rather than silently updating the lockfile.
+      - run: npm ci
+
+      - run: npm run lint
+
+      # tsconfig.json includes the test files, so this typechecks the vitest
+      # specs too — and everything under e2e/ once that lands.
+      - run: npm run typecheck
+
+      # vitest, both projects. Everything is module-mocked, so this needs no
+      # Docker, no network and no environment variables.
+      #
+      # NOT here on purpose: `npm run test:db` (pgTAP) needs Docker and a local
+      # Supabase stack, and Playwright needs a browser download plus a live
+      # project — both would need repo secrets that do not exist yet.
+      - run: npm test

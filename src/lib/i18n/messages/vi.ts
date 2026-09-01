@@ -88,7 +88,6 @@ export const vi: Messages = {
       dashboard: "Tổng quan",
       settings: "Cài đặt",
       tiers: "Hạng thành viên",
-      products: "Sản phẩm",
       rewards: "Quà tặng",
       spin: "Vòng quay",
       blog: "Blog",
@@ -153,9 +152,9 @@ export const vi: Messages = {
       metaTitle: "Cài Đặt Điểm Thưởng",
       title: "Cài Đặt Điểm Thưởng",
       helper:
-        "Điểm = tổng(số lượng × điểm mỗi sản phẩm) × hệ số hạng, sau đó làm tròn.",
+        "Điểm = (tiền thực trả ÷ số đồng mỗi điểm) × hệ số hạng, sau đó làm tròn.",
       formulaExample:
-        "Ví dụ: 3 bịch × 5 điểm = 15, hạng có hệ số 1.5 → 22,5, làm tròn xuống → 22 điểm.",
+        "Ví dụ: đơn 2.000.000đ ÷ 1.000 = 2.000 điểm nền, hạng Vàng hệ số 1,1 → 2.200 điểm.",
       rounding: "Làm tròn",
       roundingHelper: "Cách xử lý khi tổng điểm ra số lẻ.",
       floor: "Làm tròn xuống",
@@ -170,9 +169,9 @@ export const vi: Messages = {
       recommended: "nên chọn",
       selectedCount: (n) => `đã chọn ${n}`,
       noStatusSelected: "Chọn ít nhất một trạng thái.",
-      unmappedSkuPoints: "Điểm cho sản phẩm chưa cấu hình",
-      unmappedSkuPointsHelper:
-        "Điểm cho mỗi sản phẩm chưa khai báo SKU. Để 0 nếu không muốn cộng điểm.",
+      vndPerPoint: "Số đồng cho mỗi điểm",
+      vndPerPointHelper:
+        "Bao nhiêu đồng khách thực trả thì được 1 điểm nền. Thể lệ chương trình là 1.000đ = 1 điểm. Phần lẻ dưới mức này luôn được làm tròn xuống.",
       welcomeGiftPoints: "Quà tân thủ",
       welcomeGiftPointsHelper:
         "Điểm tặng một lần khi đăng ký thành công. 0 = tắt tính năng.",
@@ -222,6 +221,11 @@ export const vi: Messages = {
         cake: "Sinh nhật",
         award: "Đẳng cấp",
         sparkles: "Khác",
+        wheel: "Vòng quay",
+        paw: "Boss",
+        flask: "Sản phẩm mới",
+        layers: "Bộ sưu tập",
+        heart: "Chăm sóc",
       },
       listTitle: "Danh sách hạng",
       empty: "Chưa có hạng nào — thêm hạng đầu tiên ở dưới.",
@@ -262,35 +266,6 @@ export const vi: Messages = {
       scheduleForbidden: "Chỉ tài khoản nhân viên mới được đổi mốc hạng.",
       effectiveOn: (date: string) => `từ ${date}`,
       percentileLabel: (pct: number) => `top ${pct}%`,
-    },
-    products: {
-      metaTitle: "Điểm Sản Phẩm",
-      title: "Điểm Sản Phẩm",
-      productCode: "Mã SKU",
-      label: "Tên gợi nhớ",
-      labelHelper: "Ghi chú nội bộ, khách không nhìn thấy.",
-      pointsAwarded: "Điểm mỗi sản phẩm",
-      pointsAwardedHelper: "Sẽ được nhân với số lượng trên đơn hàng.",
-      status: "Trạng thái",
-      statusHelper: "Sản phẩm đã tắt sẽ không được tính điểm.",
-      listTitle: "Danh sách quy tắc",
-      addTitle: "Thêm sản phẩm",
-      empty:
-        "Chưa có sản phẩm nào — đơn hàng sẽ tính theo điểm của sản phẩm chưa cấu hình.",
-      saved: "Đã lưu sản phẩm.",
-      saveFailed: "Lưu thất bại.",
-      deleteFailed: "Xóa thất bại.",
-      duplicate: "Mã SKU này đã được cấu hình.",
-      pickSku: "Chọn sản phẩm",
-      searchSku: "Tìm theo tên hoặc mã SKU…",
-      changeSku: "Đổi",
-      noSkusLeft: "Mọi mã SKU trên Pancake đều đã được cấu hình.",
-      noSkuMatch: "Không có sản phẩm nào khớp.",
-      unknownSku: "Không còn trong danh mục Pancake.",
-      catalogUnavailable:
-        "Không kết nối được Pancake — hãy nhập mã SKU thủ công, phải trùng khớp tuyệt đối.",
-      price: "Giá bán",
-      stock: "Tồn kho",
     },
     media: {
       upload: "Tải ảnh lên",
@@ -733,7 +708,7 @@ export const vi: Messages = {
       emailPlaceholder: "ban@email.com",
       emailHint: "Dùng để liên hệ với bạn về tài khoản và các yêu cầu hỗ trợ.",
       dob: "Ngày sinh",
-      dobHint: "Để chúng mình gửi bạn một món quà nhỏ vào ngày sinh nhật.",
+      dobHint: "Để chúng mình gửi lời chúc và trang trí trang cá nhân vào đúng ngày sinh nhật bạn.",
       orderCode: "Mã đơn hàng gần nhất",
       orderCodePlaceholder: "VD: 8661",
       orderCodeHint:
@@ -931,7 +906,7 @@ export const vi: Messages = {
       vipChip: "VIP",
       retentionTitle: "Chính sách duy trì hạng",
       retentionBody: (tierName: string) =>
-        `Theo thể lệ chương trình, hạng ${tierName} được xét lại mỗi 365 ngày. Hệ thống không tự động hạ hạng của bạn — nếu thấy sai sót, hãy liên hệ với chúng tôi.`,
+        `Theo thể lệ chương trình, hạng ${tierName} được xét lại mỗi 365 ngày kể từ lần thăng hạng gần nhất. Việc tự động hạ hạng đang được triển khai; hiện tại chúng mình xử lý thủ công — nếu thấy sai sót, hãy liên hệ với chúng tôi.`,
       progressTo: (name: string) => `Tiến tới hạng ${name}`,
       progressCaption: "Mỗi đồng chi tiêu đều được tính vào hạng kế tiếp.",
       benefitsTableTitle: "Quyền lợi hạng thẻ",
@@ -979,7 +954,7 @@ export const vi: Messages = {
       titleEdit: "Hồ sơ của bạn",
       panelTitle: "Chào mừng tới đại gia đình.",
       panelBody:
-        "Càng hiểu bạn, chúng tôi càng gửi được nhiều ưu đãi và bất ngờ sinh nhật phù hợp.",
+        "Càng hiểu bạn, chúng tôi càng gửi được nhiều ưu đãi phù hợp với bạn và bé cưng.",
       settingsSection: "Cài đặt",
       ownerSection: "Thông tin chủ nuôi",
       fullName: "Họ và tên",
@@ -991,7 +966,7 @@ export const vi: Messages = {
       petType: "Loại thú cưng",
       petTypes: { dog: "Chó", cat: "Mèo", other: "Khác" },
       petDob: "Ngày sinh hoặc ngày nhận nuôi",
-      petDobHint: "Chúng tôi sẽ gửi quà khi ngày đặc biệt tới.",
+      petDobHint: "Để chúng mình ghi nhớ ngày đặc biệt của bé cưng.",
       orderSection: "Điểm tự động được cộng",
       orderHint:
         "Mọi đơn hàng đặt bằng số điện thoại này sẽ được cộng điểm tự động sau khi giao thành công.",
@@ -1128,7 +1103,7 @@ export const vi: Messages = {
         title: "Tích điểm",
         paragraphs: [
           "Điểm được tính từ các sản phẩm trong đơn hàng, nhân với hệ số của hạng bạn đang giữ. Chỉ tính trên số tiền bạn thực trả — sau khi đã trừ mọi khuyến mãi và voucher.",
-          "Đơn hàng được tính điểm khi đã hoàn tất tại cửa hàng. Đơn bị huỷ hoặc trả hàng thì không được tính.",
+          "Đơn hàng được tính điểm khi đã hoàn tất tại cửa hàng. Nếu đơn bị huỷ hoặc trả hàng sau khi điểm đã được cộng, ChiCha sẽ điều chỉnh lại số dư — bạn liên hệ hỗ trợ nếu thấy điều chỉnh chưa đúng nhé.",
         ],
       },
       {
@@ -1136,7 +1111,7 @@ export const vi: Messages = {
         title: "Hạng thành viên",
         paragraphs: [
           "Hạng của bạn được xác định bằng tổng chi tiêu tích luỹ, không phải bằng số điểm đang có. Điểm là thứ bạn dùng để đổi quà; chi tiêu mới là thứ đưa bạn lên hạng.",
-          "Hạng có giá trị trong 365 ngày. Bạn duy trì mức chi tiêu để giữ hạng hiện tại hoặc lên hạng cao hơn.",
+          "Hạng được đánh giá lại sau mỗi 365 ngày kể từ lần thăng hạng gần nhất. Bạn duy trì mức chi tiêu của hạng để giữ hạng hiện tại hoặc lên hạng cao hơn.",
         ],
       },
       {
@@ -1176,7 +1151,6 @@ export const vi: Messages = {
     invalidPhone: "Số điện thoại không hợp lệ",
     nonNegative: "Không được nhỏ hơn 0",
     positive: "Phải lớn hơn 0",
-    skuRequired: "Vui lòng nhập mã SKU",
     tierNameRequired: "Vui lòng nhập tên hạng",
     rewardNameRequired: "Vui lòng nhập tên quà",
     spinPrizeNameRequired: "Vui lòng nhập tên ô",

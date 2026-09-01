@@ -5,6 +5,10 @@ mỗi case ghi rõ file/hàm nguồn để dev đối chiếu khi case fail.
 
 - **ID**: `<C|A|S>-<NHÓM>-<số>` — `C` = customer, `A` = admin, `S` = hệ thống (webhook / cron / phân quyền / i18n / theme).
 - **Ưu tiên**: `P0` chặn release (tiền, điểm, phân quyền) · `P1` chức năng chính · `P2` hiển thị / phụ.
+- **Tự động**: file test đã phủ ca đó — bỏ qua khi bấm tay, chỉ chạy lại khi nó fail. `—` là
+  vẫn phải bấm. Cột này mới chỉ có ở các nhóm đã được tự động hoá trong đợt P0
+  (S-AUTH, C-LOG, C-RWD, A-CUS); các nhóm khác vẫn thủ công toàn bộ.
+  Chạy: `npm test` (vitest) · `npm run test:db` (pgTAP, cần Docker) · `npm run test:e2e` (Playwright).
 
 ---
 
@@ -16,7 +20,7 @@ mỗi case ghi rõ file/hàm nguồn để dev đối chiếu khi case fail.
 | Chạy app | `npm run dev` |
 | Tài khoản test | Xem `docs/account-test.md` — admin `admin@gmail.com/admin`, customer `0376733152/123123123` |
 | Env Pancake | `PANCAKE_*` trỏ tới shop thật (đơn hàng KHÔNG được seed, luôn fetch live) |
-| Env webhook | `WEBHOOK_SECRET` — dùng chung cho `/api/webhooks/pancake` và `/api/cron/tier-schedules` |
+| Env webhook | `WEBHOOK_SECRET` — dùng chung cho `/api/webhooks/pancake` và `/api/cron/daily` |
 | Dữ liệu cần chuẩn bị tay | ≥ 3 mã đơn Pancake thật: (a) đơn chưa ai đăng ký, status 3 hoặc 16; (b) đơn đã thuộc tài khoản khác; (c) đơn status khác 3/16 |
 
 > Tài khoản admin phải có `app_metadata.role = 'admin'` (xem `public.is_admin()` ở `0005_roles_and_customer_rls.sql`).
@@ -28,27 +32,44 @@ mỗi case ghi rõ file/hàm nguồn để dev đối chiếu khi case fail.
 
 | Hạng | Mốc chi tiêu | Hệ số nhân điểm | sort_order |
 |------|-------------|-----------------|------------|
-| Bạc | 0đ | ×1.0 | 1 |
-| Vàng | 3.000.000đ | ×1.2 | 2 |
-| Bạch kim | 8.000.000đ | ×1.5 | 3 |
-| Kim cương | 20.000.000đ | ×1.8 | 4 |
-| Ruby | 50.000.000đ | ×2.0 | 5 |
+| Bạc | 1.000.000đ | ×1.0 | 1 |
+| Vàng | 2.000.000đ | ×1.1 | 2 |
+| Bạch kim | 4.000.000đ | ×1.2 | 3 |
+| Kim cương | 8.000.000đ | ×1.4 | 4 |
+| Ruby | 40.000.000đ | ×2.0 | 5 |
 
-**Cấu hình loyalty**: `rounding = floor` · `claimable_statuses = {3, 16}` · `unmapped_sku_points = 0`
+> Đây là giá trị thật trong `supabase/seed.sql`. Nếu bảng này lệch với seed thì mọi con số
+> "điểm mong đợi" bên dưới đều sai — đối chiếu lại seed trước khi kết luận một case fail.
+> Lưu ý mốc Bạc là **1.000.000đ**, không phải 0đ: khách mới chưa đủ chi tiêu thì
+> `customers.tier_id` là NULL và hệ số rơi về ×1.
 
-**SKU đã map**: `SP000001` = 50 điểm · `STPLCHODNC500` = 100 điểm. SKU khác → 0 điểm (fallback).
+**Cấu hình loyalty**: `rounding = floor` · `claimable_statuses = {3, 16}` · `vnd_per_point = 1000`
+
+**Điểm tính theo TIỀN, không theo SKU** (`0025`, spec §5.1): `floor(tiền thực trả / 1.000) × hệ số hạng`.
+Mọi SKU đều như nhau — bảng `product_points` và trang `/admin/products` đã bị gỡ.
 
 **Quà**: Voucher 50.000đ — 500 điểm / 100 cái · Túi cát 2,5kg — 1500 điểm / 20 cái (**nổi bật**) ·
 Combo chăm sóc — 4000 điểm / 5 cái (**exclusive**).
 
-### 1.2. Công thức điểm (chỉ tồn tại trong RPC `claim_points`, `0011_claim_spend.sql`)
+### 1.2. Công thức điểm (chỉ tồn tại trong RPC `claim_points`, `0025_spend_based_points.sql`)
 
 ```
-điểm = floor( Σ(qty × points_awarded của SKU) × hệ_số_nhân_của_hạng_ĐANG_GIỮ )
+nền   = floor( tiền_thực_trả / loyalty_settings.vnd_per_point )
+điểm  = làm_tròn( nền × hệ_số_nhân_của_hạng_ĐANG_GIỮ )
 ```
+
+Điểm tính theo **TIỀN**, không theo SKU — bảng `product_points` đã bị gỡ ở `0025`.
+`tiền_thực_trả` là `total_price_after_sub_discount`: sau mọi voucher, không tính ship.
+
+Phép chia ra đồng **luôn floor**, kể cả khi `rounding = ceil`; cấu hình `rounding` chỉ
+áp cho bước nhân hệ số. Đây là bất đối xứng cố ý, đừng "sửa".
 
 Hệ số nhân lấy từ hạng khách **đang giữ lúc đơn về**, không phải hạng sau khi cộng.
 `lifetime_spend` cộng thêm `p_order_total`; hạng chỉ được **nâng**, không bao giờ tụt.
+
+> Toàn bộ số học này được chốt tự động ở `supabase/tests/claim_points_test.sql`
+> (`npm run test:db`). `src/lib/points.ts` chỉ còn kiểu dữ liệu — không còn bản sao
+> TypeScript nào để đối chiếu bằng tay.
 
 ---
 
@@ -88,16 +109,16 @@ Form `/register` gồm: họ tên, ngày sinh, SĐT, email, mật khẩu, mã đ
 
 Nguồn: `signIn` / `signOut` (`src/app/(customer)/auth/actions.ts:63`)
 
-| ID | Tiền điều kiện | Các bước | Kết quả mong đợi | Ưu tiên |
-|----|---------------|----------|------------------|---------|
-| C-LOG-01 | Tài khoản `0376733152/123123123` | `/login` → nhập SĐT + mật khẩu | Vào `/dashboard` | P0 |
-| C-LOG-02 | — | SĐT đúng, mật khẩu sai | `"Số điện thoại hoặc mật khẩu không đúng."` | P0 |
-| C-LOG-03 | — | SĐT **chưa hề** đăng ký | Cùng thông báo với C-LOG-02, cùng thời gian phản hồi tương đương — không được lộ SĐT nào là thành viên | P0 |
-| C-LOG-04 | — | Nhập `+84376733152` thay vì `0376733152` | Vẫn đăng nhập được (chuẩn hoá trước khi tra `customers.email`) | P1 |
-| C-LOG-05 | Đã đăng nhập | Vào lại `/login` hoặc `/register` | Bị chuyển về `/dashboard` | P1 |
-| C-LOG-06 | Đã đăng nhập, đã tự bấm đổi theme sang tối | Đăng xuất → đăng nhập lại | Theme tối **được giữ** — không bị ghi đè bởi mặc định theo tuổi | P1 |
-| C-LOG-07 | Đã đăng nhập | Bấm Đăng xuất | Về `/login`; quay lại `/dashboard` bị chặn về `/login` | P0 |
-| C-LOG-08 | — | Bỏ trống mật khẩu | `"Mật khẩu phải có ít nhất 8 ký tự"` | P2 |
+| ID | Tiền điều kiện | Các bước | Kết quả mong đợi | Ưu tiên | Tự động |
+|----|---------------|----------|------------------|---------|----------|
+| C-LOG-01 | Tài khoản `0376733152/123123123` | `/login` → nhập SĐT + mật khẩu | Vào `/dashboard` | P0 | `e2e/login.spec.ts` |
+| C-LOG-02 | — | SĐT đúng, mật khẩu sai | `"Số điện thoại hoặc mật khẩu không đúng."` | P0 | `e2e/login.spec.ts` |
+| C-LOG-03 | — | SĐT **chưa hề** đăng ký | Cùng thông báo với C-LOG-02, cùng thời gian phản hồi tương đương — không được lộ SĐT nào là thành viên | P0 | `e2e/login.spec.ts` |
+| C-LOG-04 | — | Nhập `+84376733152` thay vì `0376733152` | Vẫn đăng nhập được (chuẩn hoá trước khi tra `customers.email`) | P1 | `lib/phone.test.ts` (chỉ chuẩn hoá) |
+| C-LOG-05 | Đã đăng nhập | Vào lại `/login` hoặc `/register` | Bị chuyển về `/dashboard` | P1 | `supabase/middleware.test.ts` |
+| C-LOG-06 | Đã đăng nhập, đã tự bấm đổi theme sang tối | Đăng xuất → đăng nhập lại | Theme tối **được giữ** — không bị ghi đè bởi mặc định theo tuổi | P1 | — |
+| C-LOG-07 | Đã đăng nhập | Bấm Đăng xuất | Về `/login`; quay lại `/dashboard` bị chặn về `/login` | P0 | `e2e/login.spec.ts` |
+| C-LOG-08 | — | Bỏ trống mật khẩu | `"Mật khẩu phải có ít nhất 8 ký tự"` | P2 | — |
 
 ---
 
@@ -121,18 +142,24 @@ Nguồn: `src/app/(customer)/(account)/dashboard/page.tsx` · `tierProgress` (`s
 
 Nguồn: `src/app/(customer)/(account)/rewards/actions.ts` → RPC `redeem_reward` (`0006_redeem_rpc.sql`)
 
-| ID | Tiền điều kiện | Các bước | Kết quả mong đợi | Ưu tiên |
-|----|---------------|----------|------------------|---------|
-| C-RWD-01 | Khách 600 điểm | `/rewards` → đổi Voucher (500 điểm) | Thành công; điểm còn 100; `quantity` giảm 100→99; `/history` có dòng `REDEEM` | P0 |
-| C-RWD-02 | Khách 400 điểm | Đổi Voucher (500 điểm) | `"Bạn chưa đủ điểm để đổi phần quà này."` (P0003); điểm không đổi | P0 |
-| C-RWD-03 | Admin đặt `quantity = 0` cho 1 quà | Khách đủ điểm bấm đổi | `"Phần quà này đã hết hàng."` (P0002); không trừ điểm | P0 |
-| C-RWD-04 | Admin tắt `is_active` của 1 quà | Khách bấm đổi (từ tab đang mở trước đó) | `"Phần quà này không còn khả dụng."` (P0001) | P0 |
-| C-RWD-05 | Khách 600 điểm, mở 2 tab cùng trang | Bấm đổi Voucher gần như đồng thời ở cả 2 tab | Chỉ **một** lần thành công; tab kia báo không đủ điểm; điểm cuối = 100, `quantity` giảm đúng 1 | P0 |
-| C-RWD-06 | Phiên hết hạn (xoá cookie) | Bấm đổi | `"Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."` | P1 |
-| C-RWD-07 | Có quà thuộc nhiều `category` | Mở `/rewards` | Thanh tab dựng từ các category phân biệt; lọc đúng | P1 |
-| C-RWD-08 | Có quà `is_featured = true` | Mở `/rewards` | Đúng 1 quà nằm ở hero đầu trang | P1 |
-| C-RWD-09 | Có quà `is_exclusive = true` | Mở `/rewards` bằng tài khoản hạng thấp | Quà exclusive hiển thị đúng theo quy tắc hiện hành của UI (đánh dấu / khoá), không crash | P2 |
-| C-RWD-10 | Sau C-RWD-01 | Mở `/dashboard` | Số điểm ở dashboard đã cập nhật ngay (revalidate `/dashboard`, `/rewards`, `/history`) | P1 |
+| ID | Tiền điều kiện | Các bước | Kết quả mong đợi | Ưu tiên | Tự động |
+|----|---------------|----------|------------------|---------|----------|
+| C-RWD-01 | Khách 600 điểm | `/rewards` → đổi Voucher (500 điểm) | Thành công; điểm còn 100; `quantity` giảm 100→99; `/history` có dòng `REDEEM` | P0 | `e2e/redeem.spec.ts` · `redeem_test.sql` |
+| C-RWD-02 | Khách 400 điểm | Đổi Voucher (500 điểm) | `"Bạn chưa đủ điểm để đổi phần quà này."` (P0003); điểm không đổi | P0 | `e2e/redeem.spec.ts` · `redeem_test.sql` |
+| C-RWD-03 | Admin đặt `quantity = 0` cho 1 quà | Khách đủ điểm bấm đổi | `"Phần quà này đã hết hàng."` (P0002); không trừ điểm | P0 | `e2e/redeem.spec.ts` · `redeem_test.sql` |
+| C-RWD-04 | Admin tắt `is_active` của 1 quà | Khách bấm đổi (từ tab đang mở trước đó) | `"Phần quà này không còn khả dụng."` (P0001) | P0 | `e2e/redeem.spec.ts` · `redeem_test.sql` |
+| C-RWD-05 | Khách 600 điểm, mở 2 tab cùng trang | Bấm đổi Voucher gần như đồng thời ở cả 2 tab | Chỉ **một** lần thành công; tab kia báo không đủ điểm; điểm cuối = 100, `quantity` giảm đúng 1 | P0 | — (xem ghi chú) |
+| C-RWD-06 | Phiên hết hạn (xoá cookie) | Bấm đổi | `"Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."` | P1 | `rewards/actions.test.ts` |
+| C-RWD-07 | Có quà thuộc nhiều `category` | Mở `/rewards` | Thanh tab dựng từ các category phân biệt; lọc đúng | P1 | — |
+| C-RWD-08 | Có quà `is_featured = true` | Mở `/rewards` | Đúng 1 quà nằm ở hero đầu trang | P1 | — |
+| C-RWD-09 | Có quà `is_exclusive = true` | Mở `/rewards` bằng tài khoản hạng thấp | Quà exclusive hiển thị đúng theo quy tắc hiện hành của UI (đánh dấu / khoá), không crash | P2 | — |
+| C-RWD-10 | Sau C-RWD-01 | Mở `/dashboard` | Số điểm ở dashboard đã cập nhật ngay (revalidate `/dashboard`, `/rewards`, `/history`) | P1 | `rewards/actions.test.ts` |
+
+> **C-RWD-05 phải bấm tay, và sẽ luôn như vậy.** Hai tab đổi quà đồng thời không tự động hoá
+> được ở tầng nào: pgTAP chạy một connection trong một transaction nên không dựng được hai
+> phiên tranh nhau, còn Playwright không xen kẽ được hai server action đúng vào lúc row lock
+> mở ra. Bản thân khoá thì đã có test — `supabase/tests/redeem_test.sql` chốt rằng lần thứ hai
+> nhận P0002 và không rò kho — nhưng *cuộc đua* thì chỉ có tay người mới dựng được.
 
 ---
 
@@ -233,12 +260,12 @@ Nguồn: `src/app/admin/settings/actions.ts` · `makeLoyaltySettingsSchema`
 | ID | Tiền điều kiện | Các bước | Kết quả mong đợi | Ưu tiên |
 |----|---------------|----------|------------------|---------|
 | A-SET-01 | — | Đổi `rounding` sang `ceil` → Lưu | `"Đã lưu cài đặt."`; đơn mới làm tròn lên | P1 |
-| A-SET-02 | — | `unmapped_sku_points = 10` → Lưu | Đơn có SKU chưa map cộng 10 điểm/sp | P1 |
+| A-SET-02 | — | `vnd_per_point = 2000` → Lưu | Đơn 2.000.000đ cộng 1.000 điểm nền thay vì 2.000 | P1 |
 | A-SET-03 | — | `claimable_statuses = "3, 16"` → Lưu | Lưu thành `{3,16}` | P0 |
 | A-SET-04 | — | `claimable_statuses = "3, 16,"` (dấu phẩy thừa) | Đoạn rỗng bị **bỏ**, KHÔNG thành `0`. Kết quả `{3,16}` — nếu ra `{0,3,16}` là bug (0 = đơn mới chưa thanh toán sẽ được cộng điểm) | P0 |
 | A-SET-05 | — | `claimable_statuses = "999"` | `"Nhập các số, cách nhau bằng dấu phẩy"` — không lưu status không tồn tại | P0 |
 | A-SET-06 | — | `claimable_statuses` trống | `"Nhập các số, cách nhau bằng dấu phẩy"` | P1 |
-| A-SET-07 | — | `unmapped_sku_points = -5` | `"Phải >= 0"` | P1 |
+| A-SET-07 | — | `vnd_per_point = 0` | `"Phải lớn hơn 0"` — là số chia, 0 sẽ chia cho 0 | P0 |
 
 ---
 
@@ -279,19 +306,11 @@ Nguồn: `saveTierSchedule` / `cancelTierSchedule` / `previewPercentileAmount` (
 
 ---
 
-## 15. Admin — Sản phẩm / SKU (A-PRD)
+## 15. ~~Admin — Sản phẩm / SKU (A-PRD)~~ — ĐÃ GỠ
 
-Nguồn: `src/app/admin/products/actions.ts` · `sku-picker.tsx`
-
-| ID | Tiền điều kiện | Các bước | Kết quả mong đợi | Ưu tiên |
-|----|---------------|----------|------------------|---------|
-| A-PRD-01 | — | Thêm SKU mới + điểm → Lưu | `"Đã lưu sản phẩm."` | P1 |
-| A-PRD-02 | SKU `SP000001` đã tồn tại | Thêm lại đúng SKU đó | `"Mã SKU này đã được cấu hình."` (23505) | P1 |
-| A-PRD-03 | — | Sửa `points_awarded` của `SP000001` thành 80 | Lưu; đơn **mới** cộng theo 80; đơn cũ đã claim không đổi | P0 |
-| A-PRD-04 | — | Nhập điểm âm | `"Phải >= 0"` | P1 |
-| A-PRD-05 | — | Bỏ trống mã SKU | `"Vui lòng nhập mã SKU"` | P2 |
-| A-PRD-06 | — | Tắt `is_active` của 1 SKU | Đơn mới có SKU đó dùng `unmapped_sku_points` thay vì điểm đã cấu hình | P0 |
-| A-PRD-07 | — | Xoá 1 SKU → xác nhận | Xoá thành công; nếu lỗi hiện `"Xoá thất bại."` | P1 |
+Trang `/admin/products` và bảng `product_points` bị gỡ trong `0025_spend_based_points.sql`: điểm nay
+tính theo tiền thực trả (§5.1), nên không còn bản đồ SKU → điểm để quản trị. Các ca A-PRD-01…07 không
+còn áp dụng. Kiểm tra thay thế nằm ở A-SET-02 / A-SET-07 và ở `supabase/tests/claim_points_test.sql`.
 
 ---
 
@@ -317,20 +336,20 @@ Nguồn: `src/app/admin/rewards/actions.ts`
 
 Nguồn: `src/app/admin/customers/[id]/actions.ts` → RPC `adjust_points` (`0008`, `0012`)
 
-| ID | Tiền điều kiện | Các bước | Kết quả mong đợi | Ưu tiên |
-|----|---------------|----------|------------------|---------|
-| A-CUS-01 | — | Mở `/admin/customers`, tìm theo SĐT | Ra đúng khách | P1 |
-| A-CUS-02 | — | Tìm theo tên / email | Ra đúng khách | P2 |
-| A-CUS-03 | > 1 trang khách | Bấm phân trang | Đúng dữ liệu, không lặp | P2 |
-| A-CUS-04 | Khách 100 điểm | `current_delta = +50`, lý do "bù đơn lỗi" → Lưu | `"Đã áp dụng điều chỉnh."`; điểm 150; **có dòng ledger** kèm lý do và email admin | P0 |
-| A-CUS-05 | Khách 100 điểm | `current_delta = -200` | `"Thao tác này sẽ làm số điểm âm."` (P0003); điểm giữ nguyên 100 | P0 |
-| A-CUS-06 | — | Để trống cả 3 (điểm hiện tại, điểm tích luỹ, hạng) | `"Nhập số điểm thay đổi hoặc chọn hạng để cấp"` — chặn từ form trước khi gọi RPC | P1 |
-| A-CUS-07 | Khách đang hạng Vàng | Cấp thẳng hạng Kim cương, không đổi điểm | Hạng lên Kim cương; **`lifetime_spend` KHÔNG tăng**, `lifetime_points` KHÔNG tăng — cấp hạng không được bịa chi tiêu | P0 |
-| A-CUS-08 | Khách đang hạng Kim cương | Cấp hạng Vàng (thấp hơn) | `"Không có gì để áp dụng — khách đã ở hạng này hoặc cao hơn."` (P0005) — hạng chỉ đi lên | P0 |
-| A-CUS-09 | — | Bỏ trống lý do | `"Cần nhập lý do"` | P1 |
-| A-CUS-10 | — | Lý do > 500 ký tự | `"Vui lòng viết ngắn hơn 500 ký tự"` | P2 |
-| A-CUS-11 | — | Nhập delta là số thập phân (`1.5`) | `"Phải là số nguyên"` | P2 |
-| A-CUS-12 | Đăng nhập bằng **customer**, lấy id một khách bất kỳ | Gọi thẳng server action `adjustPoints` (fetch từ console) | `"Chỉ tài khoản nhân viên mới được điều chỉnh điểm."` — action tự kiểm claim admin, không tin vào route | P0 |
+| ID | Tiền điều kiện | Các bước | Kết quả mong đợi | Ưu tiên | Tự động |
+|----|---------------|----------|------------------|---------|----------|
+| A-CUS-01 | — | Mở `/admin/customers`, tìm theo SĐT | Ra đúng khách | P1 | — |
+| A-CUS-02 | — | Tìm theo tên / email | Ra đúng khách | P2 | — |
+| A-CUS-03 | > 1 trang khách | Bấm phân trang | Đúng dữ liệu, không lặp | P2 | — |
+| A-CUS-04 | Khách 100 điểm | `current_delta = +50`, lý do "bù đơn lỗi" → Lưu | `"Đã áp dụng điều chỉnh."`; điểm 150; **có dòng ledger** kèm lý do và email admin | P0 | `e2e/adjust-points.spec.ts` · `adjust_points_test.sql` |
+| A-CUS-05 | Khách 100 điểm | `current_delta = -200` | `"Thao tác này sẽ làm số điểm âm."` (P0003); điểm giữ nguyên 100 | P0 | `e2e/adjust-points.spec.ts` · `adjust_points_test.sql` |
+| A-CUS-06 | — | Để trống cả 3 (điểm hiện tại, điểm tích luỹ, hạng) | `"Nhập số điểm thay đổi hoặc chọn hạng để cấp"` — chặn từ form trước khi gọi RPC | P1 | `lib/schemas.test.ts` |
+| A-CUS-07 | Khách đang hạng Vàng | Cấp thẳng hạng Kim cương, không đổi điểm | Hạng lên Kim cương; **`lifetime_spend` KHÔNG tăng**, `lifetime_points` KHÔNG tăng — cấp hạng không được bịa chi tiêu | P0 | `e2e/adjust-points.spec.ts` · `adjust_points_test.sql` |
+| A-CUS-08 | Khách đang hạng Kim cương | Cấp hạng Vàng (thấp hơn) | `"Không có gì để áp dụng — khách đã ở hạng này hoặc cao hơn."` (P0005) — hạng chỉ đi lên | P0 | `adjust_points_test.sql` |
+| A-CUS-09 | — | Bỏ trống lý do | `"Cần nhập lý do"` | P1 | `adjust_points_test.sql` |
+| A-CUS-10 | — | Lý do > 500 ký tự | `"Vui lòng viết ngắn hơn 500 ký tự"` | P2 | — |
+| A-CUS-11 | — | Nhập delta là số thập phân (`1.5`) | `"Phải là số nguyên"` | P2 | `lib/schemas.test.ts` |
+| A-CUS-12 | Đăng nhập bằng **customer**, lấy id một khách bất kỳ | Gọi thẳng server action `adjustPoints` (fetch từ console) | `"Chỉ tài khoản nhân viên mới được điều chỉnh điểm."` — action tự kiểm claim admin, không tin vào route | P0 | `customers/[id]/actions.test.ts` |
 
 ---
 
@@ -389,17 +408,19 @@ curl -X POST http://localhost:3000/api/webhooks/pancake \
 | S-WH-10 | Pancake trả 5xx / timeout | Gọi webhook | `503 {"error":"pancake_unavailable"}` — để Pancake gửi lại | P0 |
 | S-WH-11 | Tắt DB (Supabase local) | Gọi webhook | `503 {"error":"db_unavailable"}` — **không** được trả 200 `unknown_customer` (200 = mất điểm vĩnh viễn) | P0 |
 | S-WH-12 | Bất kỳ | Xem response body | Không chứa SĐT / tên / email khách (Pancake ghi log body webhook) | P0 |
-| S-WH-13 | Đơn có SKU chưa map, `unmapped_sku_points = 0` | Gọi webhook | Claim thành công với `points_awarded = 0`; `lifetime_spend` vẫn tăng theo tiền đơn | P1 |
-| S-WH-14 | Khách hạng Vàng (×1.2), đơn 2 × `SP000001` (50đ) | Gọi webhook | `floor(2 × 50 × 1.2) = 120` điểm | P0 |
+| S-WH-13 | Đơn chứa SKU chưa từng khai báo ở đâu, tiền thực trả 2.000.000đ | Gọi webhook | Claim thành công với `points_awarded = 2000` — SKU không còn ảnh hưởng đến điểm (`0025`); `lifetime_spend` tăng theo tiền đơn | P0 |
+| S-WH-14 | Khách hạng Vàng (×1.1), đơn tiền thực trả 2.000.000đ, `vnd_per_point = 1000` | Gọi webhook | `floor(2.000.000 / 1.000) = 2.000` nền → `2.000 × 1,1 = 2.200` điểm. **Không** phụ thuộc SKU hay số lượng dòng hàng | P0 |
 
 ---
 
 ## 21. Hệ thống — Cron nâng mốc hạng (S-CRON)
 
-Nguồn: `src/app/api/cron/tier-schedules/route.ts`
+Nguồn: `src/app/api/cron/daily/route.ts` · `jobs.ts`
 
 ```bash
-curl -H "x-webhook-secret: $WEBHOOK_SECRET" http://localhost:3000/api/cron/tier-schedules
+curl -H "x-webhook-secret: $WEBHOOK_SECRET" http://localhost:3000/api/cron/daily
+# hoặc chỉ một job:
+curl -H "x-webhook-secret: $WEBHOOK_SECRET" "http://localhost:3000/api/cron/daily?only=tier-schedules"
 ```
 
 | ID | Tiền điều kiện | Các bước | Kết quả mong đợi | Ưu tiên |
@@ -417,18 +438,18 @@ curl -H "x-webhook-secret: $WEBHOOK_SECRET" http://localhost:3000/api/cron/tier-
 
 Nguồn: `src/lib/supabase/middleware.ts` · `src/proxy.ts` · `(account)/account.ts`
 
-| ID | Tiền điều kiện | Các bước | Kết quả mong đợi | Ưu tiên |
-|----|---------------|----------|------------------|---------|
-| S-AUTH-01 | Chưa đăng nhập | Vào `/admin`, `/admin/customers`, `/admin/tiers` | Chuyển về `/admin/login` | P0 |
-| S-AUTH-02 | Đăng nhập bằng **customer** | Vào `/admin` | Chuyển về `/dashboard` — không thấy dữ liệu admin | P0 |
-| S-AUTH-03 | Đăng nhập admin | Vào `/dashboard` | Được vào (admin cũng là user hợp lệ), nhưng nếu không có dòng `customers` thì hiện thông báo "chưa có tài khoản điểm" chứ không crash | P1 |
-| S-AUTH-04 | Chưa đăng nhập | Vào `/dashboard`, `/rewards`, `/history` | Chuyển về `/login` (chặn ở middleware) | P0 |
-| S-AUTH-05 | Chưa đăng nhập | Vào `/profile` | Chuyển về `/login`. **Ghi chú**: route này KHÔNG nằm trong `ACCOUNT_PREFIXES` (`src/lib/supabase/middleware.ts:9`) — chặn xảy ra ở tầng RSC do `getAccount()` tự redirect (`(account)/account.ts:28`). Kết quả người dùng thấy vẫn phải là về `/login` | P0 |
-| S-AUTH-06 | Chưa đăng nhập | Vào `/tiers` | Như S-AUTH-05 | P0 |
-| S-AUTH-07 | Chưa đăng nhập | Vào `/help` | Như S-AUTH-05 | P0 |
-| S-AUTH-08 | Đăng nhập customer A | Vào `/admin/customers/<id-của-B>` | Bị đẩy về `/dashboard`, không đọc được dữ liệu của B | P0 |
-| S-AUTH-09 | Đăng nhập customer | Thử `UPDATE public.customers` trực tiếp qua Supabase JS client ở console | Bị RLS từ chối — khách không có đường ghi trực tiếp vào `customers` (`0005`) | P0 |
-| S-AUTH-10 | Đăng nhập customer | Thử gọi RPC `claim_points` từ client | Bị từ chối — RPC chỉ cấp cho `service_role` (`0011`, `0013`) | P0 |
+| ID | Tiền điều kiện | Các bước | Kết quả mong đợi | Ưu tiên | Tự động |
+|----|---------------|----------|------------------|---------|----------|
+| S-AUTH-01 | Chưa đăng nhập | Vào `/admin`, `/admin/customers`, `/admin/tiers` | Chuyển về `/admin/login` | P0 | `e2e/guest-guards.spec.ts` · `middleware.test.ts` |
+| S-AUTH-02 | Đăng nhập bằng **customer** | Vào `/admin` | Chuyển về `/dashboard` — không thấy dữ liệu admin | P0 | `e2e/role-separation.spec.ts` · `middleware.test.ts` |
+| S-AUTH-03 | Đăng nhập admin | Vào `/dashboard` | Được vào (admin cũng là user hợp lệ), nhưng nếu không có dòng `customers` thì hiện thông báo "chưa có tài khoản điểm" chứ không crash | P1 | — |
+| S-AUTH-04 | Chưa đăng nhập | Vào `/dashboard`, `/rewards`, `/history` | Chuyển về `/login` (chặn ở middleware) | P0 | `e2e/guest-guards.spec.ts` · `middleware.test.ts` |
+| S-AUTH-05 | Chưa đăng nhập | Vào `/profile` | Chuyển về `/login`. **Ghi chú**: route này ĐÃ nằm trong `ACCOUNT_PREFIXES` (`src/lib/supabase/middleware.ts`) nên bị chặn ngay ở edge — trước đây danh sách chỉ có 3/6 route và chặn rơi xuống tầng RSC qua `getAccount()`, nay không còn vậy | P0 | `e2e/guest-guards.spec.ts` · `middleware.test.ts` |
+| S-AUTH-06 | Chưa đăng nhập | Vào `/tiers` | Như S-AUTH-05 | P0 | `e2e/guest-guards.spec.ts` · `middleware.test.ts` |
+| S-AUTH-07 | Chưa đăng nhập | Vào `/help` | Như S-AUTH-05 | P0 | `e2e/guest-guards.spec.ts` · `middleware.test.ts` |
+| S-AUTH-08 | Đăng nhập customer A | Vào `/admin/customers/<id-của-B>` | Bị đẩy về `/dashboard`, không đọc được dữ liệu của B | P0 | `e2e/role-separation.spec.ts` · `middleware.test.ts` |
+| S-AUTH-09 | — | **Đã tự động hoá**: `supabase/tests/rls_test.sql` (`npm run test:db`) | `UPDATE public.customers` của khách tác động **0 dòng** — không có policy ghi nào cho khách (`0005`). Chạy bằng `set local role authenticated` nên giả lập đúng một khách cụ thể, chính xác hơn thử ở console | P0 | `supabase/tests/rls_test.sql` |
+| S-AUTH-10 | — | **Đã tự động hoá**: `supabase/tests/rls_test.sql` | `authenticated` và `anon` đều không có quyền execute trên `claim_points`, `redeem_reward`, `adjust_points`, `spin_wheel`, `checkin` — chỉ `service_role` (`0013`) | P0 | `supabase/tests/rls_test.sql` |
 
 ---
 
@@ -479,7 +500,7 @@ Nguồn: `src/lib/i18n/*` · `src/lib/theme/config.ts`
 | `P0003` | `adjust_points` | Điều chỉnh làm điểm âm | "Thao tác này sẽ làm số điểm âm." |
 | `P0004` | `claim_points` | Chưa có `loyalty_settings` đang bật | (lỗi hệ thống) |
 | `P0005` | `adjust_points` | Không có gì thay đổi | "Không có gì để áp dụng — khách đã ở hạng này hoặc cao hơn." |
-| `23505` | (unique index) | SKU trùng / 2 quà nổi bật / 2 lịch nâng mốc chờ cùng 1 hạng | tuỳ màn hình, xem A-PRD-02 / A-RWD-02 / A-SCH-02 |
+| `23505` | (unique index) | 2 quà nổi bật / 2 lịch nâng mốc chờ cùng 1 hạng / 2 mốc chi tiêu trùng ngưỡng | tuỳ màn hình, xem A-RWD-02 / A-SCH-02 |
 
 ## 26. Phụ lục — Quy tắc bất biến cần kiểm sau MỌI thay đổi code
 

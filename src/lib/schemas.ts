@@ -103,7 +103,8 @@ export type CustomerSignupInput = z.infer<
 export function makeLoyaltySettingsSchema(v: V) {
   return z.object({
     rounding: z.enum(["floor", "round", "ceil"]),
-    unmapped_sku_points: z.coerce.number().int().min(0, v.nonNegative),
+    // A divisor: 0 would be a division by zero in claim_points.
+    vnd_per_point: z.coerce.number().int().min(1, v.positive),
     // One-time points granted on registration. 0 = feature off.
     welcome_gift_points: z.coerce.number().int().min(0, v.nonNegative),
     // Points for one daily check-in. 0 = feature off.
@@ -205,23 +206,6 @@ export function makeTierScheduleSchema(v: V) {
 export type TierScheduleInput = z.infer<ReturnType<typeof makeTierScheduleSchema>>
 export type TierScheduleFormValues = z.input<
   ReturnType<typeof makeTierScheduleSchema>
->
-
-// Admin: SKU -> points mapping.
-export function makeProductPointSchema(v: V) {
-  return z.object({
-    id: z.string().uuid().optional(),
-    product_code: z.string().trim().min(1, v.skuRequired),
-    label: z.string().trim().optional().or(z.literal("")),
-    points_awarded: z.coerce.number().int().min(0, v.nonNegative),
-    is_active: z.coerce.boolean(),
-  })
-}
-export type ProductPointInput = z.infer<
-  ReturnType<typeof makeProductPointSchema>
->
-export type ProductPointFormValues = z.input<
-  ReturnType<typeof makeProductPointSchema>
 >
 
 // Admin: reward store item.

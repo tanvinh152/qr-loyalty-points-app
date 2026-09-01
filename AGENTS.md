@@ -48,7 +48,7 @@ QR loyalty-point app. Next.js 16 (App Router) + Supabase + Pancake POS + shadcn/
   `customers.tier_id` — that omission IS the grandfathering. A `percentile` schedule ("top 5%")
   is resolved to a đồng amount at apply time and frozen. Nothing may fake spend to force a tier:
   `tier_percentile_amount()` ranks the member base by that column. Schedules fire from the cron
-  route `/api/cron/tier-schedules` AND fire-and-forget on an `/admin/tiers` render. UI must call
+  route `/api/cron/daily` AND fire-and-forget on an `/admin/tiers` render. UI must call
   `resolveDisplayTier`/`tierProgress(tiers, spend, customer)`, never the raw earned tier.
 - **ONE GIFT CATALOG**: `public.rewards` holds all THREE kinds of gift, keyed by `kind` — `redeem`
   (the points shop), `spin` (a wheel wedge, `0022`) and `milestone` (a rung of the spend ladder,
@@ -70,11 +70,19 @@ QR loyalty-point app. Next.js 16 (App Router) + Supabase + Pancake POS + shadcn/
   `/rewards` so `PortalNav`'s prefix match keeps "Quà tặng" lit and the nav stays at exactly 4 items.
 - **DB**: `supabase/migrations/*.sql` + `supabase/seed.sql`. Claim atomicity lives in the
   `claim_points` RPC — the ONLY write path for a claim. Never bypass it. It is granted to
-  `service_role` ONLY (it trusts the item list it is handed) — call it with `createAdminClient()`.
-  Order money reaches it as `p_order_total` (`orderSpendTotal()` in `src/lib/pancake/client.ts`).
-- **Point calc**: lives ONLY in `claim_points` (`0011_claim_spend.sql`). `src/lib/points.ts`
-  is types now — the TS copy of the arithmetic was deleted because nothing called it. Do not
-  reintroduce a second implementation; if the admin UI ever needs a preview, call the RPC.
+  `service_role` ONLY (it trusts what it is handed) — call it with `createAdminClient()`.
+  Order money reaches it as `p_order_total` (`orderSpendTotal()` in `src/lib/pancake/client.ts`),
+  which reads `total_price_after_sub_discount` — after every voucher, excluding shipping. That is
+  the single definition of "money actually paid" and what §3.1/§5.1 are measured on.
+- **Point calc**: points are MONEY, not SKUs (`0025_spend_based_points.sql`, spec §5.1) —
+  `base = floor(order_total / loyalty_settings.vnd_per_point)` then `× tier multiplier`. The đồng
+  division is ALWAYS floor and is deliberately NOT governed by `rounding`, which applies only to the
+  multiplier step; don't "fix" that asymmetry. The old per-SKU `product_points` table, its
+  `unmapped_sku_points` fallback and the whole `/admin/products` screen were DROPPED in 0025 — an
+  unmapped SKU used to earn zero, which was the acceptance blocker. `p_items` is still passed and
+  still stored in `meta.items`, but only as the ledger's per-line audit trail. It lives ONLY in the
+  RPC; `src/lib/points.ts` is types now. Do not reintroduce a second implementation; if the admin UI
+  ever needs a preview, call the RPC.
 - **Storage**: ONE public bucket, `media` (`0015_media_storage.sql`), with a folder per feature —
   `rewards/`, `blog/`, `spin/`, `milestones/`. The allowlist is `MEDIA_FOLDERS` in `src/lib/media.ts`
   and is TypeScript-only: the storage policies gate on `bucket_id` alone, never on the prefix, so

@@ -43,7 +43,6 @@ export default async function AdminLayout({
   const items: PortalNavItem[] = [
     { href: "/admin", label: nav.dashboard, icon: "dashboard", exact: true },
     { href: "/admin/tiers", label: nav.tiers, icon: "tiers" },
-    { href: "/admin/products", label: nav.products, icon: "products" },
     { href: "/admin/rewards", label: nav.rewards, icon: "rewards" },
     { href: "/admin/blog", label: nav.blog, icon: "blog" },
     { href: "/admin/customers", label: nav.customers, icon: "customers" },
@@ -55,7 +54,7 @@ export default async function AdminLayout({
     { href: "/admin/support", label: nav.support, icon: "support" },
     { href: "/admin/settings", label: nav.settings, icon: "settings" },
   ]
-  // The phone tab bar holds four, as the customer's does. The five it drops are
+  // The phone tab bar holds four, as the customer's does. The four it drops are
   // in AdminMenu, behind the avatar, or those routes would be unreachable on a
   // phone.
   const bottomItems: PortalNavItem[] = [

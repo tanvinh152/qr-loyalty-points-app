@@ -131,8 +131,9 @@ describe("toClaimItems", () => {
   })
 
   it("yields a null SKU when variation_info or display_id is missing", () => {
-    // An unmapped line still earns the settings' unmapped_sku_points, so it must
-    // survive as a row rather than being filtered out here.
+    // Points no longer come from the SKU (0025), but the line is still the
+    // ledger's per-item audit trail in meta.items, so it must survive as a row
+    // rather than being filtered out here.
     expect(toClaimItems(order({ items: [item(1), item(3, null)] }))).toEqual([
       { sku: null, quantity: 1 },
       { sku: null, quantity: 3 },

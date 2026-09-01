@@ -42,3 +42,9 @@ next-env.d.ts
 .agents
 .claude
 design
+# Playwright
+/e2e/.auth
+/test-results
+/playwright-report
+/blob-report
+/playwright/.cache

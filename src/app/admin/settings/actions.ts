@@ -17,7 +17,7 @@ export async function saveSettings(
 
   const parsed = makeLoyaltySettingsSchema(t.validation).safeParse({
     rounding: formData.get("rounding"),
-    unmapped_sku_points: formData.get("unmapped_sku_points"),
+    vnd_per_point: formData.get("vnd_per_point"),
     welcome_gift_points: formData.get("welcome_gift_points"),
     checkin_points: formData.get("checkin_points"),
     spin_daily_limit: formData.get("spin_daily_limit"),

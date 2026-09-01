@@ -3,7 +3,7 @@
 -- WHY THIS EXISTS
 -- The ladder in 0010 (and repeated in seed.sql) was a placeholder, and the live
 -- database drifted further from it: Vàng was raised 3M → 5M → 6M through the
--- admin schedule UI. docs/Tich_Diem_ChiCha_Tong_Hop.md §8.2 states the real
+-- admin schedule UI. docs/Tich_Diem_ChiCha.md §5.2 states the real
 -- programme, and this migration is the ONE-TIME correction that brings the
 -- database, seed.sql and the spec onto the same numbers.
 --

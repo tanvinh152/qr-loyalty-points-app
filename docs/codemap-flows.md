@@ -18,7 +18,7 @@ Redemption & Admin Flows`. **Mọi số dòng trong file này đã được đ�
 | 4   | Đổi quà (lock tồn kho)            | `redeemReward` — `src/app/(customer)/(account)/rewards/actions.ts:52` |
 | 5   | Admin điều chỉnh điểm/hạng        | `adjustPoints` — `src/app/admin/customers/[id]/actions.ts:17`         |
 | 6   | Middleware auth & 5 luật redirect | `proxy` — `src/proxy.ts:5`                                            |
-| 7   | Tính điểm — chỉ còn MỘT bản (SQL) | `claim_points` — `supabase/migrations/0011_claim_spend.sql:99`        |
+| 7   | Tính điểm — chỉ còn MỘT bản (SQL) | `claim_points` — `supabase/migrations/0025_spend_based_points.sql`    |
 | 8   | Hạng theo chi tiêu, sticky        | `0011` + `0010` + `src/lib/loyalty.ts:674`                            |
 
 ---
@@ -94,7 +94,7 @@ POST /api/webhooks/pancake                                      :63
 └── isTikTokSource → enqueueTikTokReconciliation()              :172 → :194  → 0016
 ```
 
-### `claim_points` — `supabase/migrations/0011_claim_spend.sql`
+### `claim_points` — `supabase/migrations/0025_spend_based_points.sql`
 
 ```
 claim_points(p_order_code, p_phone, p_full_name, p_email,
@@ -104,9 +104,9 @@ claim_points(p_order_code, p_phone, p_full_name, p_email,
 ├── loyalty_settings đang active, thiếu → P0004                         :67-70
 ├── UPSERT customers on (phone), fill-if-null                           :73-80
 ├── multiplier + ngưỡng của hạng ĐANG giữ (fallback theo spend)          :85-96
-├── điểm gốc theo SKU: jsonb_to_recordset ⋈ product_points              :99-104
-│   └── SKU lạ/inactive → settings.unmapped_sku_points
-├── làm tròn: floor | ceil | round                                      :106-110
+├── điểm gốc theo TIỀN: floor(v_spend / settings.vnd_per_point)         (0025)
+│   └── luôn floor, KHÔNG theo settings.rounding — không cộng đồng chưa tiêu
+├── nhân hệ số hạng rồi làm tròn: floor | ceil | round                  (0025)
 ├── INSERT transactions ('EARN')  ← unique index order_code = idempotency :118
 │   └── unique_violation → P0002 'order already claimed'                :122
 ├── v_new_spend = lifetime_spend + v_spend                              :126
@@ -275,7 +275,7 @@ Nâng ngưỡng theo lịch       0010_spend_tiers.sql
     ├── UPDATE membership_tiers.spend_threshold                        :275-277
     └── KHÔNG chạm public.customers — chính chỗ trống đó LÀ
         grandfathering
-    Gọi từ: src/app/api/cron/tier-schedules/route.ts:33
+    Gọi từ: src/app/api/cron/daily/jobs.ts (runTierSchedules)
             src/app/admin/tiers/actions.ts:233 (fire-and-forget khi render)
 ```
 
@@ -300,7 +300,7 @@ Không chỉ lệch số dòng — có 3 chỗ **sai về bản chất**:
 
 | Migration                                                   | Nghiệp vụ                                                             | Cửa vào                                                |
 | ----------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------ |
-| `0016_tiktok_reconciliation.sql:53` `reconcile_order_spend` | Đơn TikTok claim xong được kiểm lại sau `TIKTOK_RECONCILE_DELAY_DAYS` | `src/app/api/cron/reconcile-tiktok-orders/route.ts:85` |
+| `0016_tiktok_reconciliation.sql:53` `reconcile_order_spend` | Đơn TikTok claim xong được kiểm lại sau `TIKTOK_RECONCILE_DELAY_DAYS` | `src/app/api/cron/daily/jobs.ts` (runTikTokReconciliation) |
 | `0017_reward_tier_gate.sql`                                 | `rewards.min_tier_id` — cổng hạng khi đổi quà                         | đã gộp vào §4                                          |
 | `0018_welcome_gift.sql:24` `grant_welcome_gift`             | Điểm thưởng một lần khi đăng ký                                       | `auth/actions.ts:328`                                  |
 | `0019_checkin.sql:49` `checkin`                             | Điểm danh mỗi ngày (múi giờ `Asia/Ho_Chi_Minh`)                       | `(account)/dashboard/actions.ts:50`                    |

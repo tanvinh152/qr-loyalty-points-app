@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Gift, LogOut, Medal, Newspaper, Package, Settings } from "lucide-react"
+import { Gift, LogOut, Medal, Newspaper, Settings } from "lucide-react"
 
 import { MENU_ROW, PortalMenu } from "@/components/portal-menu"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -25,7 +25,6 @@ export function AdminMenu({
 
   const rows = [
     { href: "/admin/tiers", label: nav.tiers, icon: Medal },
-    { href: "/admin/products", label: nav.products, icon: Package },
     { href: "/admin/rewards", label: nav.rewards, icon: Gift },
     { href: "/admin/blog", label: nav.blog, icon: Newspaper },
     { href: "/admin/settings", label: nav.settings, icon: Settings },

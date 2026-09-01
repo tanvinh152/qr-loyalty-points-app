@@ -165,7 +165,7 @@ beforeEach(() => {
   linkPancakeCustomer.mockResolvedValue({ ok: true })
   getActiveSettings.mockResolvedValue({
     rounding: "floor",
-    unmapped_sku_points: 0,
+    vnd_per_point: 1000,
     claimable_statuses: [3, 16],
   })
   findOrphan.mockResolvedValue({ data: null, error: null })

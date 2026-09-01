@@ -2,25 +2,26 @@
 -- product lives inside it. Nothing in TypeScript re-implements it any more, so
 -- this file is the only place those rules are checked.
 --
+-- Since 0025 points are computed from MONEY, not from SKUs:
+--     base   = floor(order_total / vnd_per_point)
+--     points = round/floor/ceil(base * tier_multiplier)
+--
 -- Run with: npm run test:db  (Supabase CLI + Docker required)
 
 begin;
-select plan(9);
+select plan(11);
 
--- A single active settings row and one known SKU, so the arithmetic below is
--- predictable regardless of what seed.sql happens to carry.
+-- A single active settings row, so the arithmetic below is predictable
+-- regardless of what seed.sql happens to carry.
 update public.loyalty_settings set is_active = false;
 insert into public.loyalty_settings
-  (rounding, claimable_statuses, unmapped_sku_points, is_active)
-values ('floor', '{3,16}', 0, true);
-
-insert into public.product_points (product_code, label, points_awarded, is_active)
-values ('TEST-SKU', 'Test item', 10, true)
-on conflict (product_code) do update
-  set points_awarded = 10, is_active = true;
+  (rounding, claimable_statuses, vnd_per_point, is_active)
+values ('floor', '{3,16}', 1000, true);
 
 -- ---------------------------------------------------------------- #1 ----
 -- The claim creates the customer, credits the points and books the spend.
+-- 500.000đ / 1.000 = 500 base; the member holds no tier yet (Bạc starts at
+-- 1.000.000đ under §5.2), so the multiplier falls back to 1.
 
 select lives_ok(
   $$select public.claim_points(
@@ -31,14 +32,23 @@ select lives_ok(
 
 select is(
   (select current_points from public.customers where phone = '0911111111'),
-  20,
-  '2 x TEST-SKU at 10 points, multiplier 1'
+  500,
+  '500.000đ at 1.000đ/point, multiplier 1'
 );
 
 select is(
   (select lifetime_spend from public.customers where phone = '0911111111'),
   500000::numeric,
   'the order total lands on lifetime_spend'
+);
+
+-- The items no longer drive the arithmetic, but they are still the ledger's
+-- only per-line audit trail, so they must survive into meta.
+select is(
+  (select meta -> 'items' -> 0 ->> 'sku'
+     from public.transactions where order_code = 'ORDER-A'),
+  'TEST-SKU',
+  'the item list is still recorded in meta even though it earns nothing'
 );
 
 -- The claim is also what writes the link the webhook attributes every later
@@ -66,7 +76,7 @@ select throws_ok(
 
 select is(
   (select current_points from public.customers where phone = '0911111111'),
-  20,
+  500,
   'the refused duplicate left the balance untouched'
 );
 
@@ -77,7 +87,7 @@ select is(
 select lives_ok(
   $$select public.claim_points(
       'ORDER-B', '0911111111', 'Nguyễn Test', null, 'pos-test',
-      '[{"sku":"TEST-SKU","qty":1}]'::jsonb, 'webhook', -900000)$$,
+      '[]'::jsonb, 'webhook', -900000)$$,
   'a negative order total is accepted rather than erroring'
 );
 
@@ -88,21 +98,37 @@ select is(
 );
 
 -- ---------------------------------------------------------------- #4 ----
--- An unmapped SKU falls back to the configured default rather than being
--- skipped, so a shop that has not mapped anything still awards something once
--- unmapped_sku_points is raised.
-
-update public.loyalty_settings set unmapped_sku_points = 5 where is_active;
+-- A SKU nobody has ever configured earns exactly the same as any other đồng.
+-- This is the whole point of 0025: under the old per-SKU model this order
+-- earned ZERO, which is gap G1.
 
 select is(
   (
     select (public.claim_points(
       'ORDER-C', '0922222222', 'Trần Test', null, 'pos-test-2',
-      '[{"sku":"NOT-MAPPED","qty":3}]'::jsonb, 'webhook', 100000
+      '[{"sku":"NOT-MAPPED","qty":3}]'::jsonb, 'webhook', 2000000
     ) ->> 'points_awarded')::int
   ),
-  15,
-  'an unknown SKU earns the configured fallback, not zero'
+  2000,
+  'an unmapped SKU earns on money alone, not zero'
+);
+
+-- ---------------------------------------------------------------- #5 ----
+-- The đồng -> base division is ALWAYS floor, whatever `rounding` says: a member
+-- must never be credited for đồng they did not spend. `rounding` governs only
+-- the multiplier step. With rounding = 'ceil', 1.999đ must still be 1 point.
+
+update public.loyalty_settings set rounding = 'ceil' where is_active;
+
+select is(
+  (
+    select (public.claim_points(
+      'ORDER-D', '0933333333', 'Lê Test', null, null,
+      '[]'::jsonb, 'claim', 1999
+    ) ->> 'points_awarded')::int
+  ),
+  1,
+  'the money division floors even when rounding is ceil'
 );
 
 select * from finish();

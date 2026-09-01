@@ -85,7 +85,7 @@ beforeEach(() => {
   getOrder.mockResolvedValue(ORDER)
   getActiveSettings.mockResolvedValue({
     rounding: "floor",
-    unmapped_sku_points: 0,
+    vnd_per_point: 1000,
     claimable_statuses: [3, 16],
   })
   isOrderClaimed.mockResolvedValue(false)

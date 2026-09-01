@@ -10,9 +10,12 @@
 -- Run with: npm run test:db  (Supabase CLI + Docker required)
 
 begin;
-select plan(16);
+select plan(18);
 
 -- Fixtures. `mv` is the rung under test; `mv_hi` sits far up the ladder.
+-- The thresholds deliberately avoid every value in seed.sql:
+-- `rewards_milestone_threshold_idx` is global, so a fixture landing on a seeded
+-- rung fails at INSERT and takes the whole file down before test #1 runs.
 insert into public.customers (id, phone, lifetime_spend)
 values
   ('11111111-1111-1111-1111-111111111111', '0911000001', 1000000),
@@ -20,7 +23,7 @@ values
 
 insert into public.rewards (id, kind, name, points_cost, quantity, spend_threshold)
 values
-  ('22222222-2222-2222-2222-222222222221', 'milestone', 'Rung 400k', 0, 0, 400000),
+  ('22222222-2222-2222-2222-222222222221', 'milestone', 'Rung 450k', 0, 0, 450000),
   ('22222222-2222-2222-2222-222222222222', 'milestone', 'Rung 9tr',  0, 0, 9000000);
 
 insert into public.rewards (id, kind, name, points_cost, quantity)
@@ -63,14 +66,14 @@ update public.rewards set name = 'Renamed'
 select is(
   (select milestone_name from public.milestone_awards
     where customer_id = '11111111-1111-1111-1111-111111111111'),
-  'Rung 400k',
+  'Rung 450k',
   'the award keeps the name it was claimed under'
 );
 
 select is(
   (select threshold_amount from public.milestone_awards
     where customer_id = '11111111-1111-1111-1111-111111111111'),
-  400000::numeric,
+  450000::numeric,
   'and the threshold it was claimed at'
 );
 
@@ -170,7 +173,7 @@ select throws_ok(
 
 select throws_ok(
   $$insert into public.rewards (kind, name, points_cost, quantity, spend_threshold)
-    values ('milestone', 'Duplicate', 0, 0, 400000)$$,
+    values ('milestone', 'Duplicate', 0, 0, 450000)$$,
   '23505',
   null,
   'two active rungs cannot share a threshold'
@@ -178,8 +181,38 @@ select throws_ok(
 
 select lives_ok(
   $$insert into public.rewards (kind, name, points_cost, quantity, is_active, spend_threshold)
-    values ('milestone', 'Retired', 0, 0, false, 400000)$$,
+    values ('milestone', 'Retired', 0, 0, false, 450000)$$,
   'an inactive rung may share a threshold with an active one'
+);
+
+-- ---------------------------------------------------------------- #17 ----
+-- An award is NEVER retracted. A refund can drag lifetime_spend back below the
+-- rung a member already claimed, and the award still stands — the same sticky
+-- posture as customers.tier_id. Nothing in the app deletes these rows; this is
+-- what would catch a "tidy up unearned awards" job that ever did.
+
+update public.customers set lifetime_spend = 0
+ where id = '11111111-1111-1111-1111-111111111111';
+
+select is(
+  (select count(*)::int from public.milestone_awards
+    where customer_id = '11111111-1111-1111-1111-111111111111'),
+  1,
+  'an award survives the spend that earned it being refunded away'
+);
+
+-- ---------------------------------------------------------------- #18 ----
+-- The RPC trusts the customer id it is handed, which is safe only because the
+-- session-proving action is the only thing that can call it.
+
+select ok(
+  not has_function_privilege(
+    'authenticated', 'public.claim_milestone_reward(uuid,uuid)', 'execute')
+    and not has_function_privilege(
+      'anon', 'public.claim_milestone_reward(uuid,uuid)', 'execute')
+    and has_function_privilege(
+      'service_role', 'public.claim_milestone_reward(uuid,uuid)', 'execute'),
+  'only service_role may claim a milestone'
 );
 
 select * from finish();

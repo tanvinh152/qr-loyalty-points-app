@@ -10,7 +10,7 @@ export const pancakeItemSchema = z.object({
   quantity: z.number().int().nonnegative(),
   variation_info: z
     .object({
-      // The SKU. Matches product_points.product_code.
+      // The SKU. Carried into the ledger as meta.items[].sku.
       display_id: z.string().nullish(),
       name: z.string().nullish(),
       retail_price: z.number().nullish(),
@@ -65,52 +65,6 @@ export type OrderLineItem = {
   name: string
   quantity: number
   points: number
-}
-
-// ---- Product catalog (GET /shops/:id/products/variations) ----
-//
-// Shape verified against shop 1328315613 (45 variations, one page at page_size=100).
-// Same narrow-parse rule as the order: only what the admin picker renders.
-
-export const pancakeVariationSchema = z.object({
-  id: z.string(),
-  // The SKU. Same value an order item carries as variation_info.display_id, and
-  // what we persist as product_points.product_code.
-  display_id: z.string().nullish(),
-  barcode: z.string().nullish(),
-  retail_price: z.number().nullish(),
-  remain_quantity: z.number().nullish(),
-  images: z.array(z.string()).nullish(),
-  is_hidden: z.boolean().nullish(),
-  is_locked: z.boolean().nullish(),
-  // Variation attributes, e.g. [{name:"Cát sắn Chicha", value:"3 túi"}]. Several
-  // variations share one product.name — only this tells them apart.
-  fields: z
-    .array(
-      z.object({ name: z.string().nullish(), value: z.string().nullish() }),
-    )
-    .nullish(),
-  product: z
-    .object({ name: z.string().nullish(), is_published: z.boolean().nullish() })
-    .nullish(),
-})
-
-export const pancakeVariationsResponseSchema = z.object({
-  success: z.boolean().optional(),
-  data: z.array(pancakeVariationSchema).default([]),
-  total_pages: z.number().int().nullish(),
-  page_number: z.number().int().nullish(),
-})
-
-// The catalog view handed to the browser. Everything the picker shows, nothing else.
-export type CatalogVariation = {
-  sku: string
-  name: string
-  /** Joined variation attributes, e.g. "Cát sắn Chicha: 3 túi · Xịt khử mùi: 237ml". */
-  attrs: string
-  image: string | null
-  price: number | null
-  remain: number | null
 }
 
 // ---- CRM customer (GET/PUT /shops/:id/customers/:customer_id) ----

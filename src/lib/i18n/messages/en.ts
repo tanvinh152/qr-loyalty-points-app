@@ -90,7 +90,6 @@ export const en = {
       dashboard: "Dashboard",
       settings: "Settings",
       tiers: "Tiers",
-      products: "Products",
       rewards: "Rewards",
       spin: "Spin wheel",
       blog: "Blog",
@@ -161,11 +160,11 @@ export const en = {
       metaTitle: "Loyalty Settings",
       title: "Loyalty Settings",
       helper:
-        "Points = sum(quantity × points per product) × tier multiplier, then rounded.",
+        "Points = (money actually paid ÷ đồng per point) × tier multiplier, then rounded.",
       // The multiplier has to produce a fraction, or the rounding step in the
       // example demonstrates nothing.
       formulaExample:
-        "Example: 3 bags × 5 points = 15, tier multiplier 1.5 → 22.5, rounded down → 22 points.",
+        "Example: a 2,000,000đ order ÷ 1,000 = 2,000 base points, Gold multiplier 1.1 → 2,200 points.",
       rounding: "Rounding",
       roundingHelper:
         "How a fractional points total is turned into a whole number.",
@@ -181,9 +180,9 @@ export const en = {
       recommended: "recommended",
       selectedCount: (n: number) => `${n} selected`,
       noStatusSelected: "Pick at least one status.",
-      unmappedSkuPoints: "Points for unmapped products",
-      unmappedSkuPointsHelper:
-        "Points per unit for a product with no SKU mapping. Leave at 0 to give none.",
+      vndPerPoint: "Đồng per point",
+      vndPerPointHelper:
+        "How many đồng of actually-paid money earn 1 base point. The programme rule is 1,000đ = 1 point. Anything under that is always rounded down.",
       welcomeGiftPoints: "Welcome gift",
       welcomeGiftPointsHelper:
         "Points granted once on successful registration. 0 = off.",
@@ -233,6 +232,11 @@ export const en = {
         cake: "Birthday",
         award: "Status",
         sparkles: "Other",
+        wheel: "Spin wheel",
+        paw: "Pet",
+        flask: "New products",
+        layers: "Collection",
+        heart: "Care",
       },
       listTitle: "Tier list",
       empty: "No tiers yet — add your first one below.",
@@ -276,35 +280,6 @@ export const en = {
       scheduleForbidden: "Only staff accounts can schedule tier changes.",
       effectiveOn: (date: string) => `from ${date}`,
       percentileLabel: (pct: number) => `top ${pct}%`,
-    },
-    products: {
-      metaTitle: "Product Points",
-      title: "Product Points",
-      productCode: "SKU",
-      label: "Label",
-      labelHelper: "Your own note. Not shown to customers.",
-      pointsAwarded: "Points per unit",
-      pointsAwardedHelper: "Multiplied by the quantity on the order.",
-      status: "Status",
-      statusHelper: "Inactive mappings earn nothing.",
-      listTitle: "Point rules",
-      addTitle: "Add a product mapping",
-      empty:
-        "No product mappings yet — orders will earn the unmapped-product points.",
-      saved: "Product mapping saved.",
-      saveFailed: "Save failed.",
-      deleteFailed: "Delete failed.",
-      duplicate: "That SKU is already mapped.",
-      pickSku: "Choose a product",
-      searchSku: "Search by name or SKU…",
-      changeSku: "Change",
-      noSkusLeft: "Every Pancake SKU is already mapped.",
-      noSkuMatch: "No product matches that search.",
-      unknownSku: "Not in the Pancake catalog anymore.",
-      catalogUnavailable:
-        "Could not reach Pancake — type the SKU by hand. It must match exactly.",
-      price: "Price",
-      stock: "In stock",
     },
     // The image uploader. Its own namespace, not part of `rewards` — the blog
     // will mount the same component.
@@ -774,7 +749,7 @@ export const en = {
       emailPlaceholder: "you@email.com",
       emailHint: "We use it to reach you about your account and your requests.",
       dob: "Date of birth",
-      dobHint: "So we can send you a little something on your birthday.",
+      dobHint: "So we can send our wishes and dress up your profile on the day.",
       orderCode: "Most recent order code",
       orderCodePlaceholder: "e.g. 8661",
       // The points half is conditional: signup only claims the order when its
@@ -1008,7 +983,7 @@ export const en = {
       // only ever rises, so nothing here may promise a downgrade.
       retentionTitle: "Keeping your tier",
       retentionBody: (tierName: string) =>
-        `Under the programme rules, ${tierName} is reviewed every 365 days. Your tier is never lowered automatically — talk to us if anything looks wrong.`,
+        `Under the programme rules, ${tierName} is reviewed 365 days after your last promotion. Automatic downgrades are still being rolled out; for now we handle it by hand — talk to us if anything looks wrong.`,
       progressTo: (name: string) => `Progress to ${name}`,
       progressCaption: "Every đồng you spend counts towards the next tier.",
       benefitsTableTitle: "Tier benefits",
@@ -1059,7 +1034,7 @@ export const en = {
       titleEdit: "Your profile",
       panelTitle: "Welcome to the pack.",
       panelBody:
-        "The more we know, the better we can tailor your perks and birthday surprises.",
+        "The more we know, the better we can tailor your perks to you and your pet.",
       // Phone only: the desktop rail already carries these, but the phone tab
       // bar has no room for them and the header cannot hold five children.
       settingsSection: "Settings",
@@ -1073,7 +1048,7 @@ export const en = {
       petType: "Pet type",
       petTypes: { dog: "Dog", cat: "Cat", other: "Other" },
       petDob: "Adoption or birth date",
-      petDobHint: "We'll send a treat when the big day comes around.",
+      petDobHint: "So we remember your pet's big day.",
       orderSection: "Points arrive on their own",
       orderHint:
         "Every order placed with this phone number is added to your balance automatically once it is delivered.",
@@ -1236,7 +1211,7 @@ export const en = {
         title: "Earning points",
         paragraphs: [
           "Points are worked out from the products in each order and multiplied by your tier's earn rate. Only the amount you actually paid counts — after any discounts or vouchers.",
-          "An order earns once it is completed at the shop. Orders that are cancelled or returned do not earn.",
+          "An order earns once it is completed at the shop. If an order is cancelled or returned after points have been credited, ChiCha adjusts your balance — get in touch if a correction looks wrong.",
         ],
       },
       {
@@ -1244,7 +1219,7 @@ export const en = {
         title: "Tiers",
         paragraphs: [
           "Your tier is set by your lifetime spend, not by your points balance. Points are the currency you redeem; spend is what moves you up.",
-          "A tier is valid for 365 days. Keep your spending up to stay at your tier or move higher.",
+          "Your tier is reviewed 365 days after each promotion. Keep your spending up to hold your tier or move higher.",
         ],
       },
       {
@@ -1284,7 +1259,6 @@ export const en = {
     invalidPhone: "Invalid phone number",
     nonNegative: "Cannot be less than 0",
     positive: "Must be greater than 0",
-    skuRequired: "SKU is required",
     tierNameRequired: "Tier name is required",
     rewardNameRequired: "Reward name is required",
     spinPrizeNameRequired: "Slice name is required",

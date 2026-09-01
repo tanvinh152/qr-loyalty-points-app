@@ -2,47 +2,71 @@
 -- Orders are NOT seeded — they come from Pancake POS live.
 
 -- Tier thresholds are LIFETIME SPEND in đồng, not points (see 0010_spend_tiers).
--- These are the numbers from docs/Tich_Diem_ChiCha_Tong_Hop.md §8.2. 0010 wrote
--- an earlier placeholder ladder and 0023 corrects an existing database onto
--- these values, so the two paths converge and a fresh `db reset` reads as one
--- story. Keep this block and 0023 in step if the programme ever changes again.
+-- These are the numbers from docs/Tich_Diem_ChiCha.md §5.2. 0010 wrote an
+-- earlier placeholder ladder and 0023 corrects an existing database onto these
+-- values, so the two paths converge and a fresh `db reset` reads as one story.
+-- Keep this block and 0023 in step if the programme ever changes again.
 -- Note there is no 0đ floor tier: under 1.000.000đ a member holds NO tier.
+--
+-- `perks` mirrors the §5.2 benefit matrix EXACTLY, one entry per ticked row plus
+-- the point multiplier. It replaces an earlier placeholder set ("Miễn phí vận
+-- chuyển", "Ưu tiên hỗ trợ 24/7") that appears nowhere in the client spec.
+--
+-- ⚠️ THIS IS A PROGRAMME PROMISE, NOT A FEATURE LIST. Only three of these are
+-- enforced by code today: the multiplier (claim_points), the daily wheel
+-- (0022 — open to every tier, matching §5.2's row) and tier-gated gifts
+-- (rewards.min_tier_id, 0017). The birthday perks, the collection, the care
+-- combo and the new-product trials are fulfilled BY HAND at the shop. Publishing
+-- them here is deliberate; do not read the list as something the system does.
 insert into public.membership_tiers (name, spend_threshold, multiplier, sort_order, benefits, perks) values
   ('Bạc',       1000000,  1.0, 1, 'Tích điểm mọi đơn hàng', '[
-     {"icon":"percent","title":"Tích điểm mọi đơn","detail":"Áp dụng cho toàn bộ sản phẩm"}
+     {"icon":"percent","title":"Tích điểm 1×","detail":"Trên mọi đơn hàng hợp lệ"},
+     {"icon":"wheel","title":"Quay số mỗi ngày","detail":"Một lượt quay may mắn mỗi ngày"},
+     {"icon":"cake","title":"Sinh nhật Sen","detail":"Lời chúc và voucher 50.000đ cho mỗi 1 triệu đã chi"},
+     {"icon":"gift","title":"Quà đặc quyền","detail":"Những phần quà chỉ dành cho thành viên"}
    ]'::jsonb),
   ('Vàng',      2000000,  1.1, 2, 'Nhân 1.1 điểm mỗi đơn', '[
-     {"icon":"percent","title":"Tích điểm 1.1×","detail":"Trên mọi đơn hàng"},
-     {"icon":"gift","title":"Quà chào hạng","detail":"Voucher khi lên hạng Vàng"}
+     {"icon":"percent","title":"Tích điểm 1.1×","detail":"Trên mọi đơn hàng hợp lệ"},
+     {"icon":"wheel","title":"Quay số mỗi ngày","detail":"Một lượt quay may mắn mỗi ngày"},
+     {"icon":"cake","title":"Sinh nhật Sen","detail":"Lời chúc và voucher 50.000đ cho mỗi 1 triệu đã chi"},
+     {"icon":"paw","title":"Sinh nhật Boss","detail":"Nhân đôi điểm mọi đơn trong tuần sinh nhật bé cưng"},
+     {"icon":"gift","title":"Quà đặc quyền","detail":"Những phần quà chỉ dành cho thành viên"}
    ]'::jsonb),
   ('Bạch kim',  4000000,  1.2, 3, 'Nhân 1.2 điểm mỗi đơn', '[
-     {"icon":"percent","title":"Tích điểm 1.2×","detail":"Trên mọi đơn hàng"},
-     {"icon":"truck","title":"Miễn phí vận chuyển","detail":"3 mã mỗi tháng"}
+     {"icon":"percent","title":"Tích điểm 1.2×","detail":"Trên mọi đơn hàng hợp lệ"},
+     {"icon":"wheel","title":"Quay số mỗi ngày","detail":"Một lượt quay may mắn mỗi ngày"},
+     {"icon":"cake","title":"Sinh nhật Sen","detail":"Lời chúc và voucher 50.000đ cho mỗi 1 triệu đã chi"},
+     {"icon":"paw","title":"Sinh nhật Boss","detail":"Nhân đôi điểm mọi đơn trong tuần sinh nhật bé cưng"},
+     {"icon":"gift","title":"Quà đặc quyền","detail":"Những phần quà chỉ dành cho thành viên"}
    ]'::jsonb),
-  ('Kim cương', 8000000,  1.4, 4, 'Nhân 1.4 điểm + quà sinh nhật', '[
-     {"icon":"percent","title":"Tích điểm 1.4×","detail":"Trên mọi đơn hàng"},
-     {"icon":"truck","title":"Miễn phí vận chuyển","detail":"Không giới hạn"},
-     {"icon":"cake","title":"Quà sinh nhật","detail":"Voucher 10% + quà tặng"}
+  ('Kim cương', 8000000,  1.4, 4, 'Nhân 1.4 điểm + trải nghiệm sản phẩm mới', '[
+     {"icon":"percent","title":"Tích điểm 1.4×","detail":"Trên mọi đơn hàng hợp lệ"},
+     {"icon":"wheel","title":"Quay số mỗi ngày","detail":"Một lượt quay may mắn mỗi ngày"},
+     {"icon":"cake","title":"Sinh nhật Sen","detail":"Lời chúc và voucher 50.000đ cho mỗi 1 triệu đã chi"},
+     {"icon":"paw","title":"Sinh nhật Boss","detail":"Nhân đôi điểm mọi đơn trong tuần sinh nhật bé cưng"},
+     {"icon":"gift","title":"Quà đặc quyền","detail":"Những phần quà chỉ dành cho thành viên"},
+     {"icon":"flask","title":"Trải nghiệm sản phẩm mới","detail":"Dùng thử trước khi sản phẩm ra mắt"}
    ]'::jsonb),
   ('Ruby',      40000000, 2.0, 5, 'Nhân 2 điểm + đặc quyền cao nhất', '[
-     {"icon":"percent","title":"Tích điểm 2×","detail":"Trên mọi đơn hàng"},
-     {"icon":"truck","title":"Miễn phí vận chuyển","detail":"Không giới hạn"},
-     {"icon":"cake","title":"Quà sinh nhật","detail":"Quà cao cấp cho bé cưng"},
-     {"icon":"award","title":"Ưu tiên hỗ trợ","detail":"Đường dây riêng 24/7"}
+     {"icon":"percent","title":"Tích điểm 2×","detail":"Trên mọi đơn hàng hợp lệ"},
+     {"icon":"wheel","title":"Quay số mỗi ngày","detail":"Một lượt quay may mắn mỗi ngày"},
+     {"icon":"cake","title":"Sinh nhật Sen","detail":"Lời chúc và voucher 50.000đ cho mỗi 1 triệu đã chi"},
+     {"icon":"paw","title":"Sinh nhật Boss","detail":"Nhân đôi điểm mọi đơn trong tuần sinh nhật bé cưng"},
+     {"icon":"gift","title":"Quà đặc quyền","detail":"Những phần quà chỉ dành cho thành viên"},
+     {"icon":"flask","title":"Trải nghiệm sản phẩm mới","detail":"Dùng thử trước khi sản phẩm ra mắt"},
+     {"icon":"layers","title":"Bộ sưu tập","detail":"Bộ sưu tập giới hạn dành riêng hạng Ruby"},
+     {"icon":"heart","title":"Combo chăm sóc","detail":"Gói chăm sóc trị giá 1.000.000đ"}
    ]'::jsonb)
 on conflict (name) do nothing;
 
-insert into public.loyalty_settings (rounding, claimable_statuses, unmapped_sku_points, is_active)
 -- 3 = delivered, 16 = received_money. Same set as the column default and as
 -- DEFAULT_CLAIMABLE_STATUSES in src/lib/pancake/order-status.ts.
-values ('floor', '{3,16}', 0, true)
+--
+-- vnd_per_point = 1000 is §5.1: `1.000 VNĐ chi tiêu thực = 1 điểm`. The per-SKU
+-- product_points table this file used to seed was dropped in 0025.
+insert into public.loyalty_settings (rounding, claimable_statuses, vnd_per_point, is_active)
+values ('floor', '{3,16}', 1000, true)
 on conflict do nothing;
-
--- Real SKUs from the shop (items[].variation_info.display_id).
-insert into public.product_points (product_code, label, points_awarded) values
-  ('SP000001',      'Cát sắn Chicha 2,5kg',     50),
-  ('STPLCHODNC500', 'Sữa tắm Purodora 500ml',  100)
-on conflict (product_code) do nothing;
 
 -- `category` drives the shop's tab bar; at most one row may be is_featured.
 insert into public.rewards
@@ -70,7 +94,7 @@ on conflict do nothing;
 -- INDEPENDENT ladder from the tiers: measured in đồng of lifetime_spend, but
 -- passing a rung moves no tier.
 --
--- These are the rungs from §7.2 of docs/Tich_Diem_ChiCha_Tong_Hop.md, NOT the
+-- These are the rungs from §4.2 of docs/Tich_Diem_ChiCha.md, NOT the
 -- ones drawn in the remix mockup — the mockup's ladder (800k / 3.2tr / 5.5tr /
 -- 8tr) does not match the spec's, and the spec is the contract. See item 5 in
 -- the plan's open questions: the client still has to confirm the final numbers.

@@ -2,7 +2,7 @@ import "server-only"
 
 import { createAdminClient } from "@/lib/supabase/admin"
 import { isDrawable } from "@/lib/spin"
-import type { LoyaltyRules, SkuPointMap } from "@/lib/points"
+import type { LoyaltyRules } from "@/lib/points"
 import type {
   AdjustMeta,
   CustomerRow,
@@ -19,7 +19,7 @@ import type {
 } from "@/lib/db-types"
 
 // Server-side reads for the claim and account flows. These use the service-role
-// client on purpose: product_points, customers and the ledger are not
+// client on purpose: loyalty_settings, customers and the ledger are not
 // anon-readable. Every function here is called from a Server Action or RSC that
 // has already rate-limited and (for customer data) established whose data it is
 // — the session for the account pages, the masked-phone match for a claim.
@@ -96,19 +96,19 @@ export async function getActiveSettings(): Promise<ActiveSettings | null> {
   const supabase = createAdminClient()
   const { data } = await supabase
     .from("loyalty_settings")
-    .select("rounding, claimable_statuses, unmapped_sku_points")
+    .select("rounding, claimable_statuses, vnd_per_point")
     .eq("is_active", true)
     .maybeSingle<
       Pick<
         LoyaltySettingsRow,
-        "rounding" | "claimable_statuses" | "unmapped_sku_points"
+        "rounding" | "claimable_statuses" | "vnd_per_point"
       >
     >()
 
   if (!data) return null
   return {
     rounding: data.rounding,
-    unmapped_sku_points: data.unmapped_sku_points,
+    vnd_per_point: data.vnd_per_point,
     // No fallback: the column is `not null`, and a third default sitting here
     // would only be a third answer to disagree with the DB default and with
     // DEFAULT_CLAIMABLE_STATUSES.
@@ -300,22 +300,6 @@ export async function getMilestoneCount(): Promise<number> {
   return count ?? 0
 }
 
-// SKU -> points, active mappings only. Fetches just the SKUs on the order.
-export async function getSkuPoints(skus: string[]): Promise<SkuPointMap> {
-  const unique = [...new Set(skus.filter(Boolean))]
-  if (unique.length === 0) return {}
-
-  const supabase = createAdminClient()
-  const { data } = await supabase
-    .from("product_points")
-    .select("product_code, points_awarded")
-    .eq("is_active", true)
-    .in("product_code", unique)
-
-  const map: SkuPointMap = {}
-  for (const row of data ?? []) map[row.product_code] = row.points_awarded
-  return map
-}
 
 export async function getTiers(): Promise<MembershipTierRow[]> {
   const supabase = createAdminClient()

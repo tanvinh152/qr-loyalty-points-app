@@ -90,7 +90,7 @@ describe("makeLoyaltySettingsSchema", () => {
   const schema = makeLoyaltySettingsSchema(v)
   const base = {
     rounding: "floor" as const,
-    unmapped_sku_points: 0,
+    vnd_per_point: 1000,
     welcome_gift_points: 0,
     checkin_points: 0,
     spin_daily_limit: 0,

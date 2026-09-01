@@ -3,8 +3,13 @@ import {
   Cake,
   CalendarClock,
   CheckCircle,
+  FerrisWheel,
+  FlaskConical,
   Gem,
   Gift,
+  Heart,
+  Layers,
+  PawPrint,
   Percent,
   ShoppingBag,
   Sparkles,
@@ -44,6 +49,11 @@ const PERK_ICONS: Record<PerkIconKey, LucideIcon> = {
   cake: Cake,
   award: Award,
   sparkles: Sparkles,
+  wheel: FerrisWheel,
+  paw: PawPrint,
+  flask: FlaskConical,
+  layers: Layers,
+  heart: Heart,
 }
 
 /**

@@ -16,7 +16,8 @@ export type LoyaltySettingsRow = {
   id: string
   rounding: Rounding
   claimable_statuses: number[]
-  unmapped_sku_points: number
+  /** Đồng of actually-paid money per 1 base point (0025). §5.1 = 1000. */
+  vnd_per_point: number
   /** One-time points granted on successful registration. 0 = off. */
   welcome_gift_points: number
   /** Points for one daily check-in. 0 = feature off. */
@@ -106,15 +107,6 @@ export type MembershipTierRow = {
   benefits: string | null
   perks: TierPerk[]
   created_at: string
-}
-
-export type ProductPointRow = {
-  id: string
-  product_code: string
-  label: string | null
-  points_awarded: number
-  is_active: boolean
-  updated_at: string
 }
 
 /**

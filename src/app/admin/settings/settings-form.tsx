@@ -27,7 +27,7 @@ import type { Rounding } from "@/lib/points"
 type Props = {
   initial: {
     rounding: Rounding
-    unmapped_sku_points: number
+    vnd_per_point: number
     welcome_gift_points: number
     checkin_points: number
     spin_daily_limit: number
@@ -155,18 +155,18 @@ export function SettingsForm({ initial }: Props) {
 
       <fieldset className="grid gap-3">
         <div className="grid gap-1">
-          <Label htmlFor="unmapped_sku_points">{s.unmappedSkuPoints}</Label>
+          <Label htmlFor="vnd_per_point">{s.vndPerPoint}</Label>
           <p className="text-muted-foreground text-body-sm">
-            {s.unmappedSkuPointsHelper}
+            {s.vndPerPointHelper}
           </p>
         </div>
         <Input
-          id="unmapped_sku_points"
-          name="unmapped_sku_points"
+          id="vnd_per_point"
+          name="vnd_per_point"
           type="number"
           step="1"
-          min="0"
-          defaultValue={initial.unmapped_sku_points}
+          min="1"
+          defaultValue={initial.vnd_per_point}
           required
           className="h-11 max-w-sm"
         />

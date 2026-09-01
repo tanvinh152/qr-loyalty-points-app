@@ -20,14 +20,14 @@ export default async function SettingsPage() {
   const { data } = await supabase
     .from("loyalty_settings")
     .select(
-      "rounding, claimable_statuses, unmapped_sku_points, welcome_gift_points, checkin_points, spin_daily_limit",
+      "rounding, claimable_statuses, vnd_per_point, welcome_gift_points, checkin_points, spin_daily_limit",
     )
     .eq("is_active", true)
     .maybeSingle()
 
   const initial = {
     rounding: (data?.rounding ?? "floor") as Rounding,
-    unmapped_sku_points: data?.unmapped_sku_points ?? 0,
+    vnd_per_point: data?.vnd_per_point ?? 1000,
     welcome_gift_points: data?.welcome_gift_points ?? 0,
     checkin_points: data?.checkin_points ?? 0,
     // 0 = the wheel is off, the same convention as checkin_points.

@@ -6,7 +6,6 @@ import {
   Gift,
   Inbox,
   Medal,
-  Package,
   Plus,
   Receipt,
   TrendingUp,
@@ -169,7 +168,6 @@ export default async function AdminDashboard() {
   const quickActions = [
     { href: "/admin/rewards", label: d.addReward, icon: Gift },
     { href: "/admin/tiers", label: d.addTier, icon: Medal },
-    { href: "/admin/products", label: d.addProduct, icon: Package },
   ]
 
   return (

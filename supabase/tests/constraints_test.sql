@@ -8,7 +8,7 @@
 -- Run with: npm run test:db  (Supabase CLI + Docker required)
 
 begin;
-select plan(17);
+select plan(16);
 
 -- ---------------------------------------------------------------- #1 ----
 -- One POS customer backs exactly one account. Without the unique index two
@@ -41,8 +41,8 @@ select lives_ok(
 -- no error and nothing in the logs. Must equal DEFAULT_CLAIMABLE_STATUSES in
 -- src/lib/pancake/order-status.ts.
 
-insert into public.loyalty_settings (rounding, unmapped_sku_points, is_active)
-values ('floor', 0, false);
+insert into public.loyalty_settings (rounding, vnd_per_point, is_active)
+values ('floor', 1000, false);
 
 select is(
   (select claimable_statuses
@@ -117,9 +117,9 @@ select lives_ok(
 );
 
 -- ---------------------------------------------------------------- #5 ----
--- Rounding, the unmapped-SKU fallback and the claimable status set are
--- business config, exactly like product_points. Nothing outside the admin
--- screens reads this table — the claim path uses the service-role client.
+-- Rounding, the đồng-per-point divisor and the claimable status set are
+-- business config. Nothing outside the admin screens reads this table — the
+-- claim path uses the service-role client.
 
 select is(
   (select count(*)::int
@@ -138,13 +138,6 @@ select is(
 select ok(
   not has_table_privilege('anon', 'public.loyalty_settings', 'select'),
   'anon has no privilege to read loyalty_settings'
-);
-
--- product_points stayed hidden all along; assert it beside the other so the two
--- cannot drift apart again.
-select ok(
-  not has_table_privilege('anon', 'public.product_points', 'select'),
-  'anon has no privilege to read the SKU point map'
 );
 
 -- ---------------------------------------------------------------- #6 ----
