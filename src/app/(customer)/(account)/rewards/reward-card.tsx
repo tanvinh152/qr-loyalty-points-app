@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { Flame, Gift, Loader2, Sparkles } from "lucide-react"
+import { Flame, Gift, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -15,6 +15,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { FormError } from "@/components/form-error"
+import { PendingIcon } from "@/components/pending-icon"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -48,6 +50,11 @@ export function RewardCard({
   const r = t.customer.rewards
   const [isPending, startTransition] = useTransition()
   const [open, setOpen] = useState(false)
+  const [error, setError] = useState<string | undefined>()
+  // The claim-burst halo, replayed the way points-pill.tsx replays its bump:
+  // added on success, dropped again on animationend so a second redeem plays
+  // it again. Safe as a one-shot because `redeem_reward` never reverses.
+  const [celebrated, setCelebrated] = useState(false)
 
   const outOfStock = reward.quantity <= 0
   // The mockup's "running low" chip. Same threshold the admin list uses for its
@@ -61,27 +68,53 @@ export function RewardCard({
   function handleRedeem() {
     startTransition(async () => {
       const res = await redeemReward(reward.id)
-      setOpen(false)
+      // A refusal keeps the dialog OPEN with the reason in it. Closing first
+      // and toasting after left the member staring at the card they had just
+      // confirmed, with the explanation sliding by in a corner.
       if (!res.ok) {
-        toast.error(res.error)
+        setError(res.error)
         return
       }
+      setError(undefined)
+      setOpen(false)
+      setCelebrated(true)
       toast.success(r.success(res.rewardName))
     })
   }
+
+  const halo = {
+    className: celebrated ? "animate-claim-burst" : undefined,
+    onAnimationEnd: () => setCelebrated(false),
+  }
+
+  // The button alone says only that it cannot be pressed; this says how far
+  // off the balance is. A tooltip cannot do it — `disabled:pointer-events-none`
+  // swallows the hover.
+  const shortfall = tooExpensive && !outOfStock && !tierLocked && (
+    <span className="text-body-xs text-muted-foreground">
+      {r.shortBy(reward.points_cost - currentPoints)}
+    </span>
+  )
 
   const price = (
     <div className="grid gap-0.5">
       <span className="text-headline-md text-primary tabular-nums">
         {r.cost(reward.points_cost)}
       </span>
+      {shortfall}
     </div>
   )
 
   const action = (
     // Redeeming spends points irreversibly, so it goes through a
     // confirmation dialog.
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next)
+        if (!next) setError(undefined)
+      }}
+    >
       <AlertDialogTrigger asChild>
         <Button
           type="button"
@@ -94,7 +127,9 @@ export function RewardCard({
           size={variant === "feature" ? "lg" : "sm"}
           disabled={disabled}
         >
-          {isPending && <Loader2 className="size-4 animate-spin" aria-hidden />}
+          <PendingIcon pending={isPending} className="size-4">
+            <Gift className="size-4" aria-hidden />
+          </PendingIcon>
           {isPending
             ? r.redeeming
             : tierLocked
@@ -111,11 +146,15 @@ export function RewardCard({
             {r.confirm(reward.name, reward.points_cost)}
           </AlertDialogDescription>
         </AlertDialogHeader>
+        <FormError message={error} />
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>
             {t.common.cancel}
           </AlertDialogCancel>
           <AlertDialogAction onClick={handleRedeem} disabled={isPending}>
+            <PendingIcon pending={isPending} className="size-4">
+              <Gift className="size-4" aria-hidden />
+            </PendingIcon>
             {isPending ? r.redeeming : r.redeem}
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -158,8 +197,10 @@ export function RewardCard({
       <div
         className={cn(
           "bg-card shadow-soft relative flex flex-col gap-4 overflow-hidden rounded-3xl p-6",
+          halo.className,
           className,
         )}
+        onAnimationEnd={halo.onAnimationEnd}
       >
         {/* The mockup's quarter-disc bleeding out of the top-right corner. */}
         <span
@@ -191,6 +232,7 @@ export function RewardCard({
           <span className="text-headline-md text-primary tabular-nums">
             {r.cost(reward.points_cost)}
           </span>
+          {shortfall}
         </div>
 
         {/* Full-width plate, per the mockup. `[&>*]:w-full` rather than a prop
@@ -206,8 +248,10 @@ export function RewardCard({
       <div
         className={cn(
           "hover:bg-surface-low flex items-center gap-4 rounded-2xl border border-transparent p-3 transition-colors",
+          halo.className,
           className,
         )}
+        onAnimationEnd={halo.onAnimationEnd}
       >
         {reward.image_url ? (
           // Same reasoning as the card: admin-entered URLs from any host.
@@ -245,8 +289,10 @@ export function RewardCard({
     <div
       className={cn(
         "border-border bg-card group duration-quick ease-out-quart flex flex-col overflow-hidden rounded-3xl border transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-elevated",
+        halo.className,
         className,
       )}
+      onAnimationEnd={halo.onAnimationEnd}
     >
       <div className="relative">
         {reward.image_url ? (

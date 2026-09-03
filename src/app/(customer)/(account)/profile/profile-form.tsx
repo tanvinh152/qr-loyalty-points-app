@@ -14,6 +14,7 @@ import type { LucideIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { FormError } from "@/components/form-error"
+import { PendingIcon } from "@/components/pending-icon"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -166,15 +167,15 @@ export function ProfileForm({ customer }: { customer: CustomerRow }) {
       <FormError message={error} />
 
       <Button type="submit" size="xl" className="w-full" disabled={isPending}>
-        {isPending ? (
-          p.submitting
-        ) : (
-          <>
-            {/* Matches the heading: "complete" the first time, "save" after. */}
-            {customer.profile_completed_at ? p.submitEdit : p.submit}
-            <ArrowRight className="size-5" aria-hidden />
-          </>
-        )}
+        {/* Matches the heading: "complete" the first time, "save" after. */}
+        {isPending
+          ? p.submitting
+          : customer.profile_completed_at
+            ? p.submitEdit
+            : p.submit}
+        <PendingIcon pending={isPending} className="size-5">
+          <ArrowRight className="size-5" aria-hidden />
+        </PendingIcon>
       </Button>
     </form>
   )

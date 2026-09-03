@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { CalendarCheck, CheckCircle2 } from "lucide-react"
 
+import { Celebration } from "@/components/celebration"
 import { PendingIcon } from "@/components/pending-icon"
 import { toast } from "sonner"
 
@@ -23,9 +24,13 @@ export function CheckinButton({
   const t = useT()
   const d = t.customer.dashboard
   const [checkedIn, setCheckedIn] = useState(initialCheckedIn)
+  // Only a check-in made HERE celebrates. One found already done — on load,
+  // or because another tab got there first — is a state, not an event.
+  const [celebrate, setCelebrate] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   function handleCheckIn() {
+    if (checkedIn) return
     startTransition(async () => {
       const res = await checkIn()
       if (!res.ok) {
@@ -36,25 +41,35 @@ export function CheckinButton({
         return
       }
       setCheckedIn(true)
+      setCelebrate(true)
       toast.success(d.checkinSuccess(res.pointsAwarded))
     })
   }
 
-  if (checkedIn) {
-    return (
-      <Button type="button" size="lg" disabled>
-        <CheckCircle2 className="size-5" aria-hidden />
-        {d.checkinDone}
-      </Button>
-    )
-  }
-
+  // ONE button for both states, so the done state arrives as a colour change
+  // and an icon cross-fade rather than a different element popping in. Done is
+  // `aria-disabled`, not `disabled`: a disabled button is painted at 40%, which
+  // would dim the very burst the member just earned.
   return (
-    <Button type="button" size="lg" onClick={handleCheckIn} disabled={isPending}>
-      <PendingIcon pending={isPending} className="size-5">
-        <CalendarCheck className="size-5" aria-hidden />
-      </PendingIcon>
-      {isPending ? d.checkinPending : d.checkinCta}
+    <Button
+      type="button"
+      size="lg"
+      variant={checkedIn ? "muted" : "default"}
+      onClick={handleCheckIn}
+      disabled={isPending}
+      aria-disabled={checkedIn || undefined}
+      className={checkedIn ? "cursor-default" : undefined}
+    >
+      {checkedIn ? (
+        <Celebration fire={celebrate} className="size-5">
+          <CheckCircle2 className="size-5" aria-hidden />
+        </Celebration>
+      ) : (
+        <PendingIcon pending={isPending} className="size-5">
+          <CalendarCheck className="size-5" aria-hidden />
+        </PendingIcon>
+      )}
+      {checkedIn ? d.checkinDone : isPending ? d.checkinPending : d.checkinCta}
     </Button>
   )
 }

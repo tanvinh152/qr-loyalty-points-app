@@ -59,6 +59,18 @@ describe("when a member may not redeem", () => {
     expect(button).toHaveTextContent(r.notEnough)
   })
 
+  // "Not enough" on its own leaves the member guessing whether they are one
+  // order away or ten. The shortfall is the number that answers that.
+  it("says how many points are still needed", () => {
+    show({ currentPoints: 380 })
+    expect(screen.getByText(r.shortBy(120))).toBeInTheDocument()
+  })
+
+  it("does not show a shortfall once the price is met", () => {
+    show({ currentPoints: 500 })
+    expect(screen.queryByText(r.shortBy(0))).toBeNull()
+  })
+
   it("blocks a tier-gated reward and names the tier needed", () => {
     show({ lockedFor: GOLD })
     const button = trigger()
@@ -126,7 +138,9 @@ describe("the confirmation gate", () => {
 
     await user.click(trigger())
     const dialog = await screen.findByRole("alertdialog")
-    await user.click(within(dialog).getByRole("button", { name: en.common.cancel }))
+    await user.click(
+      within(dialog).getByRole("button", { name: en.common.cancel }),
+    )
 
     expect(redeem).not.toHaveBeenCalled()
   })
@@ -149,10 +163,16 @@ describe("what the member is told afterwards", () => {
     expect(toast.error).not.toHaveBeenCalled()
   })
 
+  it("closes the dialog only once the redeem has gone through", async () => {
+    await confirm()
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull())
+  })
+
   // The server's message is the specific one ("out of stock", "not enough
-  // points"); swallowing it for a generic failure would leave the member
-  // guessing why their points did not move.
-  it("surfaces the server's reason verbatim on a refusal", async () => {
+  // points"). It is shown INSIDE the dialog the member just confirmed, which
+  // stays open — closing first and toasting after left them looking at the
+  // card with the reason sliding by in a corner.
+  it("keeps the dialog open and shows the server's reason on a refusal", async () => {
     redeem.mockResolvedValue({
       ok: false,
       code: "out_of_stock",
@@ -160,7 +180,10 @@ describe("what the member is told afterwards", () => {
     })
     await confirm()
 
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(r.outOfStock))
+    const dialog = await screen.findByRole("alertdialog")
+    await waitFor(() =>
+      expect(within(dialog).getByRole("alert")).toHaveTextContent(r.outOfStock),
+    )
     expect(toast.success).not.toHaveBeenCalled()
   })
 })

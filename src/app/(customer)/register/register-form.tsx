@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 
 import { FormError } from "@/components/form-error"
+import { PendingIcon } from "@/components/pending-icon"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -141,14 +142,11 @@ export function RegisterForm() {
 
       <FormError message={state?.error} />
 
-      <Button
-        type="submit"
-        variant="brand"
-        size="xl"
-        disabled={isPending}
-      >
+      <Button type="submit" variant="brand" size="xl" disabled={isPending}>
         {isPending ? r.submitting : r.submit}
-        {!isPending && <ArrowRight className="size-5" aria-hidden />}
+        <PendingIcon pending={isPending} className="size-5">
+          <ArrowRight className="size-5" aria-hidden />
+        </PendingIcon>
       </Button>
     </form>
   )

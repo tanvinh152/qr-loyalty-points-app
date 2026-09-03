@@ -6,6 +6,7 @@ import { Send } from "@/components/animate-ui/icons/send"
 import { toast } from "sonner"
 
 import { FormError } from "@/components/form-error"
+import { PendingIcon } from "@/components/pending-icon"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -118,7 +119,11 @@ export function HelpForm({
           className="w-full md:w-fit"
           disabled={isPending}
         >
-          <Send className="size-4" aria-hidden />
+          {/* The Send glyph is still an AnimateIcon child: hover is read on
+              the Button and reaches it through context, PendingIcon or not. */}
+          <PendingIcon pending={isPending} className="size-4">
+            <Send className="size-4" aria-hidden />
+          </PendingIcon>
           {isPending ? h.submitting : h.submit}
         </Button>
       </AnimateIcon>

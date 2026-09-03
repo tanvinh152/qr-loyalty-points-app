@@ -4,6 +4,7 @@ import { useActionState, useState } from "react"
 import { ArrowRight, Eye, EyeOff, Lock, Smartphone } from "lucide-react"
 
 import { FormError } from "@/components/form-error"
+import { PendingIcon } from "@/components/pending-icon"
 import { Button } from "@/components/ui/button"
 import {
   Tooltip,
@@ -83,14 +84,11 @@ export function LoginForm() {
 
       <FormError message={state?.error} />
 
-      <Button
-        type="submit"
-        variant="brand"
-        size="xl"
-        disabled={isPending}
-      >
+      <Button type="submit" variant="brand" size="xl" disabled={isPending}>
         {isPending ? l.submitting : l.submit}
-        {!isPending && <ArrowRight className="size-5" aria-hidden />}
+        <PendingIcon pending={isPending} className="size-5">
+          <ArrowRight className="size-5" aria-hidden />
+        </PendingIcon>
       </Button>
     </form>
   )
