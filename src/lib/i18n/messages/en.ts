@@ -54,6 +54,11 @@ export const en = {
     errorTitle: "Something went wrong",
     errorBody: "This screen failed to load. Try again in a moment.",
     retry: "Try again",
+    notFoundTitle: "Page not found",
+    notFoundBody:
+      "That link goes nowhere. It may have moved, or never existed.",
+    goHome: "Back to home",
+    clearFilters: "Clear filters",
   },
   // Pancake order status codes. Codes and names verified against the live
   // shop — see src/lib/pancake/order-status.ts.
@@ -284,6 +289,11 @@ export const en = {
       scheduleSaved: "Raise scheduled.",
       scheduleSaveFailed: "Could not schedule that raise.",
       scheduleCancel: "Cancel the queued raise",
+      scheduleCancelTitle: "Cancel this queued raise?",
+      scheduleCancelBody: (tierName: string) =>
+        `The threshold raise queued for ${tierName} will not run. You can queue a new one later.`,
+      scheduleCancelConfirm: "Cancel the raise",
+      scheduleCanceling: "Canceling…",
       scheduleCanceled: "Queued raise canceled.",
       scheduleCancelFailed: "Could not cancel it.",
       scheduleDuplicate:
@@ -421,7 +431,8 @@ export const en = {
         pointsChip: (points: number) => `+${num(points)} pts`,
         searchPlaceholder: "Search slices…",
         noMatch: "No slices match that search.",
-        empty: "No slices yet — add a few so the wheel has something to land on.",
+        empty:
+          "No slices yet — add a few so the wheel has something to land on.",
         statSlices: "Slices on the wheel",
         statSlicesHint: "Drawable right now",
         statTotalWeight: "Total weight",
@@ -479,7 +490,8 @@ export const en = {
       winners: {
         metaTitle: "Spin winners",
         title: "Spin Winners",
-        subtitle: "Gifts won on the wheel, newest first. Mark each one once handed over.",
+        subtitle:
+          "Gifts won on the wheel, newest first. Mark each one once handed over.",
         backToPrizes: "Back to the wheel",
         viewWinners: "Winners",
         customer: "Member",
@@ -760,7 +772,8 @@ export const en = {
       emailPlaceholder: "you@email.com",
       emailHint: "We use it to reach you about your account and your requests.",
       dob: "Date of birth",
-      dobHint: "So we can send our wishes and dress up your profile on the day.",
+      dobHint:
+        "So we can send our wishes and dress up your profile on the day.",
       orderCode: "Most recent order code",
       orderCodePlaceholder: "e.g. 8661",
       // The points half is conditional: signup only claims the order when its
@@ -807,7 +820,9 @@ export const en = {
       // and a second đồng bar right under it reads as the same journey twice.
       roadmapTitle: "Reward roadmap",
       roadmapReady: (n: number) =>
-        n === 1 ? "1 milestone ready to claim" : `${n} milestones ready to claim`,
+        n === 1
+          ? "1 milestone ready to claim"
+          : `${n} milestones ready to claim`,
       roadmapPending: (n: number) =>
         n === 1
           ? "1 prize waiting at the counter"
@@ -848,11 +863,13 @@ export const en = {
       wheelSlice: (name: string, index: number, total: number) =>
         `Slice ${index} of ${total}: ${name}`,
       resultTitle: "You won!",
+      resultGiftTitle: "You won a gift!",
       resultPoints: (points: number) =>
         `${num(points)} points have been added to your balance.`,
       resultGift: "Show this screen at the counter to collect your prize.",
       resultNone: "Better luck next time — you still have spins to use.",
-      resultNoneDone: "Better luck next time. Come back tomorrow for more spins.",
+      resultNoneDone:
+        "Better luck next time. Come back tomorrow for more spins.",
       resultClose: "Nice",
       historyTitle: "Prizes you've won",
       historyEmpty: "Nothing yet — take your first spin.",
@@ -916,6 +933,9 @@ export const en = {
       filterLabel: "Filter by category",
       outOfStock: "Out of stock",
       notEnough: "Not enough points",
+      /** Under the price when the balance falls short — the button alone
+       *  says only that it cannot be pressed. */
+      shortBy: (points: number) => `${num(points)} more points to go`,
       redeem: "Redeem",
       redeeming: "Redeeming…",
       /** Shown on a reward's lock chip and in place of the redeem button. */
@@ -942,6 +962,9 @@ export const en = {
       types: { EARN: "Earned", REDEEM: "Redeemed", ADJUST: "Adjusted" },
       emptyTitle: "No transactions yet",
       emptyBody: "Your orders will show up here on their own.",
+      noMatchTitle: "Nothing matches",
+      noMatchBody: "No transactions fit these filters.",
+      rangeInvalid: "The start date is after the end date.",
       statCount: "Transactions",
       statEarned: "Points earned",
       statSpent: "Points spent",
@@ -1027,6 +1050,7 @@ export const en = {
       messagePlaceholder: "Describe the problem you ran into…",
       submit: "Send request",
       submitting: "Sending…",
+      charCount: (used: number, max: number) => `${num(used)} / ${num(max)}`,
       success: "Request sent. We'll get back to you shortly.",
       hotlineTitle: "Hotline",
       hotlineBadge: "24/7",

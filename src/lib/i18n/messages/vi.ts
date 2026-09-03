@@ -27,8 +27,7 @@ export const vi: Messages = {
     previous: "Trước",
     next: "Sau",
     page: (n) => `Trang ${n}`,
-    showing: (shown, total) =>
-      `Hiển thị ${num(shown)} trên ${num(total)}`,
+    showing: (shown, total) => `Hiển thị ${num(shown)} trên ${num(total)}`,
     // Không gắn tên thực thể vào đây: Pagination dùng chung cho danh sách
     // khách hàng, quà tặng và yêu cầu hỗ trợ, không riêng giao dịch.
     showingRange: (first, last, total) =>
@@ -54,6 +53,11 @@ export const vi: Messages = {
     errorTitle: "Đã có lỗi xảy ra",
     errorBody: "Không tải được màn hình này. Vui lòng thử lại sau giây lát.",
     retry: "Thử lại",
+    notFoundTitle: "Không tìm thấy trang",
+    notFoundBody:
+      "Đường dẫn này không dẫn đến đâu cả. Có thể trang đã chuyển đi hoặc chưa từng tồn tại.",
+    goHome: "Về trang chủ",
+    clearFilters: "Xóa bộ lọc",
   },
   pancakeStatus: {
     new: { label: "Mới tạo", hint: "Đơn vừa được tạo, shop chưa xác nhận" },
@@ -132,8 +136,7 @@ export const vi: Messages = {
       viewAllTransactions: "Xem tất cả hoạt động",
       noRecent: "Chưa có hoạt động nào.",
       colBalance: "Tổng điểm",
-      movement: (amount) =>
-        amount > 0 ? `+${num(amount)}` : num(amount),
+      movement: (amount) => (amount > 0 ? `+${num(amount)}` : num(amount)),
       noTiers: "Chưa cấu hình hạng thành viên.",
       openTickets: "Yêu cầu đang mở",
       openTicketsHint: "Yêu cầu hỗ trợ chờ phản hồi",
@@ -208,7 +211,8 @@ export const vi: Messages = {
       spendThresholdHelper:
         "Tổng tiền đã chi tiêu để đạt hạng này (đồng). Để 0 cho hạng khởi điểm.",
       multiplier: "Hệ số nhân",
-      multiplierHelper: "1 = bình thường. 1.5 = mỗi đơn được nhân 1,5 lần điểm.",
+      multiplierHelper:
+        "1 = bình thường. 1.5 = mỗi đơn được nhân 1,5 lần điểm.",
       sortOrder: "Thứ tự",
       benefits: "Mô tả ngắn",
       benefitsHelper:
@@ -242,8 +246,10 @@ export const vi: Messages = {
       empty: "Chưa có hạng nào — thêm hạng đầu tiên ở dưới.",
       saved: "Đã lưu hạng.",
       saveFailed: "Lưu thất bại.",
-      thresholdBelowNeighbor: "Mốc này sẽ tụt xuống bằng hoặc dưới hạng liền dưới.",
-      thresholdAboveNeighbor: "Mốc này sẽ vượt lên bằng hoặc trên hạng liền trên.",
+      thresholdBelowNeighbor:
+        "Mốc này sẽ tụt xuống bằng hoặc dưới hạng liền dưới.",
+      thresholdAboveNeighbor:
+        "Mốc này sẽ vượt lên bằng hoặc trên hạng liền trên.",
       pendingThreshold: "Mốc sắp áp dụng",
       pendingNone: "Chưa hẹn thay đổi",
       scheduleTitle: "Hẹn nâng mốc",
@@ -270,6 +276,11 @@ export const vi: Messages = {
       scheduleSaved: "Đã đặt lịch nâng mốc.",
       scheduleSaveFailed: "Không đặt được lịch nâng mốc.",
       scheduleCancel: "Hủy lịch nâng mốc",
+      scheduleCancelTitle: "Hủy lịch nâng mốc này?",
+      scheduleCancelBody: (tierName) =>
+        `Lịch nâng ngưỡng đã đặt cho hạng ${tierName} sẽ không chạy nữa. Bạn có thể đặt lịch mới sau.`,
+      scheduleCancelConfirm: "Hủy lịch",
+      scheduleCanceling: "Đang hủy…",
       scheduleCanceled: "Đã hủy lịch nâng mốc.",
       scheduleCancelFailed: "Không hủy được.",
       scheduleDuplicate:
@@ -484,7 +495,8 @@ export const vi: Messages = {
       addTitle: "Bài viết mới",
       titleLabel: "Tiêu đề",
       slug: "Đường dẫn (slug)",
-      slugHelper: "URL của bài viết: /blog/duong-dan. Chỉ chữ thường và gạch ngang.",
+      slugHelper:
+        "URL của bài viết: /blog/duong-dan. Chỉ chữ thường và gạch ngang.",
       excerpt: "Tóm tắt",
       excerptHelper: "Đoạn tóm tắt ngắn hiển thị ở danh sách. Có thể bỏ trống.",
       content: "Nội dung",
@@ -719,7 +731,8 @@ export const vi: Messages = {
       emailPlaceholder: "ban@email.com",
       emailHint: "Dùng để liên hệ với bạn về tài khoản và các yêu cầu hỗ trợ.",
       dob: "Ngày sinh",
-      dobHint: "Để chúng mình gửi lời chúc và trang trí trang cá nhân vào đúng ngày sinh nhật bạn.",
+      dobHint:
+        "Để chúng mình gửi lời chúc và trang trí trang cá nhân vào đúng ngày sinh nhật bạn.",
       orderCode: "Mã đơn hàng gần nhất",
       orderCodePlaceholder: "VD: 8661",
       orderCodeHint:
@@ -780,7 +793,8 @@ export const vi: Messages = {
     },
     spin: {
       title: "Vòng quay may mắn",
-      subtitle: "Một cú chạm, một phần quà. Lượt quay miễn phí làm mới mỗi ngày.",
+      subtitle:
+        "Một cú chạm, một phần quà. Lượt quay miễn phí làm mới mỗi ngày.",
       spinsLeft: (n: number) => `Còn ${n} lượt quay`,
       spinsLeftHint: "Làm mới lúc 0 giờ",
       spin: "Quay",
@@ -790,11 +804,13 @@ export const vi: Messages = {
       wheelSlice: (name: string, index: number, total: number) =>
         `Ô ${index} trên ${total}: ${name}`,
       resultTitle: "Chúc mừng!",
+      resultGiftTitle: "Bạn trúng quà!",
       resultPoints: (points: number) =>
         `${num(points)} điểm đã được cộng vào tài khoản của bạn.`,
       resultGift: "Đưa màn hình này cho nhân viên tại quầy để nhận quà.",
       resultNone: "Chúc bạn may mắn lần sau — bạn vẫn còn lượt quay.",
-      resultNoneDone: "Chúc bạn may mắn lần sau. Mai quay lại nhận thêm lượt nhé.",
+      resultNoneDone:
+        "Chúc bạn may mắn lần sau. Mai quay lại nhận thêm lượt nhé.",
       resultClose: "Đã hiểu",
       historyTitle: "Phần quà bạn đã trúng",
       historyEmpty: "Chưa có gì cả — quay thử lượt đầu tiên nào.",
@@ -803,7 +819,8 @@ export const vi: Messages = {
       pointsChip: (points: number) => `+${num(points)} điểm`,
       noPrizeLabel: "Không trúng",
       offTitle: "Vòng quay đang tạm nghỉ",
-      offBody: "Hiện chưa có chương trình quay thưởng nào. Bạn quay lại sau nhé.",
+      offBody:
+        "Hiện chưa có chương trình quay thưởng nào. Bạn quay lại sau nhé.",
     },
     roadmap: {
       metaTitle: "Lộ trình phần thưởng",
@@ -851,6 +868,7 @@ export const vi: Messages = {
       filterLabel: "Lọc theo danh mục",
       outOfStock: "Hết hàng",
       notEnough: "Chưa đủ điểm",
+      shortBy: (points) => `Còn thiếu ${num(points)} điểm`,
       redeem: "Đổi quà",
       redeeming: "Đang đổi…",
       tierRequired: (tierName: string) => `Yêu cầu hạng ${tierName}`,
@@ -874,12 +892,16 @@ export const vi: Messages = {
       types: { EARN: "Tích điểm", REDEEM: "Đổi quà", ADJUST: "Điều chỉnh" },
       emptyTitle: "Chưa có giao dịch",
       emptyBody: "Đơn hàng của bạn sẽ tự xuất hiện ở đây.",
+      noMatchTitle: "Không có kết quả",
+      noMatchBody: "Không có giao dịch nào khớp với bộ lọc này.",
+      rangeInvalid: "Ngày bắt đầu đang sau ngày kết thúc.",
       statCount: "Tổng số giao dịch",
       statEarned: "Điểm đã tích",
       statSpent: "Điểm đã dùng",
       searchLabel: "Tìm kiếm",
       searchPlaceholder: "Mã đơn hàng của shop, vd. 8661…",
-      searchHint: "Mã đơn hàng của shop — không phải mã TXN- hiển thị bên dưới.",
+      searchHint:
+        "Mã đơn hàng của shop — không phải mã TXN- hiển thị bên dưới.",
       fromLabel: "Từ ngày",
       toLabel: "Đến ngày",
       filterCta: "Lọc",
@@ -950,6 +972,7 @@ export const vi: Messages = {
       messagePlaceholder: "Mô tả chi tiết vấn đề bạn đang gặp phải…",
       submit: "Gửi yêu cầu",
       submitting: "Đang gửi…",
+      charCount: (used, max) => `${num(used)} / ${num(max)}`,
       success: "Đã gửi yêu cầu. Chúng tôi sẽ phản hồi sớm nhất.",
       hotlineTitle: "Tổng đài CSKH",
       hotlineBadge: "24/7",
@@ -1015,7 +1038,8 @@ export const vi: Messages = {
       alreadyCheckedIn: "Bạn đã điểm danh hôm nay rồi.",
       checkinUnavailable: "Điểm danh hàng ngày hiện chưa khả dụng.",
       checkinFailed: "Điểm danh không thành công. Vui lòng thử lại.",
-      noSpinsLeft: "Bạn đã dùng hết lượt quay hôm nay. Quay lại vào ngày mai nhé.",
+      noSpinsLeft:
+        "Bạn đã dùng hết lượt quay hôm nay. Quay lại vào ngày mai nhé.",
       spinUnavailable: "Vòng quay hiện chưa hoạt động.",
       spinFailed: "Quay không thành công. Vui lòng thử lại.",
       redeemFailed: "Đổi quà không thành công. Vui lòng thử lại.",

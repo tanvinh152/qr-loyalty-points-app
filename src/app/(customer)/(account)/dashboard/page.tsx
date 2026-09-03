@@ -30,12 +30,8 @@ import { TruncatedText } from "@/components/truncated-text"
 import { cn, formatVnd } from "@/lib/utils"
 import { getLocale, getMessages } from "@/lib/i18n/server"
 import { getPublishedPosts } from "@/lib/blog"
-import { STAGGER } from "@/lib/motion/tokens"
-import {
-  buildRoadmap,
-  claimableCount,
-  nextLocked,
-} from "@/lib/milestones"
+import { ENTER, STAGGER } from "@/lib/motion/tokens"
+import { buildRoadmap, claimableCount, nextLocked } from "@/lib/milestones"
 import {
   getActiveRewards,
   getCheckinPoints,
@@ -67,21 +63,12 @@ export async function generateMetadata() {
 // most now that the wheel is a header control (check-in and the milestone
 // ladder). A lookup rather than arithmetic because Tailwind only sees literal
 // classes; add the rung back if a third tile ever returns.
-// Bento entrance. Pure CSS from tw-animate-css — `--animate-in` reads
-// `--tw-duration` and `--tw-ease`, which is what `duration-slow ease-out-quart`
-// set — so it runs inside this Server Component with no client JS, and the
-// app-wide prefers-reduced-motion rule in globals.css collapses it for free.
-// `fill-mode-both` holds frame zero through the delay so nothing flashes at
-// final position first.
-//
-// Only the five TOP-LEVEL regions stagger, never a row or a list item.
-//
-// A CSS animation replays only when the element is CREATED. router.refresh()
-// (fired by the wheel, and by every theme toggle) re-renders this tree and
-// React reconciles by position — no remount, no replay. That is why no tile
-// below may ever be given a changing `key`.
-const TILE_ENTER =
-  "animate-in fade-in-0 slide-in-from-bottom-2 duration-slow ease-out-quart fill-mode-both"
+// Bento entrance: the app-wide ENTER token (see its comment in
+// src/lib/motion/tokens.ts). Only the five TOP-LEVEL regions stagger, never a
+// row or a list item, and no tile may ever be given a changing `key` —
+// router.refresh() (fired by the wheel, and by every theme toggle) must
+// reconcile by position and replay nothing.
+const TILE_ENTER = ENTER
 
 const ENGAGEMENT_SPAN: Record<number, string> = {
   1: "lg:col-span-12",
@@ -162,7 +149,8 @@ export default async function DashboardPage() {
 
   // Same gate as the shop, and for the same reason: without it a tier-locked
   // reward would read as redeemable here and locked one screen over.
-  const displayThreshold = resolveDisplayTier(tiers, customer)?.spend_threshold ?? -1
+  const displayThreshold =
+    resolveDisplayTier(tiers, customer)?.spend_threshold ?? -1
   const tiersById = new Map(tiers.map((tier) => [tier.id, tier]))
   function lockedFor(reward: RewardRow) {
     if (!reward.min_tier_id) return null
@@ -189,9 +177,15 @@ export default async function DashboardPage() {
   // columns to head and nothing to scroll sideways at 360px.
   const summary: { label: string; value: string }[] = [
     { label: d.summarySpend, value: formatVnd(customer.lifetime_spend) },
-    { label: d.summaryEarned, value: customer.lifetime_points.toLocaleString() },
+    {
+      label: d.summaryEarned,
+      value: customer.lifetime_points.toLocaleString(),
+    },
     { label: d.summaryUsed, value: totals.spent.toLocaleString() },
-    { label: d.summaryBalance, value: customer.current_points.toLocaleString() },
+    {
+      label: d.summaryBalance,
+      value: customer.current_points.toLocaleString(),
+    },
     { label: d.summaryTier, value: current?.name ?? d.noTier },
   ]
 
@@ -199,10 +193,9 @@ export default async function DashboardPage() {
   // so the slot is never empty and the hero can stay at a constant 8 columns.
   const summaryInAside = !featured
   // Full class strings in a lookup: Tailwind cannot see an interpolated one.
-  const engagementCount = [
-    checkinPoints > 0,
-    milestoneNodes.length > 0,
-  ].filter(Boolean).length
+  const engagementCount = [checkinPoints > 0, milestoneNodes.length > 0].filter(
+    Boolean,
+  ).length
   const engagementSpan = cn(
     TILE_ENTER,
     STAGGER[2],
@@ -338,7 +331,11 @@ export default async function DashboardPage() {
                     {d.percentComplete(progress)}
                   </span>
                 </div>
-                <Progress value={progress / 100} label={d.tierProgressLabel} tone="hero" />
+                <Progress
+                  value={progress / 100}
+                  label={d.tierProgressLabel}
+                  tone="hero"
+                />
                 {/* Both ends of the band the bar is measured across — more than
                     the mockup shows, and the only way the percentage is
                     checkable. The far end is named as well as priced:
@@ -380,21 +377,21 @@ export default async function DashboardPage() {
             partial unique index says so — and when there is none the summary
             moves up here. That is what keeps the hero at a constant 8 columns
             and row 1 hole-free in every configuration. */}
-        {featured
-          ? (
-            // No SectionCard and no "Featured gift" heading: in the mockup this
-            // tile IS the gift card. RewardCard already puts its own chip on any
-            // is_featured reward, so a header label would say the same thing
-            // twice, 40px apart.
-            <RewardCard
-              reward={featured}
-              currentPoints={customer.current_points}
-              lockedFor={lockedFor(featured)}
-              variant="feature"
-              className={cn(TILE_ENTER, STAGGER[1], "lg:col-span-4")}
-            />
-          )
-          : summaryCard(cn(TILE_ENTER, STAGGER[1], "lg:col-span-4"))}
+        {featured ? (
+          // No SectionCard and no "Featured gift" heading: in the mockup this
+          // tile IS the gift card. RewardCard already puts its own chip on any
+          // is_featured reward, so a header label would say the same thing
+          // twice, 40px apart.
+          <RewardCard
+            reward={featured}
+            currentPoints={customer.current_points}
+            lockedFor={lockedFor(featured)}
+            variant="feature"
+            className={cn(TILE_ENTER, STAGGER[1], "lg:col-span-4")}
+          />
+        ) : (
+          summaryCard(cn(TILE_ENTER, STAGGER[1], "lg:col-span-4"))
+        )}
 
         {/* Daily-expiring actions, so they sit ABOVE the informational panels —
             a deliberate departure from the mockup's row order, which has no
@@ -465,7 +462,11 @@ export default async function DashboardPage() {
           <SectionCard
             chrome="plain"
             title={t.customer.rewards.title}
-            className={cn(TILE_ENTER, STAGGER[3], "flex flex-col lg:col-span-6")}
+            className={cn(
+              TILE_ENTER,
+              STAGGER[3],
+              "flex flex-col lg:col-span-6",
+            )}
             bodyClassName="grid grow content-start gap-2 p-4 sm:p-6"
             actions={
               <Link href="/rewards" className={VIEW_ALL}>
@@ -576,7 +577,9 @@ export default async function DashboardPage() {
                       <TableHead>{d.colOrder}</TableHead>
                       <TableHead>{d.colDate}</TableHead>
                       <TableHead className="text-right">{d.colTotal}</TableHead>
-                      <TableHead className="text-right">{d.colPoints}</TableHead>
+                      <TableHead className="text-right">
+                        {d.colPoints}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -634,7 +637,11 @@ export default async function DashboardPage() {
             else on the page has. */}
         {posts.length > 0 && (
           <section
-            className={cn(TILE_ENTER, STAGGER[4], "col-span-full grid gap-4 sm:gap-6")}
+            className={cn(
+              TILE_ENTER,
+              STAGGER[4],
+              "col-span-full grid gap-4 sm:gap-6",
+            )}
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-headline-md">{d.updatesTitle}</h2>

@@ -701,6 +701,23 @@
     200ms both;
 }
 
+/* The tier ring on /tiers. Server-rendered at its final dashoffset like the
+   two bars above, so the same trick: a keyframe supplies the missing start
+   frame. Only `from` is written — `to` is the element's own attribute, so the
+   ring needs no second copy of its percentage. The circumference comes in as
+   an inline custom property because it is DATA (a function of the ring's
+   size), not a design token. */
+@keyframes ring-reveal {
+  from {
+    stroke-dashoffset: var(--ring-circumference);
+  }
+}
+
+@utility animate-ring-reveal {
+  animation: ring-reveal var(--transition-duration-reveal) var(--ease-out-quart)
+    both;
+}
+
 @utility bg-hero {
   background-image: linear-gradient(
     to bottom right,
