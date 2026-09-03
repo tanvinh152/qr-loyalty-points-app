@@ -7,6 +7,17 @@ import type { Messages } from "./en"
 // Thuật ngữ chốt: "quà tặng" (không dùng "đổi thưởng" làm danh từ),
 // "hạng thành viên", "chi tiêu tích lũy", "điểm tích lũy".
 
+const NUMBER = new Intl.NumberFormat("vi-VN")
+
+// Point counts, formatted against THIS catalog's locale rather than
+// `toLocaleString()` with no argument. That bare call reads the runtime's
+// default, and Node's ICU default (en-US, "1,500") disagreed with a Vietnamese
+// browser ("1.500") — every one of these strings renders inside a client
+// component, so the disagreement was a hydration mismatch that made React throw
+// away and re-render the subtree on load. Money already went through formatVnd,
+// which has always been pinned to vi-VN.
+const num = (value: number) => NUMBER.format(value)
+
 export const vi: Messages = {
   meta: {
     appTitle: "Điểm Thưởng",
@@ -17,11 +28,11 @@ export const vi: Messages = {
     next: "Sau",
     page: (n) => `Trang ${n}`,
     showing: (shown, total) =>
-      `Hiển thị ${shown.toLocaleString()} trên ${total.toLocaleString()}`,
+      `Hiển thị ${num(shown)} trên ${num(total)}`,
     // Không gắn tên thực thể vào đây: Pagination dùng chung cho danh sách
     // khách hàng, quà tặng và yêu cầu hỗ trợ, không riêng giao dịch.
     showingRange: (first, last, total) =>
-      `Hiển thị ${first.toLocaleString()}-${last.toLocaleString()} trên ${total.toLocaleString()}`,
+      `Hiển thị ${num(first)}-${num(last)} trên ${num(total)}`,
     save: "Lưu",
     saving: "Đang lưu…",
     add: "Thêm",
@@ -116,13 +127,13 @@ export const vi: Messages = {
       searchLabel: "Tìm khách hàng",
       searchPlaceholder: "Tìm khách hàng qua số điện thoại…",
       tierDistribution: "Phân hạng thành viên",
-      tierMembers: (n: number) => `${n.toLocaleString()} thành viên`,
+      tierMembers: (n: number) => `${num(n)} thành viên`,
       viewAllTiers: "Xem tất cả hạng",
       viewAllTransactions: "Xem tất cả hoạt động",
       noRecent: "Chưa có hoạt động nào.",
       colBalance: "Tổng điểm",
       movement: (amount) =>
-        amount > 0 ? `+${amount.toLocaleString()}` : amount.toLocaleString(),
+        amount > 0 ? `+${num(amount)}` : num(amount),
       noTiers: "Chưa cấu hình hạng thành viên.",
       openTickets: "Yêu cầu đang mở",
       openTicketsHint: "Yêu cầu hỗ trợ chờ phản hồi",
@@ -312,7 +323,7 @@ export const vi: Messages = {
       imageUrl: "Ảnh (URL)",
       status: "Trạng thái",
       statusHelper: "Quà đã tắt sẽ không hiện trong cửa hàng.",
-      cost: (points) => `${points.toLocaleString()} điểm`,
+      cost: (points) => `${num(points)} điểm`,
       stockOf: (left, max) => `Tồn kho: ${left} / ${max}`,
       soldOut: "Hết hàng",
       searchPlaceholder: "Tìm kiếm quà tặng…",
@@ -386,7 +397,7 @@ export const vi: Messages = {
         statusHelper: "Ô đang tắt sẽ bị gỡ hẳn khỏi vòng quay.",
         odds: (percent: string) => `Tỉ lệ ${percent}`,
         neverDrawn: "Không bao giờ ra",
-        pointsChip: (points: number) => `+${points.toLocaleString()} điểm`,
+        pointsChip: (points: number) => `+${num(points)} điểm`,
         searchPlaceholder: "Tìm ô…",
         noMatch: "Không có ô nào khớp.",
         empty: "Chưa có ô nào — thêm vài ô để vòng quay có chỗ dừng.",
@@ -617,7 +628,7 @@ export const vi: Messages = {
       },
       adjustBy: (who: string) => `bởi ${who}`,
       adjustLifetime: (points: number) =>
-        `${points > 0 ? "+" : ""}${points.toLocaleString()} điểm tích lũy`,
+        `${points > 0 ? "+" : ""}${num(points)} điểm tích lũy`,
     },
     support: {
       metaTitle: "Yêu cầu hỗ trợ",
@@ -740,11 +751,11 @@ export const vi: Messages = {
       emptyBody: "Đặt đơn hàng đầu tiên — điểm sẽ tự vào đây.",
       checkinTitle: "Điểm danh hàng ngày",
       checkinBody: (points: number) =>
-        `Điểm danh mỗi ngày để nhận ${points.toLocaleString()} điểm.`,
+        `Điểm danh mỗi ngày để nhận ${num(points)} điểm.`,
       checkinCta: "Điểm danh",
       checkinPending: "Đang điểm danh…",
       checkinDone: "Đã điểm danh hôm nay",
-      checkinSuccess: (points: number) => `+${points.toLocaleString()} điểm`,
+      checkinSuccess: (points: number) => `+${num(points)} điểm`,
       roadmapTitle: "Lộ trình phần thưởng",
       roadmapReady: (n: number) => `${n} cột mốc đang chờ bạn nhận quà`,
       roadmapPending: (n: number) => `${n} phần quà mốc đang chờ tại quầy`,
@@ -780,7 +791,7 @@ export const vi: Messages = {
         `Ô ${index} trên ${total}: ${name}`,
       resultTitle: "Chúc mừng!",
       resultPoints: (points: number) =>
-        `${points.toLocaleString()} điểm đã được cộng vào tài khoản của bạn.`,
+        `${num(points)} điểm đã được cộng vào tài khoản của bạn.`,
       resultGift: "Đưa màn hình này cho nhân viên tại quầy để nhận quà.",
       resultNone: "Chúc bạn may mắn lần sau — bạn vẫn còn lượt quay.",
       resultNoneDone: "Chúc bạn may mắn lần sau. Mai quay lại nhận thêm lượt nhé.",
@@ -789,7 +800,7 @@ export const vi: Messages = {
       historyEmpty: "Chưa có gì cả — quay thử lượt đầu tiên nào.",
       pendingChip: "Chưa nhận",
       collectedChip: "Đã nhận",
-      pointsChip: (points: number) => `+${points.toLocaleString()} điểm`,
+      pointsChip: (points: number) => `+${num(points)} điểm`,
       noPrizeLabel: "Không trúng",
       offTitle: "Vòng quay đang tạm nghỉ",
       offBody: "Hiện chưa có chương trình quay thưởng nào. Bạn quay lại sau nhé.",
@@ -826,7 +837,7 @@ export const vi: Messages = {
     rewards: {
       metaTitle: "Cửa hàng quà tặng",
       title: "Cửa hàng quà tặng",
-      cost: (points: number) => `${points.toLocaleString()} điểm`,
+      cost: (points: number) => `${num(points)} điểm`,
       allCategories: "Tất cả",
       exclusiveCategory: "Đặc quyền",
       exclusiveChip: "Đặc quyền",
@@ -844,7 +855,7 @@ export const vi: Messages = {
       redeeming: "Đang đổi…",
       tierRequired: (tierName: string) => `Yêu cầu hạng ${tierName}`,
       confirm: (name: string, points: number) =>
-        `Đổi ${name} với ${points.toLocaleString()} điểm?`,
+        `Đổi ${name} với ${num(points)} điểm?`,
       success: (name: string) => `Đã đổi: ${name}`,
       emptyTitle: "Chưa có phần quà nào",
       emptyBody: "Quà mới sẽ sớm có mặt — hãy quay lại sau nhé.",

@@ -161,7 +161,6 @@ function SpinPrizeFields({
               <Select
                 value={fieldValue(field.value)}
                 onValueChange={field.onChange}
-                items={typeOptions}
               >
                 <FormControl>
                   <SelectTrigger className="w-full max-w-md">
@@ -308,7 +307,7 @@ function SpinPrizeFields({
                 <Checkbox
                   className="mt-0.5"
                   checked={Boolean(field.value)}
-                  onCheckedChange={field.onChange}
+                  onCheckedChange={(v) => field.onChange(v === true)}
                 />
               </FormControl>
               <div className="grid gap-0.5">

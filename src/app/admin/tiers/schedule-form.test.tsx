@@ -36,7 +36,7 @@ async function open() {
   return user
 }
 
-/** The Base UI Select that flips the two mutually exclusive columns. */
+/** The Select that flips the two mutually exclusive columns. */
 async function chooseMode(user: ReturnType<typeof userEvent.setup>, label: string) {
   await user.click(screen.getByRole("combobox", { name: m.scheduleMode }))
   await user.click(await screen.findByRole("option", { name: label }))

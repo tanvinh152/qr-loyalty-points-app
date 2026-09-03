@@ -241,10 +241,6 @@ function BlogPostFields({
               <Select
                 value={field.value}
                 onValueChange={field.onChange}
-                items={[
-                  { value: "article", label: m.typeArticle },
-                  { value: "promotion", label: m.typePromotion },
-                ]}
               >
                 <FormControl>
                   <SelectTrigger className="w-full max-w-sm">
@@ -270,7 +266,7 @@ function BlogPostFields({
                 <Checkbox
                   className="mt-0.5"
                   checked={Boolean(field.value)}
-                  onCheckedChange={field.onChange}
+                  onCheckedChange={(v) => field.onChange(v === true)}
                 />
               </FormControl>
               <div className="grid gap-0.5">

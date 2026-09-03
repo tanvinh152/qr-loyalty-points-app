@@ -250,10 +250,6 @@ function TierFields({
                     <Select
                       value={field.value}
                       onValueChange={field.onChange}
-                      items={PERK_ICON_KEYS.map((key) => ({
-                        value: key,
-                        label: m.perkIcons[key],
-                      }))}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">

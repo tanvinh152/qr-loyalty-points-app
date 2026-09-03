@@ -1,4 +1,5 @@
 <!-- BEGIN:nextjs-agent-rules -->
+
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
@@ -6,7 +7,90 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Loyalty Point App — project map
 
-QR loyalty-point app. Next.js 16 (App Router) + Supabase + Pancake POS + shadcn/ui (Base UI, NOT Radix).
+QR loyalty-point app. Next.js 16 (App Router) + Supabase + Pancake POS + a UI layer built on
+**Animate UI** over **Radix** (`radix-ui`, the unified package) + **`motion`**. Base UI was ripped
+out on 2026-09-01 and Animate UI was adopted the same day.
+
+- **Animate UI is VENDORED, via its CLI.** `npx shadcn@latest add @animate-ui/<slug>`, with the
+  registry declared in `components.json`. Because `aliases.components` is `@/components`, targets
+  like `components/animate-ui/primitives/radix/dialog.tsx` land **inside** `src/`, not outside it;
+  `hooks/*` land in `src/hooks/`, `lib/*` in `src/lib/`. (An earlier note here claimed the opposite
+  — it was wrong.) Only the `primitives-*` and `icons-*` layers are taken. The `components-*` layer
+  is stock shadcn styling that fights the Azure Paw ladder, and stacking our shim on theirs makes
+  `tailwind-merge` arbitrate every class twice.
+- **Three layers.** `src/components/animate-ui/` (vendored, normalised, owns the motion) →
+  `src/components/ui/` (this app's API and its class strings) → ~68 consumers, whose
+  `@/components/ui/x` imports did not change and must not have to.
+- **`ui/` is MIXED-PROVENANCE, and that is finished, not half-done.** On Animate UI: `dialog`,
+  `alert-dialog`, `tooltip`, `checkbox`, `menu`, `button`, `progress`, `drawer`, `accordion`.
+  Still plain Radix or plain markup: `select`, `avatar`, `input`, `label`, `textarea`, `table`,
+  `form`, `badge`, `alert`, `sonner` — **because Animate UI ships no such component.** Checked
+  against the registry; do not go looking, and do not "finish the migration".
+- **ICONS are a THIN OVERLAY on lucide, and that is permanent** (added 2026-09-01).
+  `lucide-react` is still the base library and `components.json` still says `"iconLibrary": "lucide"`:
+  Animate UI ships 260 icons, `src/**` uses 93 distinct ones, and only **39** overlap. The registry
+  has no `gift` (16 uses, the most-used glyph here), no `paw-print` (the brand mark), and no
+  `receipt`, `newspaper`, `medal`, `coins`, `wallet`, `mail`, `info`, `home`, `trending-up`,
+  `pencil`, `eye`/`eye-off`, `hand`, `undo-2`, `inbox`, `ferris-wheel`, `help-circle`, `history`, or
+  any calendar icon. Checked against `https://animate-ui.com/r/registry.json` — do not go looking,
+  and do not "finish the migration".
+  The rule for which glyph animates is **animation follows interaction, not availability**: an icon
+  is animated only when it is a CONTROL'S OWN affordance and every glyph in that control group is
+  covered. Ten icons across eight surfaces qualify — the theme toggle, the sidebar collapse toggle,
+  pagination, the header back link, the search field, the dialog close button, `ConfirmDelete`, the
+  schedule form's remove-row button and the help form's submit. A content icon (a `StatCard` chip,
+  an `EmptyState` glyph, a `SectionCard` header) is static, always.
+  Four surfaces are excluded ON PURPOSE and must stay that way:
+  - `portal-nav.tsx`'s ICONS map — only 5 of its 13 keys exist upstream, and the rail is the
+    most-seen surface in the app. `account-menu` / `admin-menu` share that glyph set.
+  - `portal-identity.tsx`'s chevron — it carries `group-data-[state=open]:rotate-180`, and Motion
+    writes `transform` INLINE, which beats the class. Same double-transform bug as
+    `active:scale-[.98]` + `tapScale`.
+  - `pending-icon.tsx` / `ui/sonner.tsx`'s `Loader2` — `animate-spin` is deliberately EXEMPT from the
+    reduced-motion collapse in `globals.css`, and a Motion-driven spinner would be frozen by
+    `MotionConfig reducedMotion="user"`. That exemption is the whole point; do not undo it.
+  - the admin forms' `Plus`/`Pencil` triggers — two states of the same button, and `pencil` is absent.
+  Wiring: hover must be read on the CONTROL, not the glyph (a `size-4` icon does not cover its
+  button's padding), so the control is wrapped in `<AnimateIcon animateOnHover asChild>`. That path
+  is safe — `icon.tsx`'s own `composeEventHandlers` COMPOSES with the child's handlers rather than
+  overwriting them, unlike Animate UI's `Slot`. `asChild` is not optional on a block child: the
+  default renders an inline `m.span`, which would put a field inside an inline box (`ui/input.tsx`).
+  Sizing needs nothing: Animate UI defaults `size = 28` and writes width/height ATTRIBUTES, which the
+  existing `className="size-N"` overrides in CSS, so every call site keeps its old API.
+  `src/components/ui/icon.ts` holds `AppIcon`, the icon-as-a-prop type for the four components that
+  RECEIVE a glyph (`StatCard`, `EmptyState`, `SectionCard`, `Input`). It replaced `LucideIcon`, which
+  stopped being true the moment one of them was handed an Animate UI icon — the two libraries share
+  no props type.
+  `icons/icon.tsx` carries a file-scoped `eslint-disable` for `react-hooks/refs` and
+  `react-hooks/set-state-in-effect`. Both fire on upstream code; the refs hits are false positives
+  (`composeEventHandlers` only stores the callback), and it is scoped rather than fixed so the file
+  stays diffable.
+- **A SERVER component's `asChild` child is not an element — it is a Flight LAZY CHUNK.** React
+  outlines a large enough prop into its own chunk and hands the client a `Symbol(react.lazy)`
+  wrapper, so `React.isValidElement` is FALSE in the SSR pass and true in the browser, where the
+  chunk has resolved. Upstream's `primitives/animate/slot.tsx` bails to `null` on that, which
+  rendered NOTHING on the server and the real element on the client — a hydration mismatch on every
+  page carrying a search field. The file now falls back to rendering `children` untouched instead:
+  a Slot merges only handlers and a ref, which emit no HTML, so the markup is identical and the
+  wrapper is merely inert for that one server pass. `slot.test.tsx` is the guard.
+  Whether a call site trips it is a SIZE heuristic — `ui/input.tsx`'s long class string is outlined,
+  `page-link.tsx`'s is not — so it is NOT something a call site can be trusted to avoid, and the two
+  server-side `AnimateIcon … asChild` call sites stay as they are. Radix's `Slot` has the same blind
+  spot, which is the second reason Button's `asChild` branch is client-only.
+- **The post-install pass is mandatory** before a vendored file is committed: rewrite `motion.` →
+  `m.` (including `motion.create`), run Prettier, confirm `cn` comes from `@/lib/utils`, audit
+  `data-slot` names against what the tests query, and delete sub-components nothing uses along with
+  their registry dependencies. Motion overrides belong in the `ui/` shim as default props, NOT as
+  edits to the vendored file, so the vendored tree stays diffable against upstream — but the file
+  is ours and may be patched outright when upstream lacks an API we need (`asChild` on
+  `DropdownMenuItem`, a renameable `data-slot` on `SheetContent`).
+- Re-running `add` for one item **rewrites the shared files** (`use-controlled-state`,
+  `get-strict-context`, `animate/slot`), which carry local fixes. Back them up and restore after
+  every install, and diff `package.json` + the lockfile for dependency churn.
+- **`drawer` lost swipe-to-dismiss.** It was `vaul`; it is now `primitives-radix-sheet`, which has
+  no drag, no velocity dismiss, no nested-scroll yielding, no iOS scroll-lock. That is a real
+  regression on a phone-first app, taken deliberately to keep one engine. `vaul` stays in
+  `package.json`: reverting is one file.
 
 - **Request middleware**: `src/proxy.ts` (Next 16 renamed `middleware` → `proxy`). Guards `/admin`.
 - **Supabase clients**: `src/lib/supabase/{client,server,admin,middleware}.ts`. `admin.ts` is service-role, server-only.
@@ -26,8 +110,6 @@ QR loyalty-point app. Next.js 16 (App Router) + Supabase + Pancake POS + shadcn/
   an already-linked POS customer is refused. A signup that died before linking leaves an auth
   user with no `customers` row — `find_orphan_auth_user` (`0009`) is what lets the next attempt
   adopt it instead of the phone being stuck on "already registered" forever.
-- **Admin**: `src/app/admin/` — `login/`, `settings/`, `tiers/`, `products/`, `rewards/`,
-  `customers/`, `transactions/`, protected `layout.tsx`.
 - **Customer accounts**: `src/app/(customer)/{login,register,auth}` + the `(account)` group
   (`dashboard/`, `rewards/`, `tiers/`, `history/`, `help/`, `profile/`). Auth is phone +
   password, but Supabase Auth is email-keyed: `/register` REQUIRES a real email, stores it on
@@ -38,7 +120,7 @@ QR loyalty-point app. Next.js 16 (App Router) + Supabase + Pancake POS + shadcn/
   `public.customers` — redemption goes through `redeem_reward` (`0006`) and the profile form
   through `update_customer_profile` (`0007`), both service-role only like `claim_points`.
   On `/tiers` and in the header's member block a tier is read by its GEM COLOUR, picked by tier
-  *rank*, never by name (`src/app/(customer)/(account)/tier-accent.ts`). That rule is scoped to
+  _rank_, never by name (`src/app/(customer)/(account)/tier-accent.ts`). That rule is scoped to
   those two places: the `/dashboard` hero is a fixed brand gradient (`bg-hero`), not a tier wash.
 - **Tiers are SPEND, points are currency**: `membership_tiers.spend_threshold` is đồng measured
   against `customers.lifetime_spend` (`0010`); `lifetime_points` only buys rewards and decides
@@ -150,18 +232,22 @@ QR loyalty-point app. Next.js 16 (App Router) + Supabase + Pancake POS + shadcn/
   holding the theme switch, sign-out, and (member only) `/profile` and `/help`. Theme and sign-out
   were loose icons beside it until 2026-08-31; three ungrouped controls fought for one corner.
   Two surfaces, one per pointer: `PortalIdentity` (`src/components/portal-identity.tsx`) is the
-  `md`-and-up dropdown over `ui/menu.tsx` (Base UI `Menu`), `AccountMenu` / `AdminMenu` over
-  `PortalMenu` + `ui/drawer.tsx` is the phone bottom sheet. They are NOT one responsive component —
+  `md`-and-up dropdown over `ui/menu.tsx` (Radix `DropdownMenu`), `AccountMenu` / `AdminMenu` over
+  `PortalMenu` + `ui/drawer.tsx` (**vaul** — Radix ships no swipe-dismissable drawer) is the phone
+  bottom sheet. They are NOT one responsive component —
   a sheet is right under a thumb and wrong under a cursor — but they must offer the SAME actions.
   Rules that bite:
   - `PortalIdentity` must never use a heading element: `PortalHeader`'s locator `<h1>` is the only
     one in the bar and `portal-header.test.tsx` looks it up by role with no name.
   - The sign-out `<form>` sits INSIDE the popup, so its `MenuItem` takes `closeOnClick={false}` —
     closing would unmount the form out from under its own submit. Same for the theme row, which is
-    not a destination at all.
+    not a destination at all. `closeOnClick` is OUR prop; `ui/menu.tsx` maps it to Radix's
+    `onSelect={(e) => e.preventDefault()}`. Do not reach for `onSelect` at a call site.
+    `menu.test.tsx` guards both halves of that mapping.
   - The theme row is `ThemeMenuItem` (`src/components/theme-toggle.tsx`), not
-    `<MenuItem render={<ThemeToggle/>}>`: Base UI's `render` hands the child props to spread and
-    ThemeToggle's Button swallows them.
+    `<MenuItem asChild><ThemeToggle/></MenuItem>`: Radix's `asChild` spreads the item's props onto
+    the child exactly as Base UI's `render` did, and ThemeToggle's Button swallows them. The gotcha
+    SURVIVED the migration — do not "simplify" it back.
   - The labelled sign-out on `/profile` and in the no-customer `EmptyState` is the backstop now that
     nothing is signed out in one click; keep both.
   - `account-menu.test.tsx` is the only guard on the phone path; don't weaken it.
@@ -196,4 +282,82 @@ QR loyalty-point app. Next.js 16 (App Router) + Supabase + Pancake POS + shadcn/
   the pointer. The pill's badge dot has an `sr-only` twin (`nav.spinPending` / `nav.spinLeft`): an
   unfulfilled `gift` win is settled by hand at the counter, and the dot is the only place a member is
   told one is waiting.
-- shadcn Button is Base UI: NO `asChild`. Use `buttonVariants` on a Link (see `src/components/page-link.tsx`).
+- **`src/components/ui/button.tsx` MUST NOT GAIN A `"use client"` DIRECTIVE.** It has none today,
+  deliberately: 15 server components call `buttonVariants()` to style a `<Link>`, and a directive
+  turns every one of them into _"Attempted to call buttonVariants() from the server"_ at runtime.
+  Neither `tsc` nor vitest can see it — **only `npm run build` does**, so run it after touching this
+  file. Rendering the client `ButtonPrimitive` from a directive-free module is fine; the import is
+  what creates the boundary, and it creates it around the primitive alone.
+- **Button supports `asChild`** — but the house pattern for links is still
+  `cn(buttonVariants({…}))` on a `<Link>`, at 22 sites (20 of them server). The `asChild` branch is
+  the client-only one, because Radix's `Slot` uses hooks, so `<Button asChild><Link/></Button>`
+  would push those subtrees across the client boundary for nothing. Reach for `asChild` only inside client
+  components, where it buys ref and handler merging — chiefly Dialog / AlertDialog / DropdownMenu /
+  Tooltip triggers. `src/components/page-link.tsx` is NOT an `asChild` workaround and does not go
+  away: it renders an inert `<span aria-hidden>` when there is no page to go to, which an `asChild`
+  Button cannot express. The `asChild` branch uses **Radix's** `Slot`, never Animate UI's: Animate
+  UI merges as `{...childProps, ...slotProps}`, so a slot prop OVERWRITES a child's own handler
+  instead of composing with it.
+- Button keeps `type="button"` as its default, because the Base UI primitive it replaced did, a bare
+  `<button>` defaults to `type="submit"`, and **Animate UI's button primitive sets no default
+  either** — 20 call sites sit inside a `<form>` without an explicit type. `button.test.tsx` is the
+  only thing standing between that and a silent regression.
+- The press is Motion's (`tapScale={0.98}`), and `active:scale-[.98]` was REMOVED from the cva to
+  match: CSS and Motion both writing `transform` double-bounced the button mid-press. `hoverScale`
+  is pinned to `1` — Animate UI's `1.05` default overflows the `xl` auth CTA out of its card and
+  pushes bento buttons past their grid cell.
+- Base UI's `render={<X/>}` is Radix's `asChild` + `<X/>` as the child, and **the trigger's children
+  move INSIDE X**: Radix's Slot will not merge slot children into a child that already has its own.
+  Get it wrong and the control keeps working but loses its accessible name.
+- **A Radix `Select.Item` may NEVER carry `value=""`** — it throws at render, invisible to `tsc`.
+  The empty-choice sentinel is `NO_SELECTION` (`src/lib/schemas.ts`), mapped back to `null` by
+  `blankToNull` at the submit boundary (`adjust-form.tsx`, `reward-form.tsx`). Radix Select items
+  never take DOM focus either, so style them with `data-highlighted:`, never `focus:`.
+- `src/app/globals.css` keeps `@import "shadcn/tailwind.css"`, so `shadcn` stays in devDependencies
+  and is load-bearing at build time. Its `@custom-variant`s (`data-open`, `data-closed`,
+  `data-checked`, `data-disabled`, …) are written to match BOTH `[data-state="open"]` (Radix) and
+  `[data-open]` (Base UI) — which is why almost every class string in `ui/` survived the swap.
+- **Motion system.** Durations and easings are tokens: a NON-`inline` `@theme` block in `globals.css`
+  (`--transition-duration-instant|quick|base|slow|reveal`, `--ease-out-quart|out-expo|back-out|
+in-quart`) mirrored for JS in `src/lib/motion/tokens.ts`. It must stay non-`inline`: `@theme inline`
+  inlines the value into the utility and emits NO custom property, so the hand-written `@utility`
+  keyframes that reference `var(--ease-*)` would silently resolve to nothing. `--ease-back-out` is the
+  ONLY overshoot in the system and is allowed on win/claim confirmations and nowhere else.
+  `MotionProvider` (`src/lib/motion/provider.tsx`) mounts `LazyMotion` in **strict** mode, so
+  components use `m.div`, never `motion.div` — which is why every vendored Animate UI file is
+  rewritten to `m.` on install, and why `eslint.config.mjs` bans importing `motion` from
+  `motion/react` anywhere under `src/`. A missed `motion.*` in a file that is imported but never
+  rendered throws nothing; it just silently ships the full bundle.
+  **`domMax` IS loaded** (changed on 2026-09-01): Animate UI's `switch` puts a bare `layout` on its
+  thumb, `tabs` uses `layout="size"` and `effects/highlight` moves with `layoutId`, and under
+  `domAnimation` all three are ignored **silently** — a thumb that teleports, with no warning. What
+  `domAnimation` used to make impossible is now only a rule: nothing under
+  `src/app/(customer)/(account)/dashboard/` may use `layout`/`layoutId`, because it would transform
+  a tile out of its assigned cell and leave the hole the no-hole rule exists to prevent. That rule
+  is enforced by a `no-restricted-syntax` selector in `eslint.config.mjs`, scoped to `<m.* />` —
+  `layout` is also an ordinary string prop here (`PostCard layout="tile"`).
+- **Presence moved from CSS to `AnimatePresence`.** In every migrated file the
+  `data-open:animate-in` / `data-closed:animate-out` utilities and the `duration-* ease-*` that
+  timed them are DELETED — keeping both animates each open twice. Three things that look similar
+  are NOT dead and must stay: `data-checked:` / `data-unchecked:` (checkbox colour),
+  `data-highlighted:` (menu row hover) and `data-[state=open]` on triggers
+  (`group-data-[state=open]:rotate-180`) — Radix still stamps all of those. `select.tsx` also keeps
+  its own `data-open:animate-*`, because Select never migrated.
+- Prefers-reduced-motion is handled app-wide in `globals.css` (everything collapses to 1ms;
+  `.animate-spin` and `.animate-pulse` are EXEMPT because a frozen spinner reads as a hung request)
+  plus `MotionConfig reducedMotion="user"`. Do not add a per-component check; the wheel's is the one
+  exception, and it reads `matchMedia` inside its click handler, never during render.
+- Numbers in `src/lib/i18n/messages/*.ts` go through that file's own pinned `num()`, never a bare
+  `toLocaleString()`: the bare call reads the runtime's default, and Node's en-US ("1,500") against a
+  Vietnamese browser ("1.500") was a real hydration mismatch on every reward card.
+- Tests: Radix needs `hasPointerCapture` / `setPointerCapture` / `releasePointerCapture` / `scrollTo`
+  stubs and Motion needs `MotionGlobalConfig.skipAnimations = true`; both live in `src/test/setup.ts`.
+  That flag is what makes an `AnimatePresence` exit resolve synchronously, so "the popup is gone" is
+  provable under jsdom — verified for tooltip, dialog and the phone sheet. `src/test/render.tsx`
+  mounts `MotionProvider`, so `strict` catches a stray `motion.` in CI; `menu.test.tsx` and
+  `truncated-text.test.tsx` render OUTSIDE it on purpose, proving the popups still degrade when no
+  Motion features are loaded. Note Radix's tooltip does not close on `userEvent.unhover()` under
+  jsdom — that is true of plain Radix too, so drive `open` directly rather than chasing it.
+  If user-event ever refuses a click inside an open dialog ("pointer-events: none"), that is Radix's
+  DismissableLayer setting it on `<body>` — the fix is `userEvent.setup({ pointerEventsCheck: 0 })`,
+  but check first whether the popup in question is still a non-Radix one.

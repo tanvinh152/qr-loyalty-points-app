@@ -1,7 +1,9 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { CalendarCheck, CheckCircle2, Loader2 } from "lucide-react"
+import { CalendarCheck, CheckCircle2 } from "lucide-react"
+
+import { PendingIcon } from "@/components/pending-icon"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -49,11 +51,9 @@ export function CheckinButton({
 
   return (
     <Button type="button" size="lg" onClick={handleCheckIn} disabled={isPending}>
-      {isPending ? (
-        <Loader2 className="size-5 animate-spin" aria-hidden />
-      ) : (
+      <PendingIcon pending={isPending} className="size-5">
         <CalendarCheck className="size-5" aria-hidden />
-      )}
+      </PendingIcon>
       {isPending ? d.checkinPending : d.checkinCta}
     </Button>
   )

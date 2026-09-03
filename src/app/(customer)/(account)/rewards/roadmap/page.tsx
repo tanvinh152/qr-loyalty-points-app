@@ -126,7 +126,7 @@ export default async function RoadmapPage() {
             class cannot be computed at runtime. */}
         <span
           aria-hidden
-          className="bg-primary shadow-glow absolute top-8 left-8 w-1.5 -translate-x-1/2 rounded-full transition-all duration-700"
+          className="bg-primary shadow-glow animate-rail-fill absolute top-8 left-8 w-1.5 -translate-x-1/2 rounded-full"
           style={{ height: `calc((100% - 4rem) * ${percent} / 100)` }}
         />
 

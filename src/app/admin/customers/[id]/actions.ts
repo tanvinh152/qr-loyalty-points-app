@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { getMessages } from "@/lib/i18n/server"
-import { makeAdjustSchema, type AdjustInput } from "@/lib/schemas"
+import { blankToNull, makeAdjustSchema, type AdjustInput } from "@/lib/schemas"
 
 export type SaveState = { ok: boolean; message: string } | null
 
@@ -41,7 +41,7 @@ export async function adjustPoints(input: AdjustInput): Promise<SaveState> {
     p_customer_id: customer_id,
     p_current_delta: current_delta,
     p_lifetime_delta: lifetime_delta,
-    p_grant_tier_id: grant_tier_id || null,
+    p_grant_tier_id: blankToNull(grant_tier_id),
     p_reason: reason,
     p_actor: { id: user.id, email: user.email ?? null },
   })

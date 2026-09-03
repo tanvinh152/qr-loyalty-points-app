@@ -1,5 +1,4 @@
-import type { LucideIcon } from "lucide-react"
-
+import type { AppIcon } from "@/components/ui/icon"
 import { cn } from "@/lib/utils"
 
 /** Centered placeholder for an empty table or list. */
@@ -12,7 +11,7 @@ export function EmptyState({
 }: {
   title: string
   description?: string
-  icon?: LucideIcon
+  icon?: AppIcon
   action?: React.ReactNode
   className?: string
 }) {

@@ -146,12 +146,11 @@ export default async function AdminLayout({
                         destroys nothing, and the red read as an error.
                         `closeOnClick={false}` so the popup does not unmount
                         the form out from under its own submit. */}
-                    <MenuItem
-                      closeOnClick={false}
-                      render={<button type="submit" />}
-                    >
-                      <LogOut className="size-5" aria-hidden />
-                      {nav.signOut}
+                    <MenuItem closeOnClick={false} asChild>
+                      <button type="submit">
+                        <LogOut className="size-5" aria-hidden />
+                        {nav.signOut}
+                      </button>
                     </MenuItem>
                   </form>
                 </PortalIdentity>

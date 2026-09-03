@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react"
+import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
@@ -47,11 +47,17 @@ describe("AccountMenu", () => {
     await user.click(screen.getByRole("button", { name: "Tài khoản của bạn" }))
     await user.click(screen.getByRole("link", { name: "Nâng hạng" }))
 
-    // Asserted on the state attribute, not on unmounting: Base UI keeps the
-    // popup mounted through its exit transition, and a CSS transition never
-    // finishes in jsdom, so it would still be in the DOM either way.
-    expect(
-      document.querySelector("[data-slot='drawer-content']"),
-    ).toHaveAttribute("data-closed")
+    // Asserted on unmounting. Base UI used to keep the popup in the DOM through
+    // an exit transition that never finished under jsdom, so the old assertion
+    // had to read `data-closed` off a still-present node. The sheet is now
+    // Animate UI's, held by <AnimatePresence>, which removes it once its exit
+    // resolves — and MotionGlobalConfig.skipAnimations in src/test/setup.ts
+    // makes that resolve synchronously. So absence is both provable and the
+    // stronger claim.
+    await waitFor(() =>
+      expect(
+        document.querySelector("[data-slot='drawer-content']"),
+      ).toBeNull(),
+    )
   })
 })

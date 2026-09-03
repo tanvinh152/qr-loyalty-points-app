@@ -34,13 +34,15 @@ import { useT } from "@/lib/i18n/provider"
 import { formatVnd } from "@/lib/utils"
 import {
   makeRewardSchema,
+  NO_SELECTION,
   type RewardFormValues,
   type RewardInput,
 } from "@/lib/schemas"
 import type { MembershipTierRow, RewardRow } from "@/lib/db-types"
 import { saveReward } from "./actions"
 
-const NO_MIN_TIER = ""
+// Radix Select refuses value="" — see NO_SELECTION in src/lib/schemas.ts.
+const NO_MIN_TIER = NO_SELECTION
 
 /** Create/edit dialog for a reward. `trigger` overrides the default button. */
 export function RewardDialog({
@@ -277,13 +279,6 @@ function RewardFields({
               <Select
                 value={fieldValue(field.value)}
                 onValueChange={field.onChange}
-                items={[
-                  { value: NO_MIN_TIER, label: m.noMinTier },
-                  ...tiers.map((tier) => ({
-                    value: tier.id,
-                    label: `${tier.name} (${formatVnd(tier.spend_threshold)}+)`,
-                  })),
-                ]}
               >
                 <FormControl>
                   <SelectTrigger className="w-full max-w-md">
@@ -320,7 +315,7 @@ function RewardFields({
                   <Checkbox
                     className="mt-0.5"
                     checked={Boolean(field.value)}
-                    onCheckedChange={field.onChange}
+                    onCheckedChange={(v) => field.onChange(v === true)}
                   />
                 </FormControl>
                 <div className="grid gap-0.5">
@@ -339,7 +334,7 @@ function RewardFields({
                   <Checkbox
                     className="mt-0.5"
                     checked={Boolean(field.value)}
-                    onCheckedChange={field.onChange}
+                    onCheckedChange={(v) => field.onChange(v === true)}
                   />
                 </FormControl>
                 <div className="grid gap-0.5">
@@ -358,7 +353,7 @@ function RewardFields({
                   <Checkbox
                     className="mt-0.5"
                     checked={Boolean(field.value)}
-                    onCheckedChange={field.onChange}
+                    onCheckedChange={(v) => field.onChange(v === true)}
                   />
                 </FormControl>
                 <div className="grid gap-0.5">

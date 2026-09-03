@@ -3,7 +3,6 @@ import {
   HelpCircle,
   LogOut,
   PawPrint,
-  Sparkles,
   TrendingUp,
   UserRound,
   UserX,
@@ -15,13 +14,14 @@ import { EmptyState } from "@/components/empty-state"
 import { PortalFooter } from "@/components/portal-footer"
 import { PortalHeader } from "@/components/portal-header"
 import { PortalIdentity } from "@/components/portal-identity"
+import { PointsPill } from "@/components/points-pill"
 import { ThemeMenuItem } from "@/components/theme-toggle"
 import {
   MenuItem,
   MenuLinkItem,
   MenuSeparator,
 } from "@/components/ui/menu"
-import { getMessages } from "@/lib/i18n/server"
+import { getLocale, getMessages } from "@/lib/i18n/server"
 import { getSidebarCollapsed } from "@/lib/sidebar/server"
 import {
   getSpinDailyLimit,
@@ -47,6 +47,7 @@ export default async function AccountLayout({
   children: React.ReactNode
 }) {
   const t = await getMessages()
+  const locale = await getLocale()
   const nav = t.customer.nav
   const { customer } = await getAccount()
   const collapsed = await getSidebarCollapsed()
@@ -190,13 +191,11 @@ export default async function AccountLayout({
                     />
                   )}
 
-                  <span className="bg-surface-high text-label-md text-primary inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 whitespace-nowrap">
-                    <Sparkles className="size-4" aria-hidden />
-                    {customer.current_points.toLocaleString()}
-                    {/* Dropped on the narrowest phones so a six-figure balance
-                        cannot push the avatar off the row. */}
-                    <span className="max-sm:hidden">{nav.pointsUnit}</span>
-                  </span>
+                  <PointsPill
+                    value={customer.current_points}
+                    unit={nav.pointsUnit}
+                    locale={locale}
+                  />
                 </>
               )
             }
@@ -214,13 +213,20 @@ export default async function AccountLayout({
                     caption={tierName}
                     captionClassName="text-primary"
                   >
-                    <MenuLinkItem render={<Link href="/profile" />}>
-                      <UserRound className="size-5" aria-hidden />
-                      {nav.profile}
+                    {/* The children go INSIDE the Link: Radix's Slot will not
+                        merge a slot's own children into a child that already
+                        has some. */}
+                    <MenuLinkItem>
+                      <Link href="/profile">
+                        <UserRound className="size-5" aria-hidden />
+                        {nav.profile}
+                      </Link>
                     </MenuLinkItem>
-                    <MenuLinkItem render={<Link href="/help" />}>
-                      <HelpCircle className="size-5" aria-hidden />
-                      {nav.help}
+                    <MenuLinkItem>
+                      <Link href="/help">
+                        <HelpCircle className="size-5" aria-hidden />
+                        {nav.help}
+                      </Link>
                     </MenuLinkItem>
 
                     <MenuSeparator />
@@ -232,12 +238,11 @@ export default async function AccountLayout({
                           destroys nothing, and the red read as an error.
                           `closeOnClick={false}` so the popup does not unmount
                           the form out from under its own submit. */}
-                      <MenuItem
-                        closeOnClick={false}
-                        render={<button type="submit" />}
-                      >
-                        <LogOut className="size-5" aria-hidden />
-                        {nav.signOut}
+                      <MenuItem closeOnClick={false} asChild>
+                        <button type="submit">
+                          <LogOut className="size-5" aria-hidden />
+                          {nav.signOut}
+                        </button>
                       </MenuItem>
                     </form>
                   </PortalIdentity>

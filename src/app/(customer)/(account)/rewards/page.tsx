@@ -113,7 +113,7 @@ export default async function RewardsPage({
         aria-label={r.filterLabel}
         // The strip scrolls edge to edge on a phone rather than inside the
         // page gutter, so a half-cut chip reads as "there is more this way".
-        className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 whitespace-nowrap sm:mx-0 sm:px-0"
+        className="scroll-fade-x -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 whitespace-nowrap sm:mx-0 sm:px-0"
       >
         {tabs.map((tab) => {
           const active = category === tab.key

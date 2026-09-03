@@ -50,7 +50,7 @@ export function PortalIdentity({
       <MenuTrigger
         aria-label={label}
         className={cn(
-          "hover:bg-surface-high data-[popup-open]:bg-surface-high group flex min-w-0 items-center gap-2.5 rounded-full py-1 pr-2 pl-1 transition-colors",
+          "hover:bg-surface-high data-[state=open]:bg-surface-high group flex min-w-0 items-center gap-2.5 rounded-full py-1 pr-2 pl-1 transition-colors",
           className,
         )}
       >
@@ -78,7 +78,7 @@ export function PortalIdentity({
         </div>
 
         <ChevronDown
-          className="text-muted-foreground size-4 shrink-0 transition-transform group-data-[popup-open]:rotate-180"
+          className="text-muted-foreground size-4 shrink-0 duration-quick ease-out-quart transition-transform group-data-[state=open]:rotate-180"
           aria-hidden
         />
       </MenuTrigger>

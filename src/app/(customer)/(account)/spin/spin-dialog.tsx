@@ -76,11 +76,11 @@ export function SpinDialog({
       <DialogTrigger
         title={nav.spin}
         className={cn(
-          "bg-surface-high text-label-md text-primary hover:bg-surface-highest relative inline-flex size-8 shrink-0 items-center justify-center gap-1.5 rounded-full whitespace-nowrap transition-colors md:w-auto md:px-3",
+          "bg-surface-high text-label-md text-primary hover:bg-surface-highest group relative inline-flex size-8 shrink-0 items-center justify-center gap-1.5 rounded-full whitespace-nowrap transition-colors md:w-auto md:px-3",
           className,
         )}
       >
-        <FerrisWheel className="size-4 shrink-0" aria-hidden />
+        <FerrisWheel className="duration-slow ease-out-quart size-4 shrink-0 transition-transform group-hover:rotate-45" aria-hidden />
         <span className="max-md:sr-only">{nav.spin}</span>
         {/* A gift won on the wheel is settled by hand at the counter, so the
             only way a member learns one is waiting is being told. The dot says
@@ -89,7 +89,7 @@ export function SpinDialog({
           <>
             <span
               aria-hidden
-              className="bg-warning ring-sidebar absolute -top-0.5 -right-0.5 size-2.5 rounded-full ring-2"
+              className="bg-warning ring-sidebar animate-pulse-dot absolute -top-0.5 -right-0.5 size-2.5 rounded-full ring-2"
             />
             <span className="sr-only">
               {pendingGifts > 0

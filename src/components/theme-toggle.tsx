@@ -1,7 +1,8 @@
 "use client"
 
-import { Moon, Sun } from "lucide-react"
-
+import { AnimateIcon } from "@/components/animate-ui/icons/icon"
+import { Moon } from "@/components/animate-ui/icons/moon"
+import { Sun } from "@/components/animate-ui/icons/sun"
 import { Button } from "@/components/ui/button"
 import { MenuItem } from "@/components/ui/menu"
 import { useT } from "@/lib/i18n/provider"
@@ -27,39 +28,44 @@ export function ThemeToggle({
 
   if (iconOnly) {
     return (
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        onClick={toggle}
-        aria-label={label}
-        className={className}
-      >
-        <Icon className="size-5" aria-hidden />
-      </Button>
+      <AnimateIcon animateOnHover asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={toggle}
+          aria-label={label}
+          className={className}
+        >
+          <Icon className="size-5" aria-hidden />
+        </Button>
+      </AnimateIcon>
     )
   }
 
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="sm"
-      onClick={toggle}
-      aria-label={label}
-      className={cn("w-full justify-start", className)}
-    >
-      <Icon className="size-4" aria-hidden />
-      {isDark ? t.light : t.dark}
-    </Button>
+    <AnimateIcon animateOnHover asChild>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={toggle}
+        aria-label={label}
+        className={cn("w-full justify-start", className)}
+      >
+        <Icon className="size-4" aria-hidden />
+        {isDark ? t.light : t.dark}
+      </Button>
+    </AnimateIcon>
   )
 }
 
 /**
  * The same switch as a row inside the desktop account dropdown. Its own
- * component rather than `<MenuItem render={<ThemeToggle />}>` because Base UI's
- * `render` hands the child its props to spread, and ThemeToggle's Button would
- * swallow them.
+ * component rather than `<MenuItem asChild><ThemeToggle /></MenuItem>` because
+ * Radix's `asChild` spreads the item's props onto the child exactly as Base UI's
+ * `render` did, and ThemeToggle's Button would swallow them. The gotcha survived
+ * the migration — do not "simplify" it back.
  *
  * `closeOnClick={false}`: flipping the theme is not leaving the menu, and
  * watching the popup vanish under the cursor reads as a misfire.
@@ -71,9 +77,11 @@ export function ThemeMenuItem() {
   const Icon = isDark ? Sun : Moon
 
   return (
-    <MenuItem closeOnClick={false} onClick={toggle}>
-      <Icon className="size-5" aria-hidden />
-      {isDark ? t.light : t.dark}
-    </MenuItem>
+    <AnimateIcon animateOnHover asChild>
+      <MenuItem closeOnClick={false} onClick={toggle}>
+        <Icon className="size-5" aria-hidden />
+        {isDark ? t.light : t.dark}
+      </MenuItem>
+    </AnimateIcon>
   )
 }

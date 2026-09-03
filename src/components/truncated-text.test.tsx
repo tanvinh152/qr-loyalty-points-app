@@ -37,8 +37,10 @@ function renderClamped(ui: React.ReactElement) {
 }
 
 /**
- * Base UI's tooltip popup carries no `role`, so the data-slot the wrapper in
- * `ui/tooltip.tsx` stamps on it is what identifies it.
+ * Radix renders the popup with role="tooltip", but it is queried by the
+ * data-slot `ui/tooltip.tsx` stamps on it so this keeps asserting on the
+ * wrapper's own contract rather than on Radix's internals — and so a
+ * not-rendered popup reads as null instead of throwing.
  */
 function popup() {
   return document.querySelector('[data-slot="tooltip-content"]')

@@ -223,12 +223,36 @@ export function makeRewardSchema(v: V) {
     is_exclusive: z.coerce.boolean(),
     is_featured: z.coerce.boolean(),
     is_active: z.coerce.boolean(),
-    // Minimum tier required to redeem. Blank = unrestricted, same as null.
-    min_tier_id: z.string().uuid().optional().or(z.literal("")),
+    // NO_SELECTION = unrestricted, same as null. The legacy "" is still
+    // accepted so a row saved before the sentinel round-trips unchanged.
+    min_tier_id: z
+      .string()
+      .uuid()
+      .optional()
+      .or(z.literal(""))
+      .or(z.literal(NO_SELECTION)),
   })
 }
 export type RewardInput = z.infer<ReturnType<typeof makeRewardSchema>>
 export type RewardFormValues = z.input<ReturnType<typeof makeRewardSchema>>
+
+/**
+ * The "no selection" value for every optional tier `<Select>`.
+ *
+ * NOT the empty string, which is what these fields used to carry: Radix reserves
+ * `value=""` for clearing a Select and THROWS at render on
+ * `<Select.Item value="">`. A crash, not a type error — nothing in tsc or the
+ * test suite would have caught it.
+ *
+ * It never reaches the database: `blankToNull` maps it back to null at the
+ * submit boundary, and the schemas below accept it in place of a uuid.
+ */
+export const NO_SELECTION = "__none__"
+
+/** Sentinel (and legacy "") -> null, for a nullable uuid column. */
+export function blankToNull(value: string | null | undefined) {
+  return !value || value === NO_SELECTION ? null : value
+}
 
 // Admin: one wedge of the lucky wheel — a `rewards` row with kind = 'spin'
 // (0022). `kind` is not a field here; saveSpinPrize stamps it.
@@ -303,12 +327,20 @@ export function makeAdjustSchema(v: V) {
       customer_id: z.string().uuid(),
       current_delta: delta,
       lifetime_delta: delta,
-      grant_tier_id: z.string().uuid().optional().or(z.literal("")),
+      grant_tier_id: z
+        .string()
+        .uuid()
+        .optional()
+        .or(z.literal(""))
+        .or(z.literal(NO_SELECTION)),
       reason: z.string().trim().min(1, v.reasonRequired).max(500, v.reasonTooLong),
     })
     // Mirrors the RPC's 'no-op adjustment' guard so the form catches it first.
     .refine(
-      (a) => a.current_delta !== 0 || a.lifetime_delta !== 0 || !!a.grant_tier_id,
+      (a) =>
+        a.current_delta !== 0 ||
+        a.lifetime_delta !== 0 ||
+        blankToNull(a.grant_tier_id) !== null,
       { message: v.adjustEmpty, path: ["current_delta"] },
     )
 }

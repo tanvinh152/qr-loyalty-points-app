@@ -111,7 +111,7 @@ export function PortalNav({
             // sighted mouse user gets instead.
             title={!bottom && collapsed ? item.label : undefined}
             className={cn(
-              "transition-colors",
+              "duration-quick ease-out-quart transition-colors",
               bottom
                 ? "relative grid h-full content-end justify-items-center gap-1 px-1 pb-3 text-center"
                 : // A filled pill, per the Azure Paw rail. The old left bar
@@ -141,7 +141,7 @@ export function PortalNav({
               // the inactive ones stay inline, so only the label row aligns.
               <span
                 className={cn(
-                  "grid place-items-center transition-all",
+                  "duration-base ease-back-out grid place-items-center transition-all",
                   active
                     ? // Same token family as the rail's active pill; in both
                       // themes these resolve to the same hex the bubble already

@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ChevronLeft } from "lucide-react"
+import { AnimateIcon } from "@/components/animate-ui/icons/icon"
+import { ChevronLeft } from "@/components/animate-ui/icons/chevron-left"
 
 import { SidebarToggle } from "@/components/portal-sidebar"
 import { resolvePortalTitle, type PortalTitle } from "@/lib/portal-title"
@@ -67,14 +68,16 @@ export function PortalHeader({
         {title && (
           <div className="flex min-w-0 items-center gap-1 max-md:hidden">
             {title.parent && (
-              <Link
-                href={title.parent}
-                aria-label={backLabel}
-                title={backLabel}
-                className="text-muted-foreground hover:text-foreground hover:bg-surface-container -ml-1 grid size-7 shrink-0 place-items-center rounded-full transition-colors"
-              >
-                <ChevronLeft className="size-4" aria-hidden />
-              </Link>
+              <AnimateIcon animateOnHover asChild>
+                <Link
+                  href={title.parent}
+                  aria-label={backLabel}
+                  title={backLabel}
+                  className="text-muted-foreground hover:text-foreground hover:bg-surface-container -ml-1 grid size-7 shrink-0 place-items-center rounded-full transition-colors"
+                >
+                  <ChevronLeft className="size-4" aria-hidden />
+                </Link>
+              </AnimateIcon>
             )}
             {/* A locator, not the page title — the page's own PageHeader is
                 that, and shouting it twice at two sizes helps nobody. */}

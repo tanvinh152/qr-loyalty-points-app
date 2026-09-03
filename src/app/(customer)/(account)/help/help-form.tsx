@@ -1,7 +1,8 @@
 "use client"
 
 import { useRef, useState, useTransition } from "react"
-import { Send } from "lucide-react"
+import { AnimateIcon } from "@/components/animate-ui/icons/icon"
+import { Send } from "@/components/animate-ui/icons/send"
 import { toast } from "sonner"
 
 import { FormError } from "@/components/form-error"
@@ -110,15 +111,17 @@ export function HelpForm({
 
       <FormError message={error} />
 
-      <Button
-        type="submit"
-        size="lg"
-        className="w-full md:w-fit"
-        disabled={isPending}
-      >
-        <Send className="size-4" aria-hidden />
-        {isPending ? h.submitting : h.submit}
-      </Button>
+      <AnimateIcon animateOnHover asChild>
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full md:w-fit"
+          disabled={isPending}
+        >
+          <Send className="size-4" aria-hidden />
+          {isPending ? h.submitting : h.submit}
+        </Button>
+      </AnimateIcon>
     </form>
   )
 }

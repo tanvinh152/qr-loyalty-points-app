@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom/vitest"
 import { cleanup } from "@testing-library/react"
+import { MotionGlobalConfig } from "motion/react"
 import { afterEach, vi } from "vitest"
 
 import { resetRoute } from "./route"
@@ -8,7 +9,7 @@ import { resetRoute } from "./route"
 // a global. This project runs with `globals: false` — every test imports from
 // "vitest" explicitly — so that registration never happens and renders would
 // pile up inside one file until getByRole starts finding two of everything.
-// Base UI portals make it worse: they mount into document.body, outside the
+// Radix portals make it worse: they mount into document.body, outside the
 // render container, so only a real unmount clears them.
 afterEach(() => {
   cleanup()
@@ -25,7 +26,7 @@ afterEach(() => {
 // `(prefers-color-scheme: dark)` through useSyncExternalStore whenever the
 // server passed no theme cookie. IntersectionObserver is what next/link uses to
 // decide when to prefetch, so every link in the tree needs it. The rest is what
-// Base UI reaches for while positioning a popup.
+// Radix reaches for while positioning a popup.
 class NoopObserver {
   observe() {}
   unobserve() {}
@@ -52,6 +53,38 @@ Object.assign(globalThis, {
 
 Element.prototype.scrollIntoView = vi.fn()
 Element.prototype.getAnimations = () => []
+
+// Radix drives Select (and every other primitive that tracks a drag) through
+// the Pointer Capture API, which jsdom does not implement at all. Without these
+// three, opening a Select throws and every test that picks an option dies.
+// scrollTo is what Select.Viewport calls to keep the highlighted item in view.
+Element.prototype.hasPointerCapture = vi.fn(() => false)
+Element.prototype.setPointerCapture = vi.fn()
+Element.prototype.releasePointerCapture = vi.fn()
+Element.prototype.scrollTo = vi.fn()
+
+// jsdom implements no WAAPI, so Element.animate is undefined. Motion feature-
+// detects on exactly that and falls back to its rAF driver, which is the path
+// we want in tests — but Radix's presence layer calls getAnimations()/animate()
+// directly, so the method has to exist and return something thenable.
+Element.prototype.animate = () =>
+  ({
+    finished: Promise.resolve(),
+    cancel() {},
+    play() {},
+    pause() {},
+    finish() {},
+    addEventListener() {},
+    removeEventListener() {},
+  }) as unknown as Animation
+
+// Motion's own test escape hatch: every animation jumps straight to its end
+// state, synchronously. This is not cosmetic. Under jsdom an AnimatePresence
+// exit animation is driven by timers that no test advances, so a closed popup
+// would stay mounted forever and every queryBy*-is-null assertion would pass or
+// fail for the wrong reason. Preferred over <MotionConfig reducedMotion> because
+// it is global — truncated-text.test.tsx renders bare, outside every provider.
+MotionGlobalConfig.skipAnimations = true
 
 // Both modules below are server-boundary code that cannot load in jsdom, and no
 // component test wants the real thing. `next/navigation` has no router outside a

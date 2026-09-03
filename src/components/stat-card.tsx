@@ -1,6 +1,6 @@
 import Link from "next/link"
-import type { LucideIcon } from "lucide-react"
 
+import type { AppIcon } from "@/components/ui/icon"
 import { cn } from "@/lib/utils"
 
 /**
@@ -22,7 +22,7 @@ export function StatCard({
   label: string
   value: string | number
   hint?: string
-  icon: LucideIcon
+  icon: AppIcon
   /** `tier` reads `--tier` from an enclosing `tierAccentClass` wash. */
   tone?: "primary" | "secondary" | "neutral" | "tier"
   /** `display` is the hero pair the dashboard opens on — bigger chip and number. */
@@ -45,7 +45,8 @@ export function StatCard({
       className={cn(
         "border-border bg-card relative flex flex-col overflow-hidden rounded-2xl border p-5 sm:p-6",
         highlight && "border-primary-container/40 bg-primary-container/10",
-        href && "hover:border-primary/40 transition-colors",
+        href &&
+          "hover:border-primary/40 duration-quick ease-out-quart transition-[colors,transform,box-shadow] hover:-translate-y-0.5 hover:shadow-elevated",
         className,
       )}
     >

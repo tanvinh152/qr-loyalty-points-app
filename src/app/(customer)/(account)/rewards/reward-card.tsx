@@ -82,29 +82,27 @@ export function RewardCard({
     // Redeeming spends points irreversibly, so it goes through a
     // confirmation dialog.
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger
-        render={
-          <Button
-            type="button"
-            // The mockup's list line carries an OUTLINED "Đổi" — the row already
-            // sits inside a card whose own CTA is elsewhere, and a solid button
-            // per row turns the list into a wall of blue. The feature tile and
-            // the shop card both keep the solid one: there the button IS the
-            // card's action.
-            variant={variant === "row" ? "secondary" : "default"}
-            size={variant === "feature" ? "lg" : "sm"}
-            disabled={disabled}
-          />
-        }
-      >
-        {isPending && <Loader2 className="size-4 animate-spin" aria-hidden />}
-        {isPending
-          ? r.redeeming
-          : tierLocked
-            ? r.tierRequired(lockedFor.name)
-            : tooExpensive
-              ? r.notEnough
-              : r.redeem}
+      <AlertDialogTrigger asChild>
+        <Button
+          type="button"
+          // The mockup's list line carries an OUTLINED "Đổi" — the row already
+          // sits inside a card whose own CTA is elsewhere, and a solid button
+          // per row turns the list into a wall of blue. The feature tile and
+          // the shop card both keep the solid one: there the button IS the
+          // card's action.
+          variant={variant === "row" ? "secondary" : "default"}
+          size={variant === "feature" ? "lg" : "sm"}
+          disabled={disabled}
+        >
+          {isPending && <Loader2 className="size-4 animate-spin" aria-hidden />}
+          {isPending
+            ? r.redeeming
+            : tierLocked
+              ? r.tierRequired(lockedFor.name)
+              : tooExpensive
+                ? r.notEnough
+                : r.redeem}
+        </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -246,7 +244,7 @@ export function RewardCard({
   return (
     <div
       className={cn(
-        "border-border bg-card group flex flex-col overflow-hidden rounded-3xl border",
+        "border-border bg-card group duration-quick ease-out-quart flex flex-col overflow-hidden rounded-3xl border transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-elevated",
         className,
       )}
     >
@@ -260,7 +258,7 @@ export function RewardCard({
             alt=""
             width={480}
             height={192}
-            className="h-48 w-full object-cover"
+            className="duration-slow ease-out-quart h-48 w-full object-cover transition-transform group-hover:scale-105"
             loading="lazy"
           />
         ) : (
@@ -276,7 +274,7 @@ export function RewardCard({
             A touch screen never hovers, so there it drops the scrim and parks
             the button in the corner permanently — otherwise the only way to
             redeem on a phone is to tab to an invisible target. */}
-        <div className="absolute inset-0 grid place-items-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 pointer-coarse:inset-auto pointer-coarse:right-3 pointer-coarse:bottom-3 pointer-coarse:bg-transparent pointer-coarse:opacity-100">
+        <div className="absolute inset-0 grid place-items-center bg-black/50 duration-quick ease-out-quart opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 pointer-coarse:inset-auto pointer-coarse:right-3 pointer-coarse:bottom-3 pointer-coarse:bg-transparent pointer-coarse:opacity-100">
           {action}
         </div>
       </div>

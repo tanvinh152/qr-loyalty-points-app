@@ -11,6 +11,7 @@ import {
   type MilestoneInput,
   type RewardInput,
   type SpinPrizeInput,
+  blankToNull,
 } from "@/lib/schemas"
 import { deleteImageByUrl } from "@/lib/storage"
 
@@ -53,7 +54,7 @@ export async function saveReward(input: RewardInput): Promise<SaveState> {
     description: description || null,
     image_url: image_url || null,
     category: category || null,
-    min_tier_id: min_tier_id || null,
+    min_tier_id: blankToNull(min_tier_id),
   }
 
   const supabase = await createClient()

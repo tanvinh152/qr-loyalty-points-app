@@ -1,6 +1,7 @@
 import Link from "next/link"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-
+import { AnimateIcon } from "@/components/animate-ui/icons/icon"
+import { ChevronLeft } from "@/components/animate-ui/icons/chevron-left"
+import { ChevronRight } from "@/components/animate-ui/icons/chevron-right"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -35,8 +36,10 @@ export function PageLink({
     )
   }
   return (
-    <Link href={href} className={className} aria-label={label}>
-      <Icon className="size-[18px]" aria-hidden />
-    </Link>
+    <AnimateIcon animateOnHover asChild>
+      <Link href={href} className={className} aria-label={label}>
+        <Icon className="size-[18px]" aria-hidden />
+      </Link>
+    </AnimateIcon>
   )
 }

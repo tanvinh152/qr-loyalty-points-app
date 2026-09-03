@@ -71,13 +71,11 @@ export function LoginForm() {
             `title` attribute was not. */}
         <div className="flex justify-end">
           <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button type="button" variant="link" size="xs">
-                  {l.forgot}
-                </Button>
-              }
-            />
+            <TooltipTrigger asChild>
+              <Button type="button" variant="link" size="xs">
+                {l.forgot}
+              </Button>
+            </TooltipTrigger>
             <TooltipContent>{l.forgotHint}</TooltipContent>
           </Tooltip>
         </div>

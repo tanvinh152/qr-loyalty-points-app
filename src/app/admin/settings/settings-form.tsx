@@ -136,7 +136,6 @@ export function SettingsForm({ initial }: Props) {
         {/* The action reads `rounding` off the form, so the Select mirrors its
             value into a hidden field. */}
         <Select
-          items={roundingItems}
           name="rounding"
           defaultValue={initial.rounding}
         >

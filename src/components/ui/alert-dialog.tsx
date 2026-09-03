@@ -1,38 +1,41 @@
 "use client"
 
 import * as React from "react"
-import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog"
 
-import { cn } from "@/lib/utils"
+import {
+  AlertDialog,
+  AlertDialogCancel as AlertDialogCancelPrimitive,
+  AlertDialogContent as AlertDialogContentPrimitive,
+  AlertDialogDescription as AlertDialogDescriptionPrimitive,
+  AlertDialogOverlay as AlertDialogOverlayPrimitive,
+  AlertDialogPortal,
+  AlertDialogTitle as AlertDialogTitlePrimitive,
+  AlertDialogTrigger,
+} from "@/components/animate-ui/primitives/radix/alert-dialog"
 import { Button } from "@/components/ui/button"
+import { T } from "@/lib/motion/tokens"
+import { cn } from "@/lib/utils"
 
-function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
-  return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />
-}
-
-function AlertDialogTrigger({ ...props }: AlertDialogPrimitive.Trigger.Props) {
-  return (
-    <AlertDialogPrimitive.Trigger data-slot="alert-dialog-trigger" {...props} />
-  )
-}
-
-function AlertDialogPortal({ ...props }: AlertDialogPrimitive.Portal.Props) {
-  return (
-    <AlertDialogPrimitive.Portal data-slot="alert-dialog-portal" {...props} />
-  )
-}
+// Same arrangement as ui/dialog.tsx: presence is <AnimatePresence> inside
+// Animate UI's AlertDialogPortal, so the `data-open:` / `data-closed:` animate
+// utilities and the `duration-quick ease-out-quart` that timed them are gone.
+// Everything the design owns — the `size` grid, the media slot, the footer's
+// bleed — is rebuilt here on top, unchanged.
 
 function AlertDialogOverlay({
   className,
   ...props
-}: AlertDialogPrimitive.Backdrop.Props) {
+}: React.ComponentProps<typeof AlertDialogOverlayPrimitive>) {
   return (
-    <AlertDialogPrimitive.Backdrop
-      data-slot="alert-dialog-overlay"
+    <AlertDialogOverlayPrimitive
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 isolate z-50 bg-black/10 supports-backdrop-filter:backdrop-blur-xs",
         className,
       )}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: T.exit }}
+      transition={T.base}
       {...props}
     />
   )
@@ -42,19 +45,22 @@ function AlertDialogContent({
   className,
   size = "default",
   ...props
-}: AlertDialogPrimitive.Popup.Props & {
+}: React.ComponentProps<typeof AlertDialogContentPrimitive> & {
   size?: "default" | "sm"
 }) {
   return (
     <AlertDialogPortal>
       <AlertDialogOverlay />
-      <AlertDialogPrimitive.Popup
-        data-slot="alert-dialog-content"
+      <AlertDialogContentPrimitive
         data-size={size}
         className={cn(
-          "group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-6 rounded-3xl bg-popover p-6 text-popover-foreground shadow-elevated ring-1 ring-foreground/10 duration-100 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-6 rounded-3xl bg-popover p-6 text-popover-foreground shadow-elevated ring-1 ring-foreground/10 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm",
           className,
         )}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95, transition: T.exit }}
+        transition={T.base}
         {...props}
       />
     </AlertDialogPortal>
@@ -112,10 +118,9 @@ function AlertDialogMedia({
 function AlertDialogTitle({
   className,
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Title>) {
+}: React.ComponentProps<typeof AlertDialogTitlePrimitive>) {
   return (
-    <AlertDialogPrimitive.Title
-      data-slot="alert-dialog-title"
+    <AlertDialogTitlePrimitive
       className={cn(
         "font-heading text-base font-medium sm:group-data-[size=default]/alert-dialog-content:group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2",
         className,
@@ -128,10 +133,9 @@ function AlertDialogTitle({
 function AlertDialogDescription({
   className,
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Description>) {
+}: React.ComponentProps<typeof AlertDialogDescriptionPrimitive>) {
   return (
-    <AlertDialogPrimitive.Description
-      data-slot="alert-dialog-description"
+    <AlertDialogDescriptionPrimitive
       className={cn(
         "text-sm text-balance text-muted-foreground md:text-pretty *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
         className,
@@ -141,6 +145,9 @@ function AlertDialogDescription({
   )
 }
 
+// Deliberately NOT wrapped in Radix's `Action`: this project's confirmations
+// run a server action and decide for themselves when to close, and Action
+// closes the dialog on click no matter what the handler is still doing.
 function AlertDialogAction({
   className,
   ...props
@@ -158,16 +165,25 @@ function AlertDialogCancel({
   className,
   variant = "outline",
   size = "default",
+  children,
   ...props
-}: AlertDialogPrimitive.Close.Props &
+}: React.ComponentProps<typeof AlertDialogCancelPrimitive> &
   Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {
   return (
-    <AlertDialogPrimitive.Close
-      data-slot="alert-dialog-cancel"
-      className={cn(className)}
-      render={<Button variant={variant} size={size} />}
-      {...props}
-    />
+    // `children` is pulled out and rendered INSIDE the Button rather than left
+    // in `props`: the Button is Cancel's slotted child, so anything Radix
+    // spread as `children` would be overwritten by it and the button would come
+    // out empty — no label, no accessible name.
+    <AlertDialogCancelPrimitive asChild {...props}>
+      <Button
+        data-slot="alert-dialog-cancel"
+        variant={variant}
+        size={size}
+        className={cn(className)}
+      >
+        {children}
+      </Button>
+    </AlertDialogCancelPrimitive>
   )
 }
 

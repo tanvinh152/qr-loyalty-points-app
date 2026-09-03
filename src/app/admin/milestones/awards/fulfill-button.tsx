@@ -1,7 +1,9 @@
 "use client"
 
 import { useTransition } from "react"
-import { Hand, Loader2, Undo2 } from "lucide-react"
+import { Hand, Undo2 } from "lucide-react"
+
+import { PendingIcon } from "@/components/pending-icon"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -46,13 +48,9 @@ export function FulfillButton({
       onClick={toggle}
       disabled={isPending}
     >
-      {isPending ? (
-        <Loader2 className="animate-spin" aria-hidden />
-      ) : fulfilled ? (
-        <Undo2 aria-hidden />
-      ) : (
-        <Hand aria-hidden />
-      )}
+      <PendingIcon pending={isPending}>
+        {fulfilled ? <Undo2 aria-hidden /> : <Hand aria-hidden />}
+      </PendingIcon>
       {fulfilled ? m.undoFulfilled : m.markFulfilled}
     </Button>
   )

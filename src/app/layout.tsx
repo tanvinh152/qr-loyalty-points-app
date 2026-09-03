@@ -7,6 +7,7 @@ import { getLocale, getMessages } from "@/lib/i18n/server"
 import { I18nProvider } from "@/lib/i18n/provider"
 import { getTheme } from "@/lib/theme/server"
 import { ThemeProvider } from "@/lib/theme/provider"
+import { MotionProvider } from "@/lib/motion/provider"
 import { ThemeInitScript } from "@/lib/theme/theme-init-script"
 
 // The Azure Paw mockups' typeface. "vietnamese" is not optional here — vi is
@@ -58,10 +59,15 @@ export default async function RootLayout({
         {theme === null && <ThemeInitScript />}
         <I18nProvider locale={locale}>
           <ThemeProvider initial={theme}>
-            <TooltipProvider>{children}</TooltipProvider>
+            <MotionProvider>
+              <TooltipProvider>{children}</TooltipProvider>
+              {/* INSIDE ThemeProvider: the toaster reads useTheme() so sonner's
+                  own richColors / description / close-button palettes switch
+                  with the page, and that hook throws outside the provider. */}
+              <Toaster richColors />
+            </MotionProvider>
           </ThemeProvider>
         </I18nProvider>
-        <Toaster richColors />
       </body>
     </html>
   )

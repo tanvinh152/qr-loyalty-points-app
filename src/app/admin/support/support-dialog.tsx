@@ -55,13 +55,11 @@ export function SupportDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        render={
-          <Button variant="outline" size="sm" type="button">
-            {s.view}
-          </Button>
-        }
-      />
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" type="button">
+          {s.view}
+        </Button>
+      </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

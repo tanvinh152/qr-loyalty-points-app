@@ -30,6 +30,7 @@ import { TruncatedText } from "@/components/truncated-text"
 import { cn, formatVnd } from "@/lib/utils"
 import { getLocale, getMessages } from "@/lib/i18n/server"
 import { getPublishedPosts } from "@/lib/blog"
+import { STAGGER } from "@/lib/motion/tokens"
 import {
   buildRoadmap,
   claimableCount,
@@ -66,6 +67,22 @@ export async function generateMetadata() {
 // most now that the wheel is a header control (check-in and the milestone
 // ladder). A lookup rather than arithmetic because Tailwind only sees literal
 // classes; add the rung back if a third tile ever returns.
+// Bento entrance. Pure CSS from tw-animate-css — `--animate-in` reads
+// `--tw-duration` and `--tw-ease`, which is what `duration-slow ease-out-quart`
+// set — so it runs inside this Server Component with no client JS, and the
+// app-wide prefers-reduced-motion rule in globals.css collapses it for free.
+// `fill-mode-both` holds frame zero through the delay so nothing flashes at
+// final position first.
+//
+// Only the five TOP-LEVEL regions stagger, never a row or a list item.
+//
+// A CSS animation replays only when the element is CREATED. router.refresh()
+// (fired by the wheel, and by every theme toggle) re-renders this tree and
+// React reconciles by position — no remount, no replay. That is why no tile
+// below may ever be given a changing `key`.
+const TILE_ENTER =
+  "animate-in fade-in-0 slide-in-from-bottom-2 duration-slow ease-out-quart fill-mode-both"
+
 const ENGAGEMENT_SPAN: Record<number, string> = {
   1: "lg:col-span-12",
   2: "lg:col-span-6",
@@ -186,8 +203,11 @@ export default async function DashboardPage() {
     checkinPoints > 0,
     milestoneNodes.length > 0,
   ].filter(Boolean).length
-  const engagementSpan =
-    ENGAGEMENT_SPAN[engagementCount] ?? ENGAGEMENT_SPAN[1]
+  const engagementSpan = cn(
+    TILE_ENTER,
+    STAGGER[2],
+    ENGAGEMENT_SPAN[engagementCount] ?? ENGAGEMENT_SPAN[1],
+  )
 
   // Every tile in the bento carries the same panel treatment, so the summary is
   // a plain function rather than a nested component: it renders in one of two
@@ -251,7 +271,13 @@ export default async function DashboardPage() {
             a gem wash cannot carry white text at five different hues. Every
             colour in here comes from --hero-*, the one token group that is
             legible on top of this gradient. */}
-        <section className="bg-hero text-hero-ink shadow-elevated relative overflow-hidden rounded-4xl p-6 md:p-8 lg:col-span-8">
+        <section
+          className={cn(
+            TILE_ENTER,
+            STAGGER[0],
+            "bg-hero text-hero-ink shadow-elevated relative overflow-hidden rounded-4xl p-6 md:p-8 lg:col-span-8",
+          )}
+        >
           <PawPrint
             aria-hidden
             className="pointer-events-none absolute -top-10 -right-10 size-56 opacity-10"
@@ -365,10 +391,10 @@ export default async function DashboardPage() {
               currentPoints={customer.current_points}
               lockedFor={lockedFor(featured)}
               variant="feature"
-              className="lg:col-span-4"
+              className={cn(TILE_ENTER, STAGGER[1], "lg:col-span-4")}
             />
           )
-          : summaryCard("lg:col-span-4")}
+          : summaryCard(cn(TILE_ENTER, STAGGER[1], "lg:col-span-4"))}
 
         {/* Daily-expiring actions, so they sit ABOVE the informational panels —
             a deliberate departure from the mockup's row order, which has no
@@ -439,7 +465,7 @@ export default async function DashboardPage() {
           <SectionCard
             chrome="plain"
             title={t.customer.rewards.title}
-            className="flex flex-col lg:col-span-6"
+            className={cn(TILE_ENTER, STAGGER[3], "flex flex-col lg:col-span-6")}
             bodyClassName="grid grow content-start gap-2 p-4 sm:p-6"
             actions={
               <Link href="/rewards" className={VIEW_ALL}>
@@ -472,6 +498,8 @@ export default async function DashboardPage() {
           // The same reasoning that forbids a hardcoded md:pl-64 mirror of the
           // rail's width forbids guessing this tile's width from the viewport.
           className={cn(
+            TILE_ENTER,
+            STAGGER[3],
             "@container/orders flex flex-col",
             teasers.length > 0 ? "lg:col-span-6" : "lg:col-span-12",
           )}
@@ -597,14 +625,17 @@ export default async function DashboardPage() {
         {/* Displaced by the featured gift, so it takes a full row of its own —
             a 12 always fills its row, which is why this can never leave a
             hole. */}
-        {!summaryInAside && summaryCard("lg:col-span-12")}
+        {!summaryInAside &&
+          summaryCard(cn(TILE_ENTER, STAGGER[4], "lg:col-span-12"))}
 
         {/* Deliberately NOT a SectionCard. The mockup ends the page with a bare
             heading over a 3-up grid: the post tiles are already cards, and
             nesting them inside a fourth panel gives the strip a frame nothing
             else on the page has. */}
         {posts.length > 0 && (
-          <section className="col-span-full grid gap-4 sm:gap-6">
+          <section
+            className={cn(TILE_ENTER, STAGGER[4], "col-span-full grid gap-4 sm:gap-6")}
+          >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-headline-md">{d.updatesTitle}</h2>
               <Link href="/blog" className={VIEW_ALL}>

@@ -10,6 +10,8 @@ import {
   makeRewardSchema,
   makeSpinPrizeSchema,
   makeTierScheduleSchema,
+  NO_SELECTION,
+  blankToNull,
 } from "./schemas"
 
 // Every message resolves to its own key, so assertions name the *rule* that
@@ -378,6 +380,22 @@ describe("makeAdjustSchema", () => {
     })
   })
 
+  it("reads the no-selection sentinel as no tier granted", () => {
+    // NO_SELECTION exists because Radix's Select throws on value="". It must
+    // therefore behave EXACTLY as "" did here, or an admin who leaves the tier
+    // dropdown alone would slip past the RPC's own no-op guard.
+    const result = schema.safeParse({
+      ...base,
+      current_delta: "0",
+      lifetime_delta: "0",
+      grant_tier_id: NO_SELECTION,
+    })
+    expect(issues(result)).toContainEqual({
+      message: "adjustEmpty",
+      path: "current_delta",
+    })
+  })
+
   it("accepts a tier grant with no point movement", () => {
     // A direct tier grant is a real adjustment on its own since 0012.
     expect(
@@ -435,5 +453,24 @@ describe("makeProfileSchema", () => {
       message: "invalidDate",
       path: "date_of_birth",
     })
+  })
+})
+
+// The sentinel must never reach a uuid column. Both admin forms seed their
+// optional tier Select with it, and both server actions run it through here.
+describe("blankToNull", () => {
+  it("maps the sentinel to null", () => {
+    expect(blankToNull(NO_SELECTION)).toBeNull()
+  })
+
+  it("still maps the legacy empty string to null", () => {
+    // Rows saved before the sentinel landed round-trip unchanged.
+    expect(blankToNull("")).toBeNull()
+    expect(blankToNull(undefined)).toBeNull()
+    expect(blankToNull(null)).toBeNull()
+  })
+
+  it("passes a real uuid straight through", () => {
+    expect(blankToNull(UUID)).toBe(UUID)
   })
 })

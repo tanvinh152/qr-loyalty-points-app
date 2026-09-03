@@ -1,55 +1,58 @@
 "use client"
 
-import { Drawer as DrawerPrimitive } from "@base-ui/react/drawer"
+import * as React from "react"
 
+import {
+  Sheet as Drawer,
+  SheetClose as DrawerClose,
+  SheetContent as SheetContentPrimitive,
+  SheetOverlay,
+  SheetPortal,
+  SheetTitle as SheetTitlePrimitive,
+  SheetTrigger as DrawerTrigger,
+} from "@/components/animate-ui/primitives/radix/sheet"
+import { T } from "@/lib/motion/tokens"
 import { cn } from "@/lib/utils"
 
-// A bottom sheet, wrapping Base UI's Drawer the way ui/dialog.tsx wraps Dialog.
-// Deliberately minimal — only the parts the phone account menu uses. Base UI
-// ships more (Viewport, SwipeArea, Indent, snap points); add a part when
-// something needs it rather than maintaining surface nothing calls.
+// A bottom sheet, wrapping Animate UI's Radix sheet the way ui/dialog.tsx wraps
+// its dialog. Deliberately minimal — only the parts the phone account menu uses.
 //
-// `swipeDirection` defaults to "down", which is exactly a swipe-to-dismiss
-// bottom sheet, so it is not passed. The popup translates itself through
-// `--drawer-swipe-movement-y` while dragging; the `translate-y-full` closed
-// state below is only the open/close transition.
-
-function Drawer({ ...props }: DrawerPrimitive.Root.Props) {
-  return <DrawerPrimitive.Root data-slot="drawer" {...props} />
-}
-
-function DrawerTrigger({ ...props }: DrawerPrimitive.Trigger.Props) {
-  return <DrawerPrimitive.Trigger data-slot="drawer-trigger" {...props} />
-}
-
-function DrawerClose({ ...props }: DrawerPrimitive.Close.Props) {
-  return <DrawerPrimitive.Close data-slot="drawer-close" {...props} />
-}
+// WHAT THIS GAVE UP. It used to be vaul, and vaul brought the parts that are
+// genuinely hard on a phone: a drag that yields to the nested scroll container
+// below, velocity-based dismiss, iOS scroll-lock and safe-area handling.
+// `primitives-radix-sheet` has NONE of them — grep it for `drag`, `swipe` or
+// `snap` and you get nothing — so the sheet now closes only by the scrim, the
+// Escape key or an explicit control. That is a real regression on the app's
+// primary device, accepted deliberately to put the whole ui/ layer on one
+// engine. `vaul` is still in package.json: reverting is this one file.
+//
+// The mitigation is the labelled close button below — without a swipe, the
+// sheet needs a visible way out that is not the scrim.
 
 function DrawerContent({
   className,
   children,
   ...props
-}: DrawerPrimitive.Popup.Props) {
+}: React.ComponentProps<typeof SheetContentPrimitive>) {
   return (
-    <DrawerPrimitive.Portal>
-      <DrawerPrimitive.Backdrop
+    <SheetPortal>
+      <SheetOverlay
         data-slot="drawer-overlay"
-        className="fixed inset-0 isolate z-50 bg-black/40 duration-200 supports-backdrop-filter:backdrop-blur-xs data-closed:opacity-0 data-starting-style:opacity-0"
+        className="fixed inset-0 isolate z-50 bg-black/40 supports-backdrop-filter:backdrop-blur-xs"
       />
-      <DrawerPrimitive.Popup
+      <SheetContentPrimitive
         data-slot="drawer-content"
+        side="bottom"
+        transition={T.base}
         className={cn(
-          "bg-popover text-popover-foreground shadow-elevated ring-foreground/10 fixed inset-x-0 bottom-0 z-50 flex max-h-[calc(100dvh-3rem)] flex-col rounded-t-3xl ring-1 outline-none",
-          "transition-transform duration-200 data-closed:translate-y-full data-starting-style:translate-y-full",
-          // No transition while the finger is down, or the sheet lags the drag.
-          "data-swiping:transition-none",
+          "bg-popover text-popover-foreground shadow-elevated ring-foreground/10 z-50 flex max-h-[calc(100dvh-3rem)] flex-col rounded-t-3xl ring-1 outline-none",
           className,
         )}
         {...props}
       >
-        {/* The grab handle from the mockup. Decorative — the whole sheet is the
-            swipe target, so it carries no role of its own. */}
+        {/* The grab handle from the mockup. Decorative, and now honestly so:
+            with vaul gone there is no swipe for it to advertise, but it is what
+            reads as "sheet" in the design. */}
         <div
           aria-hidden
           className="bg-muted-foreground/40 mx-auto mt-3 h-1 w-10 shrink-0 rounded-full"
@@ -57,14 +60,17 @@ function DrawerContent({
         <div className="grid gap-1 overflow-y-auto overscroll-contain p-4 pb-[calc(--spacing(4)+env(safe-area-inset-bottom))]">
           {children}
         </div>
-      </DrawerPrimitive.Popup>
-    </DrawerPrimitive.Portal>
+      </SheetContentPrimitive>
+    </SheetPortal>
   )
 }
 
-function DrawerTitle({ className, ...props }: DrawerPrimitive.Title.Props) {
+function DrawerTitle({
+  className,
+  ...props
+}: React.ComponentProps<typeof SheetTitlePrimitive>) {
   return (
-    <DrawerPrimitive.Title
+    <SheetTitlePrimitive
       data-slot="drawer-title"
       className={cn(
         "text-label-md text-muted-foreground px-3 pt-1 pb-2 uppercase",

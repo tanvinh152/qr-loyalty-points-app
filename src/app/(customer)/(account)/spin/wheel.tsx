@@ -1,11 +1,15 @@
 "use client"
 
 import { useEffect, useRef, useState, useTransition } from "react"
+import { AnimatePresence, animate, m } from "motion/react"
 import { useRouter } from "next/navigation"
-import { Ban, Coins, Gift, Loader2, Sparkles } from "lucide-react"
+import { Ban, Coins, Gift, Sparkles } from "lucide-react"
+
+import { PendingIcon } from "@/components/pending-icon"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { EASE, SPIN_MS, T } from "@/lib/motion/tokens"
 import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n/provider"
 import type { SpinPrizeType, SpinResult } from "@/lib/db-types"
@@ -27,7 +31,19 @@ const TYPE_ICONS = {
 
 /** Full turns added on top of the alignment, so the wheel reads as a spin. */
 const TURNS = 6
-const DURATION_MS = 4200
+
+// The throw, in three phases. A real wheel is not one deceleration curve: it is
+// pulled back, thrown, and then rocks into its detent. CSS cannot change easing
+// part-way through one animation, which is the whole reason this is driven
+// imperatively by Motion rather than by a transition.
+//
+// SPIN_MS (src/lib/motion/tokens.ts) is the throw itself; the wind-up and the
+// settle are added on top, so the whole gesture is a little longer.
+const WINDUP_MS = 350
+const SETTLE_MS = 200
+const WINDUP_DEG = 8
+const OVERSHOOT_DEG = 4
+const TOTAL_MS = WINDUP_MS + SPIN_MS + SETTLE_MS
 /** Geometry only — the SVG scales to its box, so this is not a pixel size. */
 const R = 100
 /** Where a wedge's label sits, as a share of the radius. */
@@ -118,7 +134,6 @@ export function Wheel({
   const s = t.customer.spin
   const router = useRouter()
 
-  const [rotation, setRotation] = useState(0)
   const [spinning, setSpinning] = useState(false)
   const [spinsLeft, setSpinsLeft] = useState(initialSpinsLeft)
   const [result, setResult] = useState<SpinResult | null>(null)
@@ -126,6 +141,11 @@ export function Wheel({
   // Cleared on unmount so a spin still in flight cannot set state afterwards —
   // navigating away mid-animation is the ordinary case, not an edge one.
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // A ref, not state. Motion writes the transform straight onto the <svg>
+  // while the wheel is turning, so a re-render that also set `transform`
+  // from the style prop would fight it mid-throw.
+  const rotation = useRef(0)
+  const svg = useRef<SVGSVGElement>(null)
   useEffect(
     () => () => {
       if (timer.current) clearTimeout(timer.current)
@@ -156,29 +176,64 @@ export function Wheel({
       // not on this wheel (a slice went drawable after the page rendered) just
       // spins without alignment rather than stopping on the wrong wedge.
       const mid = index * step + step / 2
-      const align = (((-(rotation + mid) % 360) + 360) % 360)
+      const align = (((-(rotation.current + mid) % 360) + 360) % 360)
+      const from = rotation.current
       const target =
-        index < 0 ? rotation + TURNS * 360 : rotation + TURNS * 360 + align
+        index < 0 ? from + TURNS * 360 : from + TURNS * 360 + align
 
+      // Read inside the handler, never during render: the server snapshot is
+      // always `false` and a render-time read would disagree with it.
       const reduced =
         typeof window !== "undefined" &&
         window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      const duration = reduced ? 0 : DURATION_MS
 
+      rotation.current = target
       setSpinning(true)
-      setRotation(target)
-      // A timeout rather than `transitionend`: at duration 0 the transition
-      // never fires an event, and the result must still be shown.
-      timer.current = setTimeout(() => {
-        setSpinning(false)
-        setSpinsLeft(won.spins_left)
-        setResult(won)
-        // Now that nothing is animating: `refresh` for the server-rendered
-        // chrome around the modal (the header's points pill and its badge),
-        // `onSettled` for the modal's own win list.
-        router.refresh()
-        onSettled?.()
-      }, duration)
+
+      const node = svg.current
+      if (!reduced && node) {
+        animate(
+          node,
+          {
+            rotate: [
+              from,
+              // Pull back, throw past the mark, then rock into the detent.
+              from - WINDUP_DEG,
+              target + OVERSHOOT_DEG,
+              target,
+            ],
+          },
+          {
+            duration: TOTAL_MS / 1000,
+            times: [
+              0,
+              WINDUP_MS / TOTAL_MS,
+              (WINDUP_MS + SPIN_MS) / TOTAL_MS,
+              1,
+            ],
+            ease: [EASE.outQuart, EASE.outExpo, EASE.backOut],
+          },
+        )
+      } else if (node) {
+        node.style.transform = `rotate(${target}deg)`
+      }
+
+      // A timeout rather than the animation's own `finished`: at reduced motion
+      // there is no animation to await, and the result must still be shown.
+      // Keeping ONE settle path also keeps the unmount guard above sufficient.
+      timer.current = setTimeout(
+        () => {
+          setSpinning(false)
+          setSpinsLeft(won.spins_left)
+          setResult(won)
+          // Now that nothing is animating: `refresh` for the server-rendered
+          // chrome around the modal (the header's points pill and its badge),
+          // `onSettled` for the modal's own win list.
+          router.refresh()
+          onSettled?.()
+        },
+        reduced ? 0 : TOTAL_MS,
+      )
     })
   }
 
@@ -196,23 +251,26 @@ export function Wheel({
 
         <div className="border-border bg-card rounded-full border-4 p-2">
           <svg
+            ref={svg}
             viewBox={`${-R} ${-R} ${R * 2} ${R * 2}`}
             role="img"
             aria-label={s.wheelLabel}
             className="block size-full"
-            style={{
-              transform: `rotate(${rotation}deg)`,
-              transition: spinning
-                ? `transform ${DURATION_MS}ms cubic-bezier(0.16, 1, 0.3, 1)`
-                : undefined,
-            }}
+            // Promoted to its own layer only WHILE turning. The trigger for
+            // this dialog lives in the header, so a standing `will-change`
+            // would cost a compositor layer on every route.
+            style={{ willChange: spinning ? "transform" : undefined }}
           >
             {slices.map((slice, index) => {
               const mid = index * step + step / 2
               const label = polar(mid, R * LABEL_R)
               const lines = wedgeLines(slice.name)
               return (
-                <g key={slice.id}>
+                <g
+                  key={slice.id}
+                  data-slot="wheel-wedge"
+                  data-won={result?.prize_id === slice.id ? "" : undefined}
+                >
                   {slices.length === 1 ? (
                     <circle
                       r={R}
@@ -276,68 +334,93 @@ export function Wheel({
           this whole component is already inside one, and a second popup over
           the first would hide the wedge that just came to rest under the
           pointer — the one thing the animation was for. */}
-      {result ? (
-        <div className="bg-surface-container grid w-full justify-items-center gap-2 rounded-2xl p-4 text-center">
-          <span
-            className={cn(
-              "grid size-12 place-items-center rounded-full",
-              result.prize_type === "none"
-                ? "bg-card text-muted-foreground"
-                : "bg-primary-container/20 text-primary",
-            )}
-          >
-            <ResultIcon className="size-6" aria-hidden />
-          </span>
-          {/* Announced, not just drawn: the spin is a pointer-driven action
-              whose whole answer arrives after the click. */}
-          <div role="status" className="grid gap-1">
-            <p className="text-label-lg font-semibold">
-              {/* "You won!" over a blank wedge would be a taunt. */}
-              {result.prize_type === "none" ? s.noPrizeLabel : s.resultTitle}
-            </p>
-            {result.prize_type !== "none" && (
-              <p className="text-headline-md">{result.prize_name}</p>
-            )}
-            <p className="text-body-sm text-muted-foreground">
-              {result.prize_type === "points"
-                ? s.resultPoints(result.points_awarded)
-                : result.prize_type === "gift"
-                  ? s.resultGift
-                  : spinsLeft > 0
-                    ? s.resultNone
-                    : s.resultNoneDone}
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="secondary"
-            className="mt-1 rounded-full"
-            onClick={() => setResult(null)}
-          >
-            {s.resultClose}
-          </Button>
-        </div>
-      ) : (
-        <div className="grid justify-items-center gap-2">
-          <Button
-            type="button"
-            size="lg"
-            onClick={handleSpin}
-            disabled={!canSpin}
-            className="min-w-44 rounded-full"
-          >
-            {busy ? (
-              <Loader2 className="size-5 animate-spin" aria-hidden />
-            ) : (
-              <Sparkles className="size-5" aria-hidden />
-            )}
-            {busy ? s.spinning : spinsLeft > 0 ? s.spin : s.noSpinsLeft}
-          </Button>
-          <p className="text-body-sm text-muted-foreground">
-            {spinsLeft > 0 ? s.spinsLeft(spinsLeft) : s.spinsLeftHint}
-          </p>
-        </div>
-      )}
+      {/* One cell holding both states, with a floor under it. The dialog above
+          reasons that "a dialog that resizes under the pointer is worse than
+          one that waits"; a tweened auto-height here would break that promise
+          under someone mid-read, so the box is simply never smaller than the
+          taller of the two. `mode="wait"` lets the spin button clear out before
+          the outcome lands, so the two never overlap. */}
+      <div className="grid min-h-44 w-full place-items-center">
+        <AnimatePresence mode="wait" initial={false}>
+          {result ? (
+            <m.div
+              key="result"
+              initial={{ opacity: 0, y: 8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 4 }}
+              transition={T.pop}
+              className="bg-surface-container col-start-1 row-start-1 grid w-full justify-items-center gap-2 rounded-2xl p-4 text-center"
+            >
+              <m.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ ...T.pop, delay: 0.08 }}
+                className={cn(
+                  "grid size-12 place-items-center rounded-full",
+                  result.prize_type === "none"
+                    ? "bg-card text-muted-foreground"
+                    : "bg-primary-container/20 text-primary",
+                )}
+              >
+                <ResultIcon className="size-6" aria-hidden />
+              </m.span>
+              {/* Announced, not just drawn: the spin is a pointer-driven action
+                  whose whole answer arrives after the click. */}
+              <div role="status" className="grid gap-1">
+                <p className="text-label-lg font-semibold">
+                  {/* "You won!" over a blank wedge would be a taunt. */}
+                  {result.prize_type === "none" ? s.noPrizeLabel : s.resultTitle}
+                </p>
+                {result.prize_type !== "none" && (
+                  <p className="text-headline-md">{result.prize_name}</p>
+                )}
+                <p className="text-body-sm text-muted-foreground">
+                  {result.prize_type === "points"
+                    ? s.resultPoints(result.points_awarded)
+                    : result.prize_type === "gift"
+                      ? s.resultGift
+                      : spinsLeft > 0
+                        ? s.resultNone
+                        : s.resultNoneDone}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                className="mt-1 rounded-full"
+                onClick={() => setResult(null)}
+              >
+                {s.resultClose}
+              </Button>
+            </m.div>
+          ) : (
+            <m.div
+              key="spin"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 4 }}
+              transition={T.exit}
+              className="col-start-1 row-start-1 grid justify-items-center gap-2"
+            >
+              <Button
+                type="button"
+                size="lg"
+                onClick={handleSpin}
+                disabled={!canSpin}
+                className="min-w-44 rounded-full"
+              >
+                <PendingIcon pending={busy} className="size-5">
+                  <Sparkles className="size-5" aria-hidden />
+                </PendingIcon>
+                {busy ? s.spinning : spinsLeft > 0 ? s.spin : s.noSpinsLeft}
+              </Button>
+              <p className="text-body-sm text-muted-foreground">
+                {spinsLeft > 0 ? s.spinsLeft(spinsLeft) : s.spinsLeftHint}
+              </p>
+            </m.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   )
 }

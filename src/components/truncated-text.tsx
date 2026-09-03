@@ -68,34 +68,38 @@ export function TruncatedText({
 
   const revealable = clipped && Boolean(full)
 
+  const label = (
+    <span
+      ref={ref}
+      tabIndex={revealable && focusable ? 0 : undefined}
+      className={cn(
+        // TableCell keeps `whitespace-nowrap` so numbers, dates and badges
+        // never break; undoing it here is what lets the clamp engage.
+        "w-full break-words whitespace-normal",
+        CLAMP[lines],
+        className,
+      )}
+    >
+      {children}
+    </span>
+  )
+
+  // The span is returned bare when there is nothing to reveal, rather than
+  // wrapped in a disabled trigger: Radix's Tooltip.Trigger has no `disabled`
+  // prop at all, so the flag would have been spread onto the <span> as an
+  // invalid DOM attribute AND the tooltip would still have fired. The measuring
+  // ref rides on `label`, so it is attached either way.
+  if (!revealable) return label
+
   return (
     <Tooltip>
-      <TooltipTrigger
-        disabled={!revealable}
-        render={
-          <span
-            ref={ref}
-            tabIndex={revealable && focusable ? 0 : undefined}
-            className={cn(
-              // TableCell keeps `whitespace-nowrap` so numbers, dates and badges
-              // never break; undoing it here is what lets the clamp engage.
-              "w-full break-words whitespace-normal",
-              CLAMP[lines],
-              className,
-            )}
-          />
-        }
+      <TooltipTrigger asChild>{label}</TooltipTrigger>
+      <TooltipContent
+        side={side}
+        className="block max-w-sm text-left whitespace-normal"
       >
-        {children}
-      </TooltipTrigger>
-      {full && (
-        <TooltipContent
-          side={side}
-          className="block max-w-sm text-left whitespace-normal"
-        >
-          {full}
-        </TooltipContent>
-      )}
+        {full}
+      </TooltipContent>
     </Tooltip>
   )
 }

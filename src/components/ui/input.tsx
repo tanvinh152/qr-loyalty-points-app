@@ -1,7 +1,7 @@
 import * as React from "react"
-import { Input as InputPrimitive } from "@base-ui/react/input"
-import type { LucideIcon } from "lucide-react"
 
+import { AnimateIcon } from "@/components/animate-ui/icons/icon"
+import type { AppIcon } from "@/components/ui/icon"
 import { cn } from "@/lib/utils"
 
 // White field, 1px outline, focus tightens to a 1px primary ring — the Stitch
@@ -13,9 +13,9 @@ function Input({
   type,
   icon: Icon,
   ...props
-}: React.ComponentProps<"input"> & { icon?: LucideIcon }) {
+}: React.ComponentProps<"input"> & { icon?: AppIcon }) {
   const input = (
-    <InputPrimitive
+    <input
       type={type}
       data-slot="input"
       className={cn(
@@ -30,13 +30,22 @@ function Input({
   if (!Icon) return input
 
   return (
-    <div className="relative">
-      <Icon
-        className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2"
-        aria-hidden
-      />
-      {input}
-    </div>
+    // `AnimateIcon` drives any Animate UI glyph nested under it from the
+    // WRAPPER's hover, which is the whole field — the 18px icon is
+    // `pointer-events-none` and could never be hovered on its own. A lucide
+    // glyph (still most call sites) simply ignores the context, so this is
+    // safe for every `Input` that takes an icon. `asChild` so the wrapper
+    // merges onto the existing relative div — the default renders an inline
+    // `m.span`, which would put the field inside an inline box.
+    <AnimateIcon animateOnHover asChild>
+      <div className="relative">
+        <Icon
+          className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2"
+          aria-hidden
+        />
+        {input}
+      </div>
+    </AnimateIcon>
   )
 }
 

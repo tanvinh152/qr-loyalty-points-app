@@ -34,9 +34,7 @@ export function FormDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        render={trigger as React.ReactElement<Record<string, unknown>>}
-      />
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className={className}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>

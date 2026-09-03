@@ -35,7 +35,7 @@ export async function PostCard({
     <Link
       href={`/blog/${post.slug}`}
       className={cn(
-        "border-border bg-card grid overflow-hidden rounded-3xl border transition-colors",
+        "border-border bg-card duration-quick ease-out-quart grid overflow-hidden rounded-3xl border transition-[colors,transform,box-shadow] hover:-translate-y-0.5 hover:shadow-elevated",
         tile
           ? "hover:border-primary/40 content-start"
           : "gap-4 sm:grid-cols-[200px_1fr]",

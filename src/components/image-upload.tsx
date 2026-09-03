@@ -1,7 +1,9 @@
 "use client"
 
 import { useRef, useTransition } from "react"
-import { ImagePlus, Loader2, Trash2 } from "lucide-react"
+import { ImagePlus, Trash2 } from "lucide-react"
+
+import { PendingIcon } from "@/components/pending-icon"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -71,7 +73,7 @@ export function ImageUpload({
   return (
     <div className="grid gap-3">
       {value && (
-        <div className="border-border bg-surface-container relative aspect-[4/3] w-full max-w-56 overflow-hidden rounded-lg border">
+        <div className="border-border bg-surface-container animate-in fade-in-0 zoom-in-95 duration-quick ease-out-quart relative aspect-[4/3] w-full max-w-56 overflow-hidden rounded-lg border">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={value}
@@ -91,11 +93,9 @@ export function ImageUpload({
           disabled={isPending}
           onClick={() => input.current?.click()}
         >
-          {isPending ? (
-            <Loader2 className="animate-spin" aria-hidden />
-          ) : (
+          <PendingIcon pending={isPending}>
             <ImagePlus aria-hidden />
-          )}
+          </PendingIcon>
           {isPending ? m.uploading : value ? m.replace : m.upload}
         </Button>
         {value && (

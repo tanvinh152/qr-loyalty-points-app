@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { Trash2 } from "lucide-react"
+import { AnimateIcon } from "@/components/animate-ui/icons/icon"
+import { Trash2 } from "@/components/animate-ui/icons/trash-2"
 import { toast } from "sonner"
 
 import {
@@ -55,18 +56,18 @@ export function ConfirmDelete({
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger
-        render={
+      <AnimateIcon animateOnHover asChild>
+        <AlertDialogTrigger asChild>
           <Button
             variant="destructive"
             size="icon-sm"
             type="button"
             aria-label={`${t.common.delete} — ${name}`}
-          />
-        }
-      >
-        <Trash2 aria-hidden />
-      </AlertDialogTrigger>
+          >
+            <Trash2 aria-hidden />
+          </Button>
+        </AlertDialogTrigger>
+      </AnimateIcon>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>

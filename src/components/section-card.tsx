@@ -1,5 +1,4 @@
-import type { LucideIcon } from "lucide-react"
-
+import type { AppIcon } from "@/components/ui/icon"
 import { cn } from "@/lib/utils"
 
 /**
@@ -29,7 +28,7 @@ export function SectionCard({
   title?: string
   description?: string
   /** Colored glyph leading the title. Ignored when `chrome="plain"`. */
-  icon?: LucideIcon
+  icon?: AppIcon
   actions?: React.ReactNode
   footer?: React.ReactNode
   chrome?: "framed" | "plain"

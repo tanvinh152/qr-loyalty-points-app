@@ -3,7 +3,10 @@
 import { useEffect, useState, useTransition } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CalendarClock, X } from "lucide-react"
+import { CalendarClock } from "lucide-react"
+
+import { AnimateIcon } from "@/components/animate-ui/icons/icon"
+import { X } from "@/components/animate-ui/icons/x"
 import { toast } from "sonner"
 
 import { FormDialog } from "@/components/form-dialog"
@@ -148,7 +151,9 @@ function ScheduleFields({
       if (!state?.ok) {
         // Pinned in the dialog as well as toasted — the toast can land behind
         // the overlay on a phone.
-        form.setError("root", { message: state?.message ?? m.scheduleSaveFailed })
+        form.setError("root", {
+          message: state?.message ?? m.scheduleSaveFailed,
+        })
         toast.error(state?.message ?? m.scheduleSaveFailed)
         return
       }
@@ -174,10 +179,6 @@ function ScheduleFields({
               <Select
                 value={fieldValue(field.value)}
                 onValueChange={field.onChange}
-                items={tiers.map((tier) => ({
-                  value: tier.id,
-                  label: `${tier.name} — ${formatVnd(tier.spend_threshold)}`,
-                }))}
               >
                 <FormControl>
                   <SelectTrigger className="w-full">
@@ -206,7 +207,6 @@ function ScheduleFields({
               <Select
                 value={fieldValue(field.value)}
                 onValueChange={field.onChange}
-                items={modes}
               >
                 <FormControl>
                   <SelectTrigger className="w-full">
@@ -222,7 +222,9 @@ function ScheduleFields({
                 </SelectContent>
               </Select>
               <FormDescription>
-                {mode === "percentile" ? m.percentileModeHelper : m.amountModeHelper}
+                {mode === "percentile"
+                  ? m.percentileModeHelper
+                  : m.amountModeHelper}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -337,21 +339,23 @@ export function CancelSchedule({ id }: { id: string }) {
   const [isPending, startTransition] = useTransition()
 
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      aria-label={m.scheduleCancel}
-      disabled={isPending}
-      onClick={() =>
-        startTransition(async () => {
-          const state = await cancelTierSchedule(id)
-          if (state?.ok) toast.success(state.message)
-          else toast.error(state?.message ?? m.scheduleCancelFailed)
-        })
-      }
-    >
-      <X aria-hidden />
-    </Button>
+    <AnimateIcon animateOnHover asChild>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        aria-label={m.scheduleCancel}
+        disabled={isPending}
+        onClick={() =>
+          startTransition(async () => {
+            const state = await cancelTierSchedule(id)
+            if (state?.ok) toast.success(state.message)
+            else toast.error(state?.message ?? m.scheduleCancelFailed)
+          })
+        }
+      >
+        <X aria-hidden />
+      </Button>
+    </AnimateIcon>
   )
 }

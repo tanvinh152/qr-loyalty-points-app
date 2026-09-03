@@ -151,7 +151,15 @@ function MilestoneFields({
               <FormControl>
                 <Input
                   type="number"
-                  min="1"
+                  // `min` must sit ON the step grid. With `min="1"` the browser
+                  // reads the valid values as 1, 1001, 2001 … so EVERY round
+                  // đồng amount — including all seven seeded rungs — failed
+                  // native constraint validation, and a form that fails it
+                  // never fires a submit event at all: the dialog just sat
+                  // there, no message, no request. 1000 keeps the "strictly
+                  // positive" intent the schema enforces and lines the grid up
+                  // with the thousands an admin actually types.
+                  min="1000"
                   step="1000"
                   inputMode="numeric"
                   {...field}
@@ -201,7 +209,7 @@ function MilestoneFields({
                 <Checkbox
                   className="mt-0.5"
                   checked={Boolean(field.value)}
-                  onCheckedChange={field.onChange}
+                  onCheckedChange={(v) => field.onChange(v === true)}
                 />
               </FormControl>
               <div className="grid gap-0.5">

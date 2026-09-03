@@ -8,6 +8,17 @@
 //    Pancake webhook and by the one proof order taken at signup — there is no
 //    scan screen, no counter, and no manual claim.
 
+const NUMBER = new Intl.NumberFormat("en-US")
+
+// Point counts, formatted against THIS catalog's locale rather than
+// `toLocaleString()` with no argument. That bare call reads the runtime's
+// default, and Node's ICU default (en-US, "1,500") disagreed with a Vietnamese
+// browser ("1.500") — every one of these strings renders inside a client
+// component, so the disagreement was a hydration mismatch that made React throw
+// away and re-render the subtree on load. Money already went through formatVnd,
+// which has always been pinned to vi-VN.
+const num = (value: number) => NUMBER.format(value)
+
 export const en = {
   meta: {
     appTitle: "Loyalty Points",
@@ -18,9 +29,9 @@ export const en = {
     next: "Next",
     page: (n: number) => `Page ${n}`,
     showing: (shown: number, total: number) =>
-      `Showing ${shown.toLocaleString()} of ${total.toLocaleString()}`,
+      `Showing ${num(shown)} of ${num(total)}`,
     showingRange: (first: number, last: number, total: number) =>
-      `Showing ${first.toLocaleString()}-${last.toLocaleString()} of ${total.toLocaleString()}`,
+      `Showing ${num(first)}-${num(last)} of ${num(total)}`,
     save: "Save",
     saving: "Saving…",
     add: "Add",
@@ -124,13 +135,13 @@ export const en = {
       searchLabel: "Search customers",
       searchPlaceholder: "Search a customer by phone…",
       tierDistribution: "Tier distribution",
-      tierMembers: (n: number) => `${n.toLocaleString()} members`,
+      tierMembers: (n: number) => `${num(n)} members`,
       viewAllTiers: "View all tiers",
       viewAllTransactions: "View all activity",
       noRecent: "No activity yet.",
       colBalance: "Total points",
       movement: (amount: number) =>
-        amount > 0 ? `+${amount.toLocaleString()}` : amount.toLocaleString(),
+        amount > 0 ? `+${num(amount)}` : num(amount),
       noTiers: "No tiers configured yet.",
       openTickets: "Open requests",
       openTicketsHint: "Support tickets waiting for a reply",
@@ -328,7 +339,7 @@ export const en = {
       imageUrl: "Image URL",
       status: "Status",
       statusHelper: "Inactive rewards are hidden from the shop.",
-      cost: (points: number) => `${points.toLocaleString()} pts`,
+      cost: (points: number) => `${num(points)} pts`,
       stockOf: (left: number, max: number) => `Stock: ${left} / ${max}`,
       soldOut: "Out of stock",
       searchPlaceholder: "Search rewards…",
@@ -407,7 +418,7 @@ export const en = {
         statusHelper: "Inactive slices are removed from the wheel entirely.",
         odds: (percent: string) => `${percent} chance`,
         neverDrawn: "Never drawn",
-        pointsChip: (points: number) => `+${points.toLocaleString()} pts`,
+        pointsChip: (points: number) => `+${num(points)} pts`,
         searchPlaceholder: "Search slices…",
         noMatch: "No slices match that search.",
         empty: "No slices yet — add a few so the wheel has something to land on.",
@@ -642,7 +653,7 @@ export const en = {
       // ADJUST rows carry no order code — the staff note stands in for one.
       adjustBy: (who: string) => `by ${who}`,
       adjustLifetime: (points: number) =>
-        `${points > 0 ? "+" : ""}${points.toLocaleString()} lifetime`,
+        `${points > 0 ? "+" : ""}${num(points)} lifetime`,
     },
     support: {
       metaTitle: "Support requests",
@@ -786,11 +797,11 @@ export const en = {
       emptyBody: "Place your first order — points land here on their own.",
       checkinTitle: "Daily check-in",
       checkinBody: (points: number) =>
-        `Check in once a day for ${points.toLocaleString()} points.`,
+        `Check in once a day for ${num(points)} points.`,
       checkinCta: "Check in",
       checkinPending: "Checking in…",
       checkinDone: "Checked in today",
-      checkinSuccess: (points: number) => `+${points.toLocaleString()} points`,
+      checkinSuccess: (points: number) => `+${num(points)} points`,
       // The milestone card. Deliberately NO second progress bar: the hero
       // above already shows one measured in đồng (spend towards the next tier),
       // and a second đồng bar right under it reads as the same journey twice.
@@ -838,7 +849,7 @@ export const en = {
         `Slice ${index} of ${total}: ${name}`,
       resultTitle: "You won!",
       resultPoints: (points: number) =>
-        `${points.toLocaleString()} points have been added to your balance.`,
+        `${num(points)} points have been added to your balance.`,
       resultGift: "Show this screen at the counter to collect your prize.",
       resultNone: "Better luck next time — you still have spins to use.",
       resultNoneDone: "Better luck next time. Come back tomorrow for more spins.",
@@ -847,7 +858,7 @@ export const en = {
       historyEmpty: "Nothing yet — take your first spin.",
       pendingChip: "Not collected",
       collectedChip: "Collected",
-      pointsChip: (points: number) => `+${points.toLocaleString()} pts`,
+      pointsChip: (points: number) => `+${num(points)} pts`,
       noPrizeLabel: "No prize",
       offTitle: "The wheel is taking a break",
       offBody: "There's no spin event running right now. Check back soon.",
@@ -890,7 +901,7 @@ export const en = {
     rewards: {
       metaTitle: "Reward store",
       title: "Reward store",
-      cost: (points: number) => `${points.toLocaleString()} points`,
+      cost: (points: number) => `${num(points)} points`,
       allCategories: "All",
       exclusiveCategory: "Exclusive",
       exclusiveChip: "Exclusive",
@@ -910,7 +921,7 @@ export const en = {
       /** Shown on a reward's lock chip and in place of the redeem button. */
       tierRequired: (tierName: string) => `Requires ${tierName}`,
       confirm: (name: string, points: number) =>
-        `Redeem ${name} for ${points.toLocaleString()} points?`,
+        `Redeem ${name} for ${num(points)} points?`,
       success: (name: string) => `Redeemed: ${name}`,
       emptyTitle: "No rewards yet",
       emptyBody: "New rewards are on the way — check back soon.",

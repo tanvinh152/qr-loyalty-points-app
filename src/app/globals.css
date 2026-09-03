@@ -157,6 +157,34 @@
   --shadow-glow: 0 0 20px var(--shadow-color-glow);
 }
 
+/* ── Motion tokens ────────────────────────────────────────────────────────
+   A SEPARATE, NON-`inline` @theme on purpose. `@theme inline` inlines a value
+   into the utility and emits NO custom property — check the build output:
+   `.rounded-3xl{border-radius:32px}` exists, `--radius-3xl` in `:root` does
+   not. The @utility keyframes further down and src/lib/motion/tokens.ts both
+   need these to exist at runtime, so they cannot live in the block above.
+
+   Named semantically, like the shadows, never numerically. Before this the app
+   had four ad-hoc durations (100 x5, 200 x3, 150, 700) and no easing at all. */
+@theme {
+  --transition-duration-instant: 100ms; /* colour + opacity feedback */
+  --transition-duration-quick: 180ms; /* chips, small transforms, popups */
+  --transition-duration-base: 240ms; /* dialogs, rail collapse, tab bubble */
+  --transition-duration-slow: 420ms; /* card entrance, list reveal */
+  --transition-duration-reveal: 700ms; /* progress rails filling */
+
+  /* --ease-out-expo is not invented: it is the bezier that was hardcoded in
+     wheel.tsx, the app's only magic number. Naming it retires that.
+     --ease-back-out is the ONLY overshoot in the system and is allowed on win
+     and claim confirmations, nowhere else. Deliberately a cubic-bezier rather
+     than a CSS linear() spring - linear() needs Safari 17.2+ and the primary
+     device here is a phone. */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1); /* the house default */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1); /* long decelerations */
+  --ease-back-out: cubic-bezier(0.34, 1.56, 0.64, 1); /* the one overshoot */
+  --ease-in-quart: cubic-bezier(0.5, 0, 0.75, 0); /* exits only */
+}
+
 /* ── Light theme (the baseline) ───────────────────────────────────────────
    Light is `:root`, so it is what an undecided visitor on a light or unknown
    OS gets, and it is the theme the Stitch mockups were drawn in. Dark is the
@@ -522,10 +550,155 @@
   animation: milestone-pulse 2s infinite;
 }
 
+/* ── Reduced motion, app-wide ─────────────────────────────────────────────
+   Before this, the milestone halo below was the ONLY animation in the app that
+   honoured the setting. Two different treatments on purpose:
+
+   The halo is silenced outright — a permanently repeating decorative animation
+   is precisely what the setting exists to stop.
+
+   Everything else is COLLAPSED to 1ms rather than removed, so an element whose
+   final state is only reached at the end of an animation still gets there. Kill
+   the animation outright and `fill-mode: both` reveals never arrive.
+
+   animate-spin and animate-pulse are EXEMPT: both are status indicators (nine
+   Loader2 sites, two skeleton files), their motion is small-area and
+   non-vestibular, and a frozen spinner reads as a hung request. */
+/* A rung the moment it is claimed. Same box-shadow trick as the claimable
+   halo above, but ONE iteration and drawn from --success: the award is already
+   confirmed by the time this plays, and `claim_milestone_reward` never retracts
+   one, so a single burst can never be seen running backwards. */
+@keyframes claim-burst {
+  0% {
+    box-shadow: 0 0 0 0 var(--pulse-color);
+  }
+  70% {
+    box-shadow: 0 0 0 14px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@utility animate-claim-burst {
+  --pulse-color: color-mix(in srgb, var(--success) 45%, transparent);
+  animation: claim-burst var(--transition-duration-slow) var(--ease-out-quart);
+}
+
+/* The wedge that won, lit for as long as the result panel is on screen. The
+   wedges are `fill-chart-N/20` tokens, so raising fill-opacity needs no new
+   colour and no literal — the rule src/** has zero hardcoded hex. This is the
+   celebration, in place of a confetti canvas: it points at the thing that
+   actually happened. */
+[data-slot="wheel-wedge"] path,
+[data-slot="wheel-wedge"] circle {
+  transition: fill-opacity var(--transition-duration-slow) var(--ease-out-quart);
+}
+
+[data-slot="wheel-wedge"][data-won] path,
+[data-slot="wheel-wedge"][data-won] circle {
+  fill-opacity: 0.45;
+}
+
+/* The header balance's gain. One animation carrying both the lift and the glow,
+   so the pill needs no Motion component at all — the count-up itself is the
+   only JS. --shadow-glow is the existing token; no new colour, no literal. */
+@keyframes points-bump {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 transparent;
+  }
+  40% {
+    transform: scale(1.06);
+    box-shadow: var(--shadow-glow);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@utility animate-points-bump {
+  animation: points-bump var(--transition-duration-slow) var(--ease-out-quart);
+}
+
+/* The spin pill's badge dot. Same box-shadow trick as the milestone halo but
+   NOT that utility: its ring is sized for a 64px marker and drawn from
+   --primary-container, where this sits on a 10px dot that must read as
+   `bg-warning`. An unfulfilled `gift` win is settled by hand at the counter, so
+   this dot is the only place a member is told one is waiting. */
+@keyframes pulse-dot {
+  0% {
+    box-shadow: 0 0 0 0 var(--pulse-color);
+  }
+  70% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@utility animate-pulse-dot {
+  --pulse-color: color-mix(in srgb, var(--warning) 50%, transparent);
+  animation: pulse-dot 2s infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-milestone-pulse {
+  .animate-milestone-pulse,
+  .animate-pulse-dot {
     animation: none;
   }
+
+  *:not(.animate-spin, .animate-pulse),
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Reveal animations for server-rendered gauges ─────────────────────────
+   Both bars below are rendered by the server ALREADY at their final value, so
+   the `transition-*` each carried had no start frame and had never once run.
+   A keyframe supplies the missing frame.
+
+   Both animate `transform`, never the dimension itself: width/height stay the
+   inline style because they are DATA, and scaling costs no layout pass.
+   `fill-mode: both` holds frame zero through the animation's delay, so nothing
+   flashes at full length first. */
+@keyframes progress-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@utility animate-progress-fill {
+  transform-origin: left;
+  animation: progress-fill var(--transition-duration-reveal)
+    var(--ease-out-quart) both;
+}
+
+@keyframes rail-fill {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* The 200ms delay lets the roadmap's rungs land first, then the rail climbs
+   past them. That ordering is the page's signature move. */
+@utility animate-rail-fill {
+  transform-origin: top;
+  animation: rail-fill var(--transition-duration-reveal) var(--ease-out-quart)
+    200ms both;
 }
 
 @utility bg-hero {

@@ -1,11 +1,15 @@
 "use client"
 
 import { useTransition } from "react"
-import { CircleCheck, Gift, Hourglass, Loader2, Lock } from "lucide-react"
+import { AnimatePresence, m } from "motion/react"
+import { CircleCheck, Gift, Hourglass, Lock } from "lucide-react"
+
+import { PendingIcon } from "@/components/pending-icon"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { T } from "@/lib/motion/tokens"
 import { cn, formatVnd } from "@/lib/utils"
 import { useT } from "@/lib/i18n/provider"
 import { thresholdMagnitude, type MilestoneNode } from "@/lib/milestones"
@@ -57,20 +61,39 @@ export function MilestoneNodeRow({
     })
   }
 
-  const marker =
-    state === "claimed" ? (
-      <span className="bg-success/15 border-success text-success grid size-16 place-items-center rounded-full border-2">
-        <CircleCheck className="size-7" aria-hidden />
-      </span>
-    ) : state === "claimable" ? (
-      <span className="bg-primary-container text-primary-foreground border-card shadow-elevated animate-milestone-pulse grid size-16 place-items-center rounded-full border-4">
-        <Gift className="size-7" aria-hidden />
-      </span>
-    ) : (
-      <span className="bg-surface-container border-border text-muted-foreground grid size-16 place-items-center rounded-full border-2">
-        <Lock className="size-6" aria-hidden />
-      </span>
-    )
+  // Keyed on `state`, so claiming swaps the gift for the tick with a beat
+  // instead of a cut. The burst below is a ONE-SHOT and is safe precisely
+  // because the claim is confirmed before it plays: `claim_milestone_reward`
+  // never retracts an award, so this celebration can never run backwards. That
+  // is also why the button uses useTransition and not useOptimistic — an
+  // optimistic burst that then reversed would be worse than a spinner.
+  const marker = (
+    <AnimatePresence mode="popLayout" initial={false}>
+      <m.span
+        key={state}
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.8, opacity: 0 }}
+        transition={T.pop}
+        className={cn(
+          "grid size-16 place-items-center rounded-full",
+          state === "claimed"
+            ? "bg-success/15 border-success text-success animate-claim-burst border-2"
+            : state === "claimable"
+              ? "bg-primary-container text-primary-foreground border-card shadow-elevated animate-milestone-pulse border-4"
+              : "bg-surface-container border-border text-muted-foreground border-2",
+        )}
+      >
+        {state === "claimed" ? (
+          <CircleCheck className="size-7" aria-hidden />
+        ) : state === "claimable" ? (
+          <Gift className="size-7" aria-hidden />
+        ) : (
+          <Lock className="size-6" aria-hidden />
+        )}
+      </m.span>
+    </AnimatePresence>
+  )
 
   return (
     <li
@@ -80,7 +103,7 @@ export function MilestoneNodeRow({
         // matters as much as the scale: the enlarged card would otherwise slide
         // under its neighbour's border.
         state === "claimable" &&
-          "z-20 origin-left transition-transform md:scale-105",
+          "duration-base ease-back-out z-20 origin-left transition-transform md:scale-105",
       )}
     >
       {/* The marker sits above the rail, which runs behind it. */}
@@ -104,7 +127,10 @@ export function MilestoneNodeRow({
 
       <div
         className={cn(
-          "flex min-w-0 grow flex-col items-start gap-4 rounded-3xl border p-4 transition-colors sm:flex-row sm:items-center sm:justify-between sm:p-6",
+          // The rung is re-rendered in place when a spend refresh unlocks it,
+          // never remounted, so the grayscale/opacity ladder below melts off
+          // instead of snapping.
+          "duration-slow ease-out-quart flex min-w-0 grow flex-col items-start gap-4 rounded-3xl border p-4 transition-[colors,opacity,filter] sm:flex-row sm:items-center sm:justify-between sm:p-6",
           state === "claimable"
             ? "border-primary bg-card shadow-elevated relative overflow-hidden border-2"
             : state === "claimed"
@@ -185,11 +211,9 @@ export function MilestoneNodeRow({
             </>
           ) : state === "claimable" ? (
             <Button type="button" onClick={handleClaim} disabled={isPending}>
-              {isPending ? (
-                <Loader2 className="animate-spin" aria-hidden />
-              ) : (
+              <PendingIcon pending={isPending}>
                 <Gift aria-hidden />
-              )}
+              </PendingIcon>
               {isPending ? r.claiming : r.claimCta}
             </Button>
           ) : (

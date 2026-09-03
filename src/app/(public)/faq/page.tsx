@@ -1,6 +1,12 @@
 import Link from "next/link"
 import { LifeBuoy } from "lucide-react"
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 import { buttonVariants } from "@/components/ui/button"
 import { getMessages } from "@/lib/i18n/server"
 import { cn } from "@/lib/utils"
@@ -12,9 +18,15 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t.faq.metaTitle }
 }
 
-// Native <details> rather than the Collapsible primitive: it needs no client
-// boundary, is keyboard-accessible for free, and works with JS disabled. The
-// answers are static i18n strings, so there is nothing to hydrate.
+// The disclosures are ui/accordion (Animate UI over Radix), which replaced a
+// native <details>/<summary>. That native version needed no client boundary and
+// worked with JS off; the accordion buys an animated reveal and a real
+// aria-expanded/aria-controls pairing. This page ITSELF stays a server
+// component — only the Accordion subtree crosses the boundary, and the
+// questions and answers are static i18n strings passed straight through.
+//
+// `collapsible` so the open item can be closed again, and `type="single"` so a
+// group reads as one list of questions rather than an expandable wall.
 export default async function FaqPage() {
   const t = await getMessages()
   const f = t.faq
@@ -31,25 +43,14 @@ export default async function FaqPage() {
           <h2 className="text-label-md text-muted-foreground tracking-[0.2em] uppercase">
             {group.title}
           </h2>
-          <div className="grid gap-2">
+          <Accordion type="single" collapsible className="grid gap-2">
             {group.items.map((item) => (
-              <details
-                key={item.q}
-                className="border-border bg-card shadow-soft group rounded-3xl border px-5 py-4"
-              >
-                <summary className="text-body-lg marker:content-none flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">
-                  {item.q}
-                  <span
-                    aria-hidden
-                    className="text-primary shrink-0 transition-transform group-open:rotate-45"
-                  >
-                    +
-                  </span>
-                </summary>
-                <p className="text-muted-foreground mt-3">{item.a}</p>
-              </details>
+              <AccordionItem key={item.q} value={item.q}>
+                <AccordionTrigger>{item.q}</AccordionTrigger>
+                <AccordionContent>{item.a}</AccordionContent>
+              </AccordionItem>
             ))}
-          </div>
+          </Accordion>
         </section>
       ))}
 

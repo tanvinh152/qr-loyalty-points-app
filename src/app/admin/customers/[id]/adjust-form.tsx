@@ -40,13 +40,15 @@ import { useT } from "@/lib/i18n/provider"
 import { formatVnd } from "@/lib/utils"
 import {
   makeAdjustSchema,
+  NO_SELECTION,
   type AdjustFormValues,
   type AdjustInput,
 } from "@/lib/schemas"
 import type { CustomerRow, MembershipTierRow } from "@/lib/db-types"
 import { adjustPoints } from "./actions"
 
-const NO_TIER = ""
+// Radix Select refuses value="" — see NO_SELECTION in src/lib/schemas.ts.
+const NO_TIER = NO_SELECTION
 
 /**
  * Staff grant of tier and points.
@@ -151,13 +153,6 @@ export function AdjustForm({
               <Select
                 value={fieldValue(field.value)}
                 onValueChange={field.onChange}
-                items={[
-                  { value: NO_TIER, label: m.noTierGrant },
-                  ...grantable.map((tier) => ({
-                    value: tier.id,
-                    label: m.tierOption(tier.name, formatVnd(tier.spend_threshold)),
-                  })),
-                ]}
               >
                 <FormControl>
                   <SelectTrigger className="w-full max-w-md">

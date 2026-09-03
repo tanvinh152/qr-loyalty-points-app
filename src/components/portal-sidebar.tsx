@@ -2,8 +2,9 @@
 
 import { createContext, useContext, useState } from "react"
 import Link from "next/link"
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react"
-
+import { AnimateIcon } from "@/components/animate-ui/icons/icon"
+import { PanelLeftClose } from "@/components/animate-ui/icons/panel-left-close"
+import { PanelLeftOpen } from "@/components/animate-ui/icons/panel-left-open"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { PortalNav, type PortalNavItem } from "@/components/portal-nav"
 import { setSidebarCollapsed } from "@/lib/sidebar/actions"
@@ -72,17 +73,19 @@ export function SidebarToggle({ className }: { className?: string }) {
   const Icon = collapsed ? PanelLeftOpen : PanelLeftClose
 
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      onClick={toggle}
-      aria-label={label}
-      title={label}
-      className={cn("shrink-0", className)}
-    >
-      <Icon className="size-5" aria-hidden />
-    </Button>
+    <AnimateIcon animateOnHover asChild>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        onClick={toggle}
+        aria-label={label}
+        title={label}
+        className={cn("shrink-0", className)}
+      >
+        <Icon className="size-5" aria-hidden />
+      </Button>
+    </AnimateIcon>
   )
 }
 
@@ -177,7 +180,7 @@ export function SidebarRail({
         // `shadow-nav` is the other half and is load-bearing in light only —
         // see --shadow-color-nav in globals.css for why dark cannot use it, and
         // therefore why `border-r` may not be dropped.
-        "bg-sidebar border-border/60 shadow-nav group/sidebar sticky top-0 hidden h-svh shrink-0 flex-col border-r transition-[width] duration-200 md:flex",
+        "bg-sidebar border-border/60 shadow-nav group/sidebar sticky top-0 hidden h-svh shrink-0 flex-col border-r duration-base ease-out-quart transition-[width] md:flex",
         collapsed ? "w-16" : "w-64",
         className,
       )}
