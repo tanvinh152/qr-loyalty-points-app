@@ -10,10 +10,19 @@ import { PendingIcon } from "@/components/pending-icon"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useT } from "@/lib/i18n/provider"
 import { SUPPORT_TOPICS } from "@/lib/schemas"
 import { submitSupportRequest } from "./actions"
+
+const MESSAGE_MAX = 2000
 
 export function HelpForm({
   defaultName,
@@ -26,6 +35,10 @@ export function HelpForm({
   const h = t.customer.help
   const formRef = useRef<HTMLFormElement>(null)
   const [error, setError] = useState<string | undefined>()
+  const [used, setUsed] = useState(0)
+  // `form.reset()` clears the native fields but not a Radix Select's own
+  // state; re-keying it is the reliable way to put the placeholder back.
+  const [formKey, setFormKey] = useState(0)
   const [isPending, startTransition] = useTransition()
 
   function handleSubmit(formData: FormData) {
@@ -39,6 +52,8 @@ export function HelpForm({
       }
       setError(undefined)
       formRef.current?.reset()
+      setUsed(0)
+      setFormKey((k) => k + 1)
       toast.success(h.success)
     })
   }
@@ -77,25 +92,22 @@ export function HelpForm({
 
       <div className="grid gap-2">
         <Label htmlFor="support-topic">{h.topic}</Label>
-        {/* A native select, not the Base UI one: this form posts through a
-            plain FormData action, and the styled Select is not a form control. */}
-        <select
-          id="support-topic"
-          name="topic"
-          defaultValue=""
-          required
-          // Sized like Input so the three controls share one height and radius.
-          className="border-input bg-card text-body-sm ring-offset-background focus-visible:ring-ring h-12 rounded-md border px-4 focus-visible:ring-2 focus-visible:outline-none"
-        >
-          <option value="" disabled>
-            {h.topicPlaceholder}
-          </option>
-          {SUPPORT_TOPICS.map((topic) => (
-            <option key={topic} value={topic}>
-              {h.topics[topic]}
-            </option>
-          ))}
-        </select>
+        {/* The design-system Select IS a form control now: Radix renders a
+            hidden native <select> under `name` inside a form, so the value
+            reaches the FormData action like any other field. The placeholder
+            is `SelectValue`'s — an item may never carry `value=""`. */}
+        <Select key={formKey} name="topic" required>
+          <SelectTrigger id="support-topic" className="h-12 w-full">
+            <SelectValue placeholder={h.topicPlaceholder} />
+          </SelectTrigger>
+          <SelectContent>
+            {SUPPORT_TOPICS.map((topic) => (
+              <SelectItem key={topic} value={topic}>
+                {h.topics[topic]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid gap-2">
@@ -104,10 +116,21 @@ export function HelpForm({
           id="support-message"
           name="message"
           rows={6}
-          maxLength={2000}
+          maxLength={MESSAGE_MAX}
           placeholder={h.messagePlaceholder}
+          onChange={(event) => setUsed(event.target.value.length)}
+          aria-describedby="support-message-count"
           required
         />
+        {/* Polite, so a screen reader hears the count settle rather than
+            every keystroke. */}
+        <p
+          id="support-message-count"
+          aria-live="polite"
+          className="text-body-xs text-muted-foreground text-right tabular-nums"
+        >
+          {h.charCount(used, MESSAGE_MAX)}
+        </p>
       </div>
 
       <FormError message={error} />

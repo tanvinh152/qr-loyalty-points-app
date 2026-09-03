@@ -49,8 +49,10 @@ export function Celebration({
 }) {
   const [burst, setBurst] = useState(0)
   // Edge detection during render rather than in an effect — the React-endorsed
-  // shape, and the one `react-hooks/set-state-in-effect` allows.
-  const [seenFire, setSeenFire] = useState(fire)
+  // shape, and the one `react-hooks/set-state-in-effect` allows. Seeded FALSE,
+  // not with `fire`: a panel that mounts already celebrating (the wheel's
+  // result) is itself the edge, and must burst.
+  const [seenFire, setSeenFire] = useState(false)
   if (fire !== seenFire) {
     setSeenFire(fire)
     if (fire) setBurst((n) => n + 1)

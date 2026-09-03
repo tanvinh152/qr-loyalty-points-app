@@ -324,8 +324,9 @@ export default async function TiersPage() {
         </div>
 
         {/* Three columns of Vietnamese do not fit 360px, so a phone gets the
-            same rows as cards — the pattern /history uses. */}
-        <ul className="divide-border divide-y sm:hidden">
+            same rows as cards — the pattern /history uses. The switch is at
+            `md`, not `sm`: at 640–768px the table only fit by side-scrolling. */}
+        <ul className="divide-border divide-y md:hidden">
           {tiers.map((tier, index) => (
             <li
               key={tier.id}
@@ -368,18 +369,18 @@ export default async function TiersPage() {
           ))}
         </ul>
 
-        <div className="hidden overflow-x-auto sm:block">
-          <table className="w-full min-w-[720px] text-left">
+        <div className="hidden md:block">
+          <table className="w-full text-left">
             <caption className="sr-only">{ti.benefitsTableTitle}</caption>
             <thead>
               <tr className="border-border text-label-md text-muted-foreground border-b tracking-wider uppercase">
-                <th scope="col" className="px-6 py-3.5">
+                <th scope="col" className="px-4 py-3.5 lg:px-6">
                   {ti.colTier}
                 </th>
-                <th scope="col" className="px-6 py-3.5">
+                <th scope="col" className="px-4 py-3.5 lg:px-6">
                   {ti.colCondition}
                 </th>
-                <th scope="col" className="px-6 py-3.5">
+                <th scope="col" className="px-4 py-3.5 lg:px-6">
                   {ti.colBenefits}
                 </th>
               </tr>
@@ -397,7 +398,7 @@ export default async function TiersPage() {
                     tier.id === current?.id && "border-l-4 border-l-tier",
                   )}
                 >
-                  <th scope="row" className="px-6 py-4 font-semibold">
+                  <th scope="row" className="px-4 py-4 font-semibold lg:px-6">
                     <div className="flex items-center gap-3">
                       <span className="border-tier/30 bg-tier/10 text-tier grid size-10 shrink-0 place-items-center rounded-full border">
                         <Gem className="size-5" aria-hidden />
@@ -408,7 +409,7 @@ export default async function TiersPage() {
                       )}
                     </div>
                   </th>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-4 lg:px-6">
                     <div className="grid justify-items-start gap-1.5">
                       <span className="text-body-sm whitespace-nowrap tabular-nums">
                         {ti.thresholdAt(formatVnd(tier.spend_threshold))}
@@ -418,7 +419,7 @@ export default async function TiersPage() {
                       </Badge>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-4 lg:px-6">
                     <ul className="grid gap-1.5">
                       {headlineBenefits(tier).map((benefit) => (
                         <li

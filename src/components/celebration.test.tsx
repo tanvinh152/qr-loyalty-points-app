@@ -15,6 +15,17 @@ describe("Celebration", () => {
     expect(document.querySelector('[data-slot="celebration-burst"]')).toBeNull()
   })
 
+  it("bursts when it mounts already firing — the wheel's result panel", () => {
+    renderWithProviders(
+      <Celebration fire>
+        <span data-testid="glyph" />
+      </Celebration>,
+    )
+    expect(
+      document.querySelector('[data-slot="celebration-burst"]'),
+    ).not.toBeNull()
+  })
+
   it("plays a burst hidden from assistive tech once fired", () => {
     const { rerender } = renderWithProviders(
       <Celebration fire={false}>

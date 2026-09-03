@@ -5,9 +5,11 @@ import { AnimatePresence, animate, m } from "motion/react"
 import { useRouter } from "next/navigation"
 import { Ban, Coins, Gift, Sparkles } from "lucide-react"
 
+import { Celebration } from "@/components/celebration"
 import { PendingIcon } from "@/components/pending-icon"
 import { toast } from "sonner"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { EASE, SPIN_MS, T } from "@/lib/motion/tokens"
 import { cn } from "@/lib/utils"
@@ -176,10 +178,9 @@ export function Wheel({
       // not on this wheel (a slice went drawable after the page rendered) just
       // spins without alignment rather than stopping on the wrong wedge.
       const mid = index * step + step / 2
-      const align = (((-(rotation.current + mid) % 360) + 360) % 360)
+      const align = ((-(rotation.current + mid) % 360) + 360) % 360
       const from = rotation.current
-      const target =
-        index < 0 ? from + TURNS * 360 : from + TURNS * 360 + align
+      const target = index < 0 ? from + TURNS * 360 : from + TURNS * 360 + align
 
       // Read inside the handler, never during render: the server snapshot is
       // always `false` and a render-time read would disagree with it.
@@ -351,28 +352,44 @@ export function Wheel({
               transition={T.pop}
               className="bg-surface-container col-start-1 row-start-1 grid w-full justify-items-center gap-2 rounded-2xl p-4 text-center"
             >
-              <m.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ ...T.pop, delay: 0.08 }}
-                className={cn(
-                  "grid size-12 place-items-center rounded-full",
-                  result.prize_type === "none"
-                    ? "bg-card text-muted-foreground"
-                    : "bg-primary-container/20 text-primary",
-                )}
+              {/* The burst sits on the disc, and only a WIN gets one. A gift is
+                  amber rather than the points blue: it is not settled yet — it
+                  waits at the counter, and the chip under the name says so.
+                  Before this a gift and a handful of points looked identical. */}
+              <Celebration
+                fire={result.prize_type !== "none"}
+                tone={result.prize_type === "gift" ? "warning" : "success"}
+                className="size-12"
               >
-                <ResultIcon className="size-6" aria-hidden />
-              </m.span>
+                <span
+                  className={cn(
+                    "grid size-12 place-items-center rounded-full",
+                    result.prize_type === "none"
+                      ? "bg-card text-muted-foreground"
+                      : result.prize_type === "gift"
+                        ? "bg-warning/15 text-warning"
+                        : "bg-primary-container/20 text-primary",
+                  )}
+                >
+                  <ResultIcon className="size-6" aria-hidden />
+                </span>
+              </Celebration>
               {/* Announced, not just drawn: the spin is a pointer-driven action
                   whose whole answer arrives after the click. */}
-              <div role="status" className="grid gap-1">
+              <div role="status" className="grid justify-items-center gap-1">
                 <p className="text-label-lg font-semibold">
                   {/* "You won!" over a blank wedge would be a taunt. */}
-                  {result.prize_type === "none" ? s.noPrizeLabel : s.resultTitle}
+                  {result.prize_type === "none"
+                    ? s.noPrizeLabel
+                    : result.prize_type === "gift"
+                      ? s.resultGiftTitle
+                      : s.resultTitle}
                 </p>
                 {result.prize_type !== "none" && (
                   <p className="text-headline-md">{result.prize_name}</p>
+                )}
+                {result.prize_type === "gift" && (
+                  <Badge variant="warning">{s.pendingChip}</Badge>
                 )}
                 <p className="text-body-sm text-muted-foreground">
                   {result.prize_type === "points"

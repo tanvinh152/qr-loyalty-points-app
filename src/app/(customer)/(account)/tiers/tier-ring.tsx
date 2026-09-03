@@ -37,6 +37,9 @@ export function TierRing({
           strokeWidth={stroke}
           className="stroke-surface-high"
         />
+        {/* Rendered at its final offset, like the two bars in globals.css;
+            `animate-ring-reveal` supplies the missing start frame from the
+            full circumference, and the attribute below is the end. */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -46,7 +49,10 @@ export function TierRing({
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={circumference * (1 - clamped / 100)}
-          className="stroke-tier"
+          className="stroke-tier animate-ring-reveal"
+          style={
+            { "--ring-circumference": circumference } as React.CSSProperties
+          }
         />
       </svg>
       <div className="absolute inset-0 grid place-content-center text-center">

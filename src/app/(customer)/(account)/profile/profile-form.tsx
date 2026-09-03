@@ -18,7 +18,6 @@ import { PendingIcon } from "@/components/pending-icon"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { cn } from "@/lib/utils"
 import { useT } from "@/lib/i18n/provider"
 import type { CustomerRow, PetType } from "@/lib/db-types"
 import { saveProfile } from "./actions"
@@ -35,30 +34,35 @@ const FIELD = "h-12 rounded-full"
 export function ProfileForm({ customer }: { customer: CustomerRow }) {
   const t = useT()
   const p = t.customer.profile
-  const [petType, setPetType] = useState<PetType | undefined>(
-    customer.pet_type ?? undefined,
-  )
   const [error, setError] = useState<string | undefined>()
+  // Once the profile is complete the button is "Save", and a save with nothing
+  // changed is a no-op the member should not have to wonder about. The first
+  // completion stays always-on: the pet fields are optional, so an untouched
+  // form is still a valid first submission.
+  const [dirty, setDirty] = useState(false)
+  const completed = Boolean(customer.profile_completed_at)
   const [isPending, startTransition] = useTransition()
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
-      const res = await saveProfile({
-        ...Object.fromEntries(formData.entries()),
-        // The pet-type toggle is buttons, not a field, so it is merged in here.
-        pet_type: petType,
-      })
+      // pet_type arrives with the rest: the toggle is a real radio group now.
+      const res = await saveProfile(Object.fromEntries(formData.entries()))
       if (!res.ok) {
         setError(res.error)
         return
       }
       setError(undefined)
+      setDirty(false)
       toast.success(p.success)
     })
   }
 
   return (
-    <form action={handleSubmit} className="grid gap-8">
+    <form
+      action={handleSubmit}
+      onChange={() => setDirty(true)}
+      className="grid gap-8"
+    >
       <fieldset className="grid gap-4">
         <legend className="text-headline-md mb-2 flex items-center gap-2">
           <UserRound className="text-primary size-5" aria-hidden />
@@ -109,35 +113,32 @@ export function ProfileForm({ customer }: { customer: CustomerRow }) {
           />
         </div>
 
-        <div className="grid gap-2">
-          <span className="text-body-sm font-medium">{p.petType}</span>
-          <div
-            role="group"
-            aria-label={p.petType}
-            className="grid grid-cols-3 gap-3"
-          >
-            {PET_TYPES.map(({ value, icon: Icon }) => {
-              const active = petType === value
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => setPetType(active ? undefined : value)}
-                  className={cn(
-                    "border-border grid justify-items-center gap-1.5 rounded-2xl border p-4 transition-colors",
-                    active
-                      ? "border-primary-container bg-primary-container/15 text-primary"
-                      : "bg-surface-container text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  <Icon className="size-5" aria-hidden />
-                  <span className="text-body-sm">{p.petTypes[value]}</span>
-                </button>
-              )
-            })}
+        {/* A real radio group — arrow keys move between the three, the value
+            posts as `pet_type` with no JS, and the tile styles itself off its
+            own input with `has-checked:`. It was three `aria-pressed` buttons
+            with the value merged in by hand. The one thing lost is deselect:
+            a radio group cannot go back to "no answer" once one is picked. */}
+        <fieldset className="grid gap-2">
+          <legend className="text-body-sm mb-2 font-medium">{p.petType}</legend>
+          <div className="grid grid-cols-3 gap-3">
+            {PET_TYPES.map(({ value, icon: Icon }) => (
+              <label
+                key={value}
+                className="border-border bg-surface-container text-muted-foreground hover:text-foreground has-checked:border-primary-container has-checked:bg-primary-container/15 has-checked:text-primary has-focus-visible:ring-primary/30 duration-instant ease-out-quart grid cursor-pointer justify-items-center gap-1.5 rounded-2xl border p-4 transition-colors has-focus-visible:ring-2"
+              >
+                <input
+                  type="radio"
+                  name="pet_type"
+                  value={value}
+                  defaultChecked={customer.pet_type === value}
+                  className="sr-only"
+                />
+                <Icon className="size-5" aria-hidden />
+                <span className="text-body-sm">{p.petTypes[value]}</span>
+              </label>
+            ))}
           </div>
-        </div>
+        </fieldset>
 
         <div className="grid gap-2">
           <Label htmlFor="pet_dob">{p.petDob}</Label>
@@ -166,7 +167,12 @@ export function ProfileForm({ customer }: { customer: CustomerRow }) {
 
       <FormError message={error} />
 
-      <Button type="submit" size="xl" className="w-full" disabled={isPending}>
+      <Button
+        type="submit"
+        size="xl"
+        className="w-full"
+        disabled={isPending || (completed && !dirty)}
+      >
         {/* Matches the heading: "complete" the first time, "save" after. */}
         {isPending
           ? p.submitting

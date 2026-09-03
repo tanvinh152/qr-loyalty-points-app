@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useState, useTransition } from "react"
-import { Ban, Coins, FerrisWheel, Gift, Loader2 } from "lucide-react"
+import { Ban, Coins, FerrisWheel, Gift } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import {
@@ -76,11 +76,16 @@ export function SpinDialog({
       <DialogTrigger
         title={nav.spin}
         className={cn(
-          "bg-surface-high text-label-md text-primary hover:bg-surface-highest group relative inline-flex size-8 shrink-0 items-center justify-center gap-1.5 rounded-full whitespace-nowrap transition-colors md:w-auto md:px-3",
+          // 32px drawn; the ::before widens the HIT box to 44px without moving
+          // anything, which is the touch minimum this pill sat under.
+          "bg-surface-high text-label-md text-primary hover:bg-surface-highest group relative inline-flex size-8 shrink-0 items-center justify-center gap-1.5 rounded-full whitespace-nowrap transition-colors before:absolute before:-inset-1.5 before:content-[''] md:w-auto md:px-3",
           className,
         )}
       >
-        <FerrisWheel className="duration-slow ease-out-quart size-4 shrink-0 transition-transform group-hover:rotate-45" aria-hidden />
+        <FerrisWheel
+          className="duration-slow ease-out-quart size-4 shrink-0 transition-transform group-hover:rotate-45"
+          aria-hidden
+        />
         <span className="max-md:sr-only">{nav.spin}</span>
         {/* A gift won on the wheel is settled by hand at the counter, so the
             only way a member learns one is waiting is being told. The dot says
@@ -106,21 +111,25 @@ export function SpinDialog({
           <DialogDescription>{s.subtitle}</DialogDescription>
         </DialogHeader>
 
-        {/* The spinner is for the FIRST open only — `loading` deliberately does
-            not gate this. `onSettled` re-runs the same load once a spin has
-            stopped, and swapping the wheel out for a spinner then would take
-            away the result panel the member is still reading. A reopen shows
-            the previous board until the new one lands, for the same reason.
-            The wheel is ~340px tall once it arrives, so the placeholder holds
-            roughly that much room: a dialog that resizes under the pointer is
-            worse than one that waits. */}
+        {/* The skeleton is for the FIRST open only — `loading` deliberately
+            does not gate this. `onSettled` re-runs the same load once a spin
+            has stopped, and swapping the wheel out then would take away the
+            result panel the member is still reading. A reopen shows the
+            previous board until the new one lands, for the same reason.
+            It is wheel-SHAPED — the same max-w-sm disc, the pill and the
+            result floor `Wheel` draws — so the real board lands on top of it
+            without the dialog resizing under the pointer. */}
         {!board ? (
           <div
-            className="text-muted-foreground grid min-h-72 place-items-center"
+            className="grid justify-items-center gap-6"
             role="status"
             aria-label={s.title}
+            aria-busy={loading}
           >
-            {loading && <Loader2 className="size-6 animate-spin" aria-hidden />}
+            <div className="bg-surface-container aspect-square w-full max-w-sm animate-pulse rounded-full" />
+            <div className="grid min-h-44 w-full place-items-center">
+              <div className="bg-surface-container h-11 w-44 animate-pulse rounded-full" />
+            </div>
           </div>
         ) : !board.ok ? (
           <EmptyState
@@ -181,7 +190,9 @@ export function SpinDialog({
                         {/* Only a gift is settled by hand, so only a gift can
                             be waiting at the counter. */}
                         {win.prize_type === "gift" && (
-                          <Badge variant={win.collected ? "success" : "warning"}>
+                          <Badge
+                            variant={win.collected ? "success" : "warning"}
+                          >
                             {win.collected ? s.collectedChip : s.pendingChip}
                           </Badge>
                         )}
