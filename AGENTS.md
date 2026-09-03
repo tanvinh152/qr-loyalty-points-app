@@ -336,6 +336,30 @@ in-quart`) mirrored for JS in `src/lib/motion/tokens.ts`. It must stay non-`inli
   a tile out of its assigned cell and leave the hole the no-hole rule exists to prevent. That rule
   is enforced by a `no-restricted-syntax` selector in `eslint.config.mjs`, scoped to `<m.* />` —
   `layout` is also an ordinary string prop here (`PostCard layout="tile"`).
+- **The feedback layer** (added 2026-09-03). Five small pieces carry every "something is
+  happening / just happened" cue, and a new surface reaches for them before inventing its own:
+  - `ENTER` + `STAGGER[i]` (`src/lib/motion/tokens.ts`) is the entrance every page's TOP-LEVEL
+    regions wear — never a row, card or list item, and never on an element with a changing `key`.
+    On `/rewards` and `/history` it goes on the RESULT region only: those pages remount on every
+    search-param change (the segment key carries the params), so a header wearing it would replay
+    on each chip or page click. `loading.tsx` skeletons wear none — they are what it plays over.
+  - `PendingIcon` is the ONE spinner dialect for a button; `Loader2` appears in exactly two files
+    (`pending-icon.tsx`, `ui/sonner.tsx`) and the grep is the guard.
+  - `Celebration` (`src/components/celebration.tsx`) is the one-shot burst for a confirmed win or
+    claim — check-in, redeem, the wheel — composing the `animate-claim-burst` halo with Motion sparks
+    and `T.pop`. It is the only place outside the wheel, the roadmap and the nav bubble that may use
+    the overshoot, and it must NEVER fire optimistically: every caller fires it after the server has
+    answered, on a write that is never retracted. `fire` is edge-triggered; mounting already-true
+    counts as an edge (the wheel's result panel).
+  - `LinkPending` (`useLinkStatus`) is the dot a chip or pager shows while its navigation is in
+    flight — always rendered, toggled by opacity, parked in the control's own padding so it costs no
+    width. `SubmitButton` (`useFormStatus`) is its form-side twin, for `next/form` GET filters.
+  - `FormError` is a client component that takes FOCUS when a message lands; `field-error.tsx`
+    carries the field-level half for the `useActionState` forms (`AuthState.field` names the input,
+    ids equal names). Member forms stay on `useActionState` + HTML5 — they must post without JS.
+  - Small buttons (`xs`/`sm`/`icon-*`) grow an invisible `pointer-coarse:before:` hit box to 44px;
+    raise a hit box that way, never a height, or every admin table row reflows.
+
 - **Presence moved from CSS to `AnimatePresence`.** In every migrated file the
   `data-open:animate-in` / `data-closed:animate-out` utilities and the `duration-* ease-*` that
   timed them are DELETED — keeping both animates each open twice. Three things that look similar
