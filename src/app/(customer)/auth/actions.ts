@@ -46,7 +46,16 @@ import {
 // stores `pancake_customer_id` so every later order is credited automatically by
 // the webhook. There is no manual claim screen any more.
 
-export type AuthState = { error: string } | null
+/** `field` names the input a validation failure belongs to, so the form can
+ *  mark and focus it instead of parking one banner under the submit. Only the
+ *  zod branches set it; every later refusal (rate limit, proof, Pancake) is
+ *  about the submission as a whole and stays a banner. */
+export type AuthState = { error: string; field?: string } | null
+
+function fieldOf(issue: { path: PropertyKey[] } | undefined) {
+  const head = issue?.path[0]
+  return head === undefined ? undefined : String(head)
+}
 
 // Supabase reports a duplicate address as `email_exists`; older releases only
 // said "…has already been registered".
@@ -72,7 +81,8 @@ export async function signIn(
     password: String(formData.get("password") ?? ""),
   })
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? e.signInFailed }
+    const issue = parsed.error.issues[0]
+    return { error: issue?.message ?? e.signInFailed, field: fieldOf(issue) }
   }
 
   // One Postgres-backed counter for both forms — a password guesser and an order
@@ -129,7 +139,8 @@ export async function signUp(
     order_code: String(formData.get("order_code") ?? ""),
   })
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? e.signupFailed }
+    const issue = parsed.error.issues[0]
+    return { error: issue?.message ?? e.signupFailed, field: fieldOf(issue) }
   }
 
   const typedCode = parsed.data.order_code
@@ -351,7 +362,11 @@ export async function signUp(
     })
     console.info(`[signup] pancake sync ${synced}`, pancakeCustomerId)
   } catch (err) {
-    console.error("[signup] pancake customer sync failed", pancakeCustomerId, err)
+    console.error(
+      "[signup] pancake customer sync failed",
+      pancakeCustomerId,
+      err,
+    )
   }
 
   await recordAttempt(ip, orderCode, true)

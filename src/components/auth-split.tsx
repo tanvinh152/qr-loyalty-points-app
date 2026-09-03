@@ -1,6 +1,9 @@
 import Image from "next/image"
 import { CheckCircle2, PawPrint } from "lucide-react"
 
+import { ENTER, STAGGER } from "@/lib/motion/tokens"
+import { cn } from "@/lib/utils"
+
 /**
  * The split screen every auth page uses
  * (`design/stitch_remix_of_loyalty_rewards_dashboard/ng_nh_p_ng_k_chicha_pet_rewards/`):
@@ -33,8 +36,16 @@ export function AuthSplit({
     <main className="bg-canvas relative grid min-h-svh place-items-center overflow-hidden p-4 md:p-8">
       <div className="relative z-10 mx-auto grid w-full max-w-6xl items-center gap-8 md:grid-cols-2 md:gap-12">
         {/* Hidden below `md`, as in the mockup: on a phone the form is the whole
-            screen and a stacked marketing panel just pushes it below the fold. */}
-        <aside className="bg-surface-low shadow-soft hidden flex-col justify-center gap-5 rounded-3xl p-6 md:flex md:p-10">
+            screen and a stacked marketing panel just pushes it below the fold.
+            The two boxes are the page's two top-level regions, so they take the
+            app-wide entrance — panel first, form a beat behind. */}
+        <aside
+          className={cn(
+            ENTER,
+            STAGGER[0],
+            "bg-surface-low shadow-soft hidden flex-col justify-center gap-5 rounded-3xl p-6 md:flex md:p-10",
+          )}
+        >
           <div className="flex items-center gap-2">
             <PawPrint className="text-primary size-6" aria-hidden />
             <span className="text-headline-md text-primary">{brand}</span>
@@ -71,7 +82,13 @@ export function AuthSplit({
           </div>
         </aside>
 
-        <div className="border-border bg-card shadow-soft mx-auto w-full max-w-md rounded-3xl border p-6 md:p-8">
+        <div
+          className={cn(
+            ENTER,
+            STAGGER[1],
+            "border-border bg-card shadow-soft mx-auto w-full max-w-md rounded-3xl border p-6 md:p-8",
+          )}
+        >
           {tabs}
           {children}
         </div>

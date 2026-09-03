@@ -46,10 +46,9 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/i18n/server", () => ({ getMessages: async () => messages }))
 
 vi.mock("@/lib/pancake/client", async () => {
-  const actual =
-    await vi.importActual<typeof import("@/lib/pancake/client")>(
-      "@/lib/pancake/client",
-    )
+  const actual = await vi.importActual<typeof import("@/lib/pancake/client")>(
+    "@/lib/pancake/client",
+  )
   return {
     ...actual,
     getOrder: (...a: unknown[]) => getOrder(...a),
@@ -150,7 +149,10 @@ beforeEach(() => {
   recordAttempt.mockResolvedValue(undefined)
   getOrder.mockResolvedValue(ORDER)
   getCustomerByPancakeId.mockResolvedValue(null)
-  createUser.mockResolvedValue({ data: { user: { id: "auth-1" } }, error: null })
+  createUser.mockResolvedValue({
+    data: { user: { id: "auth-1" } },
+    error: null,
+  })
   deleteUser.mockResolvedValue({ error: null })
   updateUserById.mockResolvedValue({ error: null })
   getCustomerByPhone.mockResolvedValue({
@@ -300,6 +302,7 @@ describe("signUp — the email", () => {
   it("rejects a malformed address before anything is created", async () => {
     expect(await run(form({ email: "not-an-email" }))).toEqual({
       error: "invalidEmail",
+      field: "email",
     })
     expect(isRateLimited).not.toHaveBeenCalled()
     expect(getOrder).not.toHaveBeenCalled()
@@ -307,7 +310,10 @@ describe("signUp — the email", () => {
   })
 
   it("rejects a missing address", async () => {
-    expect(await run(form({ email: "" }))).toEqual({ error: "emailRequired" })
+    expect(await run(form({ email: "" }))).toEqual({
+      error: "emailRequired",
+      field: "email",
+    })
     expect(createUser).not.toHaveBeenCalled()
   })
 
@@ -316,7 +322,10 @@ describe("signUp — the email", () => {
       redirected: true,
     })
     expect(createUser).toHaveBeenCalledWith(
-      expect.objectContaining({ email: EMAIL, user_metadata: { phone: PHONE } }),
+      expect.objectContaining({
+        email: EMAIL,
+        user_metadata: { phone: PHONE },
+      }),
     )
   })
 
@@ -386,6 +395,7 @@ describe("signUp — proving the phone", () => {
   it("rejects a phone that is not a Vietnamese mobile before anything else", async () => {
     expect(await run(form({ phone: "901234570" }))).toEqual({
       error: "invalidPhone",
+      field: "phone",
     })
     expect(isRateLimited).not.toHaveBeenCalled()
   })
@@ -405,7 +415,8 @@ describe("signUp — the welcome gift", () => {
     adminRpc.mockImplementation(async (fn: string) => {
       if (fn === "find_orphan_auth_user") return findOrphan()
       if (fn === "claim_points") return claimPoints()
-      if (fn === "grant_welcome_gift") return { data: null, error: { code: "XX000" } }
+      if (fn === "grant_welcome_gift")
+        return { data: null, error: { code: "XX000" } }
       return { data: null, error: null }
     })
     expect(await run()).toEqual({ redirected: true })
@@ -416,10 +427,7 @@ describe("signUp — claiming the proof order", () => {
   it("skips the claim when the order has not reached a claimable status", async () => {
     getOrder.mockResolvedValueOnce({ ...ORDER, status: 0 })
     expect(await run()).toEqual({ redirected: true })
-    expect(adminRpc).not.toHaveBeenCalledWith(
-      "claim_points",
-      expect.anything(),
-    )
+    expect(adminRpc).not.toHaveBeenCalledWith("claim_points", expect.anything())
     // Still linked: every later order must be attributable.
     expect(linkPancakeCustomer).toHaveBeenCalledWith("cust-1", "pos-1")
   })

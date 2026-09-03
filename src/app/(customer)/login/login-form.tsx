@@ -1,9 +1,16 @@
 "use client"
 
-import { useActionState, useState } from "react"
-import { ArrowRight, Eye, EyeOff, Lock, Smartphone } from "lucide-react"
+import { useActionState } from "react"
+import { ArrowRight, Smartphone } from "lucide-react"
 
+import {
+  FieldError,
+  fieldError,
+  invalidProps,
+  useFocusInvalid,
+} from "@/components/field-error"
 import { FormError } from "@/components/form-error"
+import { PasswordInput } from "@/components/password-input"
 import { PendingIcon } from "@/components/pending-icon"
 import { Button } from "@/components/ui/button"
 import {
@@ -22,7 +29,9 @@ export function LoginForm() {
     signIn,
     null,
   )
-  const [showPassword, setShowPassword] = useState(false)
+  useFocusInvalid(state)
+  const phoneError = fieldError(state, "phone")
+  const passwordError = fieldError(state, "password")
 
   return (
     <form action={formAction} className="grid gap-6">
@@ -37,36 +46,24 @@ export function LoginForm() {
           placeholder={l.phonePlaceholder}
           autoComplete="username"
           required
+          {...invalidProps("phone", phoneError)}
         />
+        <FieldError id="phone" message={phoneError} />
       </div>
 
       <div className="grid gap-2">
         <Label htmlFor="password">{l.password}</Label>
-        <div className="relative">
-          <Input
-            id="password"
-            name="password"
-            type={showPassword ? "text" : "password"}
-            icon={Lock}
-            placeholder={l.passwordPlaceholder}
-            autoComplete="current-password"
-            className="pr-11"
-            required
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword((shown) => !shown)}
-            aria-label={showPassword ? l.hidePassword : l.showPassword}
-            aria-pressed={showPassword}
-            className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
-          >
-            {showPassword ? (
-              <EyeOff className="size-[18px]" aria-hidden />
-            ) : (
-              <Eye className="size-[18px]" aria-hidden />
-            )}
-          </button>
-        </div>
+        <PasswordInput
+          id="password"
+          name="password"
+          placeholder={l.passwordPlaceholder}
+          autoComplete="current-password"
+          showLabel={l.showPassword}
+          hideLabel={l.hidePassword}
+          required
+          {...invalidProps("password", passwordError)}
+        />
+        <FieldError id="password" message={passwordError} />
         {/* No self-serve reset yet, so this explains where to go instead. A
             Tooltip keeps it reachable by keyboard and on touch, which the old
             `title` attribute was not. */}
@@ -82,7 +79,9 @@ export function LoginForm() {
         </div>
       </div>
 
-      <FormError message={state?.error} />
+      {/* A field-level failure is printed under its field; the banner is for
+          everything about the submission as a whole. */}
+      <FormError message={state?.field ? undefined : state?.error} />
 
       <Button type="submit" variant="brand" size="xl" disabled={isPending}>
         {isPending ? l.submitting : l.submit}

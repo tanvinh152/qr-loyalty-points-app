@@ -5,14 +5,20 @@ import { useActionState } from "react"
 import {
   ArrowRight,
   Cake,
-  Lock,
   Mail,
   Receipt,
   Smartphone,
   UserRound,
 } from "lucide-react"
 
+import {
+  FieldError,
+  fieldError,
+  invalidProps,
+  useFocusInvalid,
+} from "@/components/field-error"
 import { FormError } from "@/components/form-error"
+import { PasswordInput } from "@/components/password-input"
 import { PendingIcon } from "@/components/pending-icon"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -29,6 +35,10 @@ export function RegisterForm() {
     signUp,
     null,
   )
+  useFocusInvalid(state)
+  // Field ids equal field names, which is what lets the server's `field`
+  // land on the right input and what useFocusInvalid relies on.
+  const errorFor = (name: string) => fieldError(state, name)
 
   return (
     <form action={formAction} className="grid gap-6">
@@ -41,7 +51,9 @@ export function RegisterForm() {
           placeholder={r.fullNamePlaceholder}
           autoComplete="name"
           required
+          {...invalidProps("full_name", errorFor("full_name"))}
         />
+        <FieldError id="full_name" message={errorFor("full_name")} />
       </div>
 
       {/* The account's auth identity, and the only address support can answer
@@ -57,7 +69,9 @@ export function RegisterForm() {
           placeholder={r.emailPlaceholder}
           autoComplete="email"
           required
+          {...invalidProps("email", errorFor("email"))}
         />
+        <FieldError id="email" message={errorFor("email")} />
         <p className="text-body-sm text-muted-foreground">{r.emailHint}</p>
       </div>
 
@@ -70,7 +84,9 @@ export function RegisterForm() {
           icon={Cake}
           autoComplete="bday"
           required
+          {...invalidProps("date_of_birth", errorFor("date_of_birth"))}
         />
+        <FieldError id="date_of_birth" message={errorFor("date_of_birth")} />
         <p className="text-body-sm text-muted-foreground">{r.dobHint}</p>
       </div>
 
@@ -85,21 +101,25 @@ export function RegisterForm() {
           placeholder={l.phonePlaceholder}
           autoComplete="username"
           required
+          {...invalidProps("phone", errorFor("phone"))}
         />
+        <FieldError id="phone" message={errorFor("phone")} />
       </div>
 
       <div className="grid gap-2">
         <Label htmlFor="password">{l.password}</Label>
-        <Input
+        <PasswordInput
           id="password"
           name="password"
-          type="password"
-          icon={Lock}
           placeholder={l.passwordPlaceholder}
           autoComplete="new-password"
+          showLabel={l.showPassword}
+          hideLabel={l.hidePassword}
           minLength={8}
           required
+          {...invalidProps("password", errorFor("password"))}
         />
+        <FieldError id="password" message={errorFor("password")} />
       </div>
 
       {/* Both the ownership proof and the Pancake link — see signUp(). */}
@@ -111,12 +131,20 @@ export function RegisterForm() {
           icon={Receipt}
           placeholder={r.orderCodePlaceholder}
           required
+          {...invalidProps("order_code", errorFor("order_code"))}
         />
+        <FieldError id="order_code" message={errorFor("order_code")} />
         <p className="text-body-sm text-muted-foreground">{r.orderCodeHint}</p>
       </div>
 
       <div className="flex items-start gap-3">
-        <Checkbox id="terms" name="terms" required className="mt-1" />
+        <Checkbox
+          id="terms"
+          name="terms"
+          required
+          className="mt-1"
+          {...invalidProps("terms", errorFor("terms"))}
+        />
         {/* Prose, not an overline: undo Label's uppercase flex row so the
             sentence wraps as one block instead of four spaced-out fragments.
             Both links are real routes now — /terms carries the privacy section
@@ -139,8 +167,11 @@ export function RegisterForm() {
           .
         </Label>
       </div>
+      <FieldError id="terms" message={errorFor("terms")} />
 
-      <FormError message={state?.error} />
+      {/* A field-level failure is printed under its field; the banner is for
+          everything about the submission as a whole. */}
+      <FormError message={state?.field ? undefined : state?.error} />
 
       <Button type="submit" variant="brand" size="xl" disabled={isPending}>
         {isPending ? r.submitting : r.submit}
