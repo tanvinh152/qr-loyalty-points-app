@@ -2,6 +2,7 @@ import Link from "next/link"
 import { AnimateIcon } from "@/components/animate-ui/icons/icon"
 import { ChevronLeft } from "@/components/animate-ui/icons/chevron-left"
 import { ChevronRight } from "@/components/animate-ui/icons/chevron-right"
+import { LinkPending } from "@/components/link-pending"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -25,7 +26,7 @@ export function PageLink({
   const Icon = direction === "prev" ? ChevronLeft : ChevronRight
   const className = cn(
     buttonVariants({ variant: "outline", size: "icon-sm" }),
-    "text-muted-foreground",
+    "text-muted-foreground relative",
   )
 
   if (disabled) {
@@ -39,6 +40,7 @@ export function PageLink({
     <AnimateIcon animateOnHover asChild>
       <Link href={href} className={className} aria-label={label}>
         <Icon className="size-[18px]" aria-hidden />
+        <LinkPending className="absolute top-1 right-1 size-1" />
       </Link>
     </AnimateIcon>
   )

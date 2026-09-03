@@ -22,6 +22,7 @@ import { Progress } from "@/components/ui/progress"
 import { EmptyState } from "@/components/empty-state"
 import { PageHeader } from "@/components/page-header"
 import { cn, formatVnd } from "@/lib/utils"
+import { ENTER, STAGGER } from "@/lib/motion/tokens"
 import { getLocale, getMessages } from "@/lib/i18n/server"
 import { getLatestTierAward, getTiers, tierProgress } from "@/lib/loyalty"
 import type { MembershipTierRow } from "@/lib/db-types"
@@ -115,10 +116,22 @@ export default async function TiersPage() {
     <div className="grid gap-4 sm:gap-6">
       {/* The mockup leaves the page title plain and moves "Current tier" onto
           the identity card below, where it labels the thing it describes. */}
-      <PageHeader title={ti.pageTitle} description={ti.subtitle} size="display" />
+      <PageHeader
+        title={ti.pageTitle}
+        description={ti.subtitle}
+        size="display"
+        className={cn(ENTER, STAGGER[0])}
+      />
 
+      {/* The four top-level regions stagger in; nothing inside them does. */}
       {!current ? (
-        <div className="border-border bg-card rounded-2xl border">
+        <div
+          className={cn(
+            ENTER,
+            STAGGER[1],
+            "border-border bg-card rounded-2xl border",
+          )}
+        >
           <EmptyState
             icon={Gem}
             title={ti.noTier}
@@ -126,7 +139,13 @@ export default async function TiersPage() {
           />
         </div>
       ) : (
-        <div className="grid gap-4 sm:gap-6 md:grid-cols-12">
+        <div
+          className={cn(
+            ENTER,
+            STAGGER[1],
+            "grid gap-4 sm:gap-6 md:grid-cols-12",
+          )}
+        >
           <section
             className={cn(
               "border-border bg-card shadow-soft relative grid content-start gap-4 overflow-hidden rounded-3xl border p-4 sm:gap-6 sm:p-6 md:col-span-5 md:p-8",
@@ -290,7 +309,13 @@ export default async function TiersPage() {
 
       {/* Unguarded on purpose: someone with no tier yet still needs to see what
           the ladder costs and offers — that is the screen's whole pitch. */}
-      <section className="border-border bg-card shadow-soft overflow-hidden rounded-3xl border">
+      <section
+        className={cn(
+          ENTER,
+          STAGGER[2],
+          "border-border bg-card shadow-soft overflow-hidden rounded-3xl border",
+        )}
+      >
         <div className="border-border bg-surface-low border-b p-4 sm:p-6">
           <h2 className="text-headline-md flex items-center gap-2">
             <Gem className="text-primary size-5" aria-hidden />
@@ -423,6 +448,8 @@ export default async function TiersPage() {
         // — the table above has room for titles alone.
         <section
           className={cn(
+            ENTER,
+            STAGGER[3],
             "border-border bg-card shadow-soft relative overflow-hidden rounded-3xl border p-4 sm:p-6 md:p-8",
             tierAccentClass(rank),
           )}

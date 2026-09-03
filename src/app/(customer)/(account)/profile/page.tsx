@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { getMessages } from "@/lib/i18n/server"
 import { signOut } from "../../auth/actions"
 import { getAccount } from "../account"
+import { ENTER } from "@/lib/motion/tokens"
 import { ProfileForm } from "./profile-form"
 
 export async function generateMetadata() {
@@ -22,7 +23,12 @@ export default async function ProfilePage() {
   if (!customer) return null
 
   return (
-    <div className="border-border bg-card grid overflow-hidden rounded-3xl border lg:grid-cols-2">
+    <div
+      className={cn(
+        ENTER,
+        "border-border bg-card grid overflow-hidden rounded-3xl border lg:grid-cols-2",
+      )}
+    >
       {/* The photo half, as in the mockup. It stays visible on phones, stacked
           above the form — same treatment as `AuthSplit`. */}
       <aside className="bg-surface-low relative isolate grid min-h-[200px] content-end gap-4 p-4 sm:min-h-[300px] sm:p-6 md:p-12">

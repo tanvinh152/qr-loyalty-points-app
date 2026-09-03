@@ -6,6 +6,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { EmptyState } from "@/components/empty-state"
 import { PageHeader } from "@/components/page-header"
 import { SectionCard } from "@/components/section-card"
+import { ENTER, STAGGER } from "@/lib/motion/tokens"
 import { cn, formatVnd } from "@/lib/utils"
 import { getMessages } from "@/lib/i18n/server"
 import { getMilestoneAwards, getMilestones } from "@/lib/loyalty"
@@ -47,7 +48,13 @@ export default async function RoadmapPage() {
   const firstLocked = nodes.findIndex((node) => node.state === "locked")
 
   const header = (
-    <div className="flex flex-col gap-4 sm:gap-6 md:flex-row md:items-end md:justify-between">
+    <div
+      className={cn(
+        ENTER,
+        STAGGER[0],
+        "flex flex-col gap-4 sm:gap-6 md:flex-row md:items-end md:justify-between",
+      )}
+    >
       <PageHeader
         size="display"
         title={
@@ -93,7 +100,7 @@ export default async function RoadmapPage() {
     return (
       <div className="grid gap-4 sm:gap-6">
         {header}
-        <SectionCard>
+        <SectionCard className={cn(ENTER, STAGGER[1])}>
           <EmptyState
             icon={Route}
             title={r.emptyTitle}
@@ -109,7 +116,9 @@ export default async function RoadmapPage() {
     <div className="grid gap-4 sm:gap-6">
       {header}
 
-      <div className="relative">
+      {/* A beat behind the header, and the rail's own 200ms delay is measured
+          from HERE — so the rungs still land before it climbs past them. */}
+      <div className={cn(ENTER, STAGGER[1], "relative")}>
         {/* The rail. Both halves are inset by half a marker (32px) so the track
             starts and ends at the centre of the first and last node rather than
             running past them. */}

@@ -1,3 +1,4 @@
+import Form from "next/form"
 import Link from "next/link"
 import {
   ArrowDownLeft,
@@ -19,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { EmptyState } from "@/components/empty-state"
@@ -27,6 +28,8 @@ import { PageHeader } from "@/components/page-header"
 import { Pagination } from "@/components/pagination"
 import { SectionCard } from "@/components/section-card"
 import { StatCard } from "@/components/stat-card"
+import { SubmitButton } from "@/components/submit-button"
+import { ENTER } from "@/lib/motion/tokens"
 import { TruncatedText } from "@/components/truncated-text"
 import { cn } from "@/lib/utils"
 import { getLocale, getMessages } from "@/lib/i18n/server"
@@ -67,14 +70,19 @@ export default async function HistoryPage({
 
   const { page, q, from, to } = await searchParams
   const pageNum = Math.max(1, Number(page) || 1)
+  // ISO dates compare as strings. A backwards range used to run the query and
+  // come back empty, indistinguishable from a ledger with nothing in it.
+  const rangeInvalid = Boolean(from && to && from > to)
   const [{ rows, total }, totals] = await Promise.all([
-    getTransactions(customer.id, {
-      page: pageNum,
-      pageSize: PAGE_SIZE,
-      search: q,
-      from,
-      to,
-    }),
+    rangeInvalid
+      ? { rows: [], total: 0 }
+      : getTransactions(customer.id, {
+          page: pageNum,
+          pageSize: PAGE_SIZE,
+          search: q,
+          from,
+          to,
+        }),
     getTransactionTotals(customer.id),
   ])
   const hasNext = total > pageNum * PAGE_SIZE
@@ -120,9 +128,11 @@ export default async function HistoryPage({
         />
       </div>
 
-      {/* One GET form for all three filters: submitting navigates, so no client
-          component is involved. Paging resets by omitting `page`. */}
-      <form
+      {/* One GET form for all three filters. `next/form` makes the submit a
+          client-side navigation, which is what lets the button pend through
+          useFormStatus; without JS it is still a plain GET. Paging resets by
+          omitting `page`. */}
+      <Form
         action="/history"
         className="border-border bg-card grid gap-4 rounded-2xl border p-4 sm:gap-5 sm:p-5 md:grid-cols-[1fr_auto_auto_auto] md:items-end"
       >
@@ -152,6 +162,7 @@ export default async function HistoryPage({
             type="date"
             name="from"
             defaultValue={from}
+            max={to || undefined}
             className="text-body-sm h-12"
           />
         </div>
@@ -162,14 +173,17 @@ export default async function HistoryPage({
             type="date"
             name="to"
             defaultValue={to}
+            min={from || undefined}
             className="text-body-sm h-12"
           />
         </div>
         <div className="flex gap-2">
-          <Button type="submit" className="h-12 grow px-8 md:grow-0">
-            <SlidersHorizontal className="size-4" aria-hidden />
+          <SubmitButton
+            icon={<SlidersHorizontal className="size-4" aria-hidden />}
+            className="h-12 grow px-8 md:grow-0"
+          >
             {h.filterCta}
-          </Button>
+          </SubmitButton>
           {filtered && (
             <Link
               href="/history"
@@ -179,9 +193,14 @@ export default async function HistoryPage({
             </Link>
           )}
         </div>
-      </form>
+      </Form>
 
+      {/* The entrance is on the ledger ALONE: this page remounts on every
+          filter or page change (the segment key carries the search params), so
+          the header and the filter bar must not wear it or they would replay
+          on each click. The ledger replaying reads as the new rows arriving. */}
       <SectionCard
+        className={ENTER}
         footer={
           rows.length > 0 ? (
             <Pagination
@@ -198,10 +217,32 @@ export default async function HistoryPage({
         }
       >
         {rows.length === 0 ? (
+          // Three different nothings: a backwards range, a filter that matched
+          // no rows, and a ledger that is genuinely empty. Only the last one
+          // has no way out.
           <EmptyState
             icon={Receipt}
-            title={h.emptyTitle}
-            description={h.emptyBody}
+            title={rangeInvalid || filtered ? h.noMatchTitle : h.emptyTitle}
+            description={
+              rangeInvalid
+                ? h.rangeInvalid
+                : filtered
+                  ? h.noMatchBody
+                  : h.emptyBody
+            }
+            action={
+              rangeInvalid || filtered ? (
+                <Link
+                  href="/history"
+                  className={cn(
+                    buttonVariants({ variant: "secondary" }),
+                    "mt-2",
+                  )}
+                >
+                  {h.resetCta}
+                </Link>
+              ) : undefined
+            }
           />
         ) : (
           <>

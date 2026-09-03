@@ -2,6 +2,8 @@ import Link from "next/link"
 import { Gift, History, Route, Sparkles } from "lucide-react"
 
 import { EmptyState } from "@/components/empty-state"
+import { LinkPending } from "@/components/link-pending"
+import { ENTER } from "@/lib/motion/tokens"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { getMessages } from "@/lib/i18n/server"
@@ -127,21 +129,26 @@ export default async function RewardsPage({
               }
               aria-current={active ? "page" : undefined}
               className={cn(
-                "text-label-md shrink-0 rounded-full px-4 py-2 transition-colors",
+                "text-label-md relative shrink-0 rounded-full px-4 py-2 transition-colors",
                 active
                   ? "bg-primary-container text-primary-foreground font-semibold"
                   : "bg-surface-container text-muted-foreground hover:text-foreground",
               )}
             >
               {tab.label}
+              {/* Parked in the chip's own padding so it costs no width. */}
+              <LinkPending className="absolute top-1/2 right-1.5 -translate-y-1/2" />
             </Link>
           )
         })}
       </nav>
 
       {/* One bento grid: the featured reward is a wide cell inside it, not a
-          separate band above it. */}
-      <div className="grid gap-4 sm:gap-6 md:grid-cols-12">
+          separate band above it. The entrance is on the GRID ALONE: this page
+          remounts on every category change (the segment key carries the search
+          params), so a header or chip strip wearing it would replay on each
+          filter click, where the grid replaying reads as the results arriving. */}
+      <div className={cn(ENTER, "grid gap-4 sm:gap-6 md:grid-cols-12")}>
         {hero && (
           <section className="border-border bg-card grid gap-4 overflow-hidden rounded-3xl border sm:grid-cols-2 sm:gap-6 md:col-span-8">
             {hero.image_url ? (
@@ -194,7 +201,7 @@ export default async function RewardsPage({
       </div>
 
       {grid.length === 0 && !hero && (
-        <div className="border-border bg-card rounded-3xl border">
+        <div className={cn(ENTER, "border-border bg-card rounded-3xl border")}>
           <EmptyState
             icon={Gift}
             title={r.emptyTitle}

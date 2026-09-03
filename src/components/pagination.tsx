@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { LinkPending } from "@/components/link-pending"
 import { PageLink } from "@/components/page-link"
 
 /**
@@ -70,11 +71,12 @@ export function Pagination({
                 aria-label={labels.page(n)}
                 className={
                   n === page
-                    ? "bg-primary-container text-primary-foreground text-label-md grid size-8 place-items-center rounded-lg font-semibold"
-                    : "text-label-md text-muted-foreground hover:text-foreground hover:bg-surface-high grid size-8 place-items-center rounded-lg"
+                    ? "bg-primary-container text-primary-foreground text-label-md relative grid size-8 place-items-center rounded-lg font-semibold"
+                    : "text-label-md text-muted-foreground hover:text-foreground hover:bg-surface-high relative grid size-8 place-items-center rounded-lg"
                 }
               >
                 {n}
+                <LinkPending className="absolute top-1 right-1 size-1" />
               </Link>
             </span>
           ))

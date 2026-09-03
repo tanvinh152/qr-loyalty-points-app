@@ -5,10 +5,13 @@
  */
 export function PageSkeleton({
   stats = 4,
+  filter = false,
   label,
 }: {
   /** Tiles in the stat row. 0 skips the row entirely. */
   stats?: number
+  /** A filter bar between the stats and the panel — the ledger screens. */
+  filter?: boolean
   /** Announced while the real screen streams in. */
   label: string
 }) {
@@ -28,6 +31,10 @@ export function PageSkeleton({
             />
           ))}
         </div>
+      )}
+
+      {filter && (
+        <div className="border-border bg-card h-24 animate-pulse rounded-2xl border" />
       )}
 
       <div className="border-border bg-card h-80 animate-pulse rounded-xl border" />

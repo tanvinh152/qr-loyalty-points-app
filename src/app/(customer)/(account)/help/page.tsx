@@ -3,6 +3,8 @@ import { ArrowRight, Mail, MessageSquare, Phone } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "@/components/page-header"
 import { SectionCard } from "@/components/section-card"
+import { ENTER, STAGGER } from "@/lib/motion/tokens"
+import { cn } from "@/lib/utils"
 import { getMessages } from "@/lib/i18n/server"
 import { getAccount } from "../account"
 import { HelpForm } from "./help-form"
@@ -20,11 +22,22 @@ export default async function HelpPage() {
 
   return (
     <div className="grid gap-4 sm:gap-6">
-      <PageHeader title={h.title} description={h.subtitle} size="display" />
+      <PageHeader
+        title={h.title}
+        description={h.subtitle}
+        size="display"
+        className={cn(ENTER, STAGGER[0])}
+      />
 
       {/* 2:1 bento, as in the mockup: the form owns two thirds and the contact
           channels stack beside it. */}
-      <div className="grid gap-4 sm:gap-6 md:grid-cols-12 md:items-start">
+      <div
+        className={cn(
+          ENTER,
+          STAGGER[1],
+          "grid gap-4 sm:gap-6 md:grid-cols-12 md:items-start",
+        )}
+      >
         <SectionCard
           title={h.formTitle}
           icon={Mail}

@@ -1,3 +1,4 @@
+import Form from "next/form"
 import Link from "next/link"
 import {
   Receipt,
@@ -16,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { EmptyState } from "@/components/empty-state"
@@ -24,6 +25,7 @@ import { PageHeader } from "@/components/page-header"
 import { Pagination } from "@/components/pagination"
 import { SectionCard } from "@/components/section-card"
 import { StatCard } from "@/components/stat-card"
+import { SubmitButton } from "@/components/submit-button"
 import { TruncatedText } from "@/components/truncated-text"
 import { cn } from "@/lib/utils"
 import { adjustMeta, getAdminTransactions } from "@/lib/loyalty"
@@ -143,9 +145,11 @@ export default async function TransactionsPage({
         />
       </div>
 
-      {/* One GET form for every filter: submitting navigates, so no client
-          component is involved. Paging resets by omitting `page`. */}
-      <form
+      {/* One GET form for every filter. `next/form` makes the submit a
+          client-side navigation, which is what lets the button pend through
+          useFormStatus; without JS it is still a plain GET. Paging resets by
+          omitting `page`. */}
+      <Form
         action="/admin/transactions"
         className="border-border bg-card grid gap-5 rounded-2xl border p-5 md:grid-cols-2 md:items-end xl:grid-cols-[1fr_auto_auto_auto_auto_auto]"
       >
@@ -217,10 +221,12 @@ export default async function TransactionsPage({
           </select>
         </div>
         <div className="flex gap-2">
-          <Button type="submit" className="h-12 px-6">
-            <SlidersHorizontal className="size-4" aria-hidden />
+          <SubmitButton
+            icon={<SlidersHorizontal className="size-4" aria-hidden />}
+            className="h-12 px-6"
+          >
             {tx.filterCta}
-          </Button>
+          </SubmitButton>
           {filtered && (
             <Link
               href="/admin/transactions"
@@ -230,7 +236,7 @@ export default async function TransactionsPage({
             </Link>
           )}
         </div>
-      </form>
+      </Form>
 
       <SectionCard
         footer={
