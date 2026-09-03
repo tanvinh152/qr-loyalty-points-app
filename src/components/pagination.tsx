@@ -52,7 +52,9 @@ export function Pagination({
           ? labels.showingRange(firstIndex, firstIndex + shown - 1, total)
           : labels.showing(shown, total)}
       </p>
-      <nav aria-label={labels.pagination} className="flex items-center gap-2">
+      {/* gap-3, not 2: the 32px pagers grow a 44px hit box on touch, and at
+          gap-2 those boxes would overlap by 4px. */}
+      <nav aria-label={labels.pagination} className="flex items-center gap-3">
         <PageLink
           href={hrefFor(page - 1)}
           disabled={page <= 1}

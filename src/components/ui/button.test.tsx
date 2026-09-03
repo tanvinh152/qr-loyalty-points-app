@@ -37,4 +37,22 @@ describe("Button", () => {
     // A link is not a button and must not be handed a type attribute.
     expect(link).not.toHaveAttribute("type")
   })
+
+  // The small sizes are under the 44px touch minimum. Their hit box grows on
+  // a coarse pointer through a ::before — invisible, so only the class proves
+  // it is there.
+  it.each(["xs", "sm", "icon-xs", "icon-sm"] as const)(
+    "widens the %s size's hit box on a coarse pointer",
+    (size) => {
+      render(<Button size={size}>·</Button>)
+      expect(screen.getByRole("button").className).toMatch(
+        /pointer-coarse:before:-inset-/,
+      )
+    },
+  )
+
+  it("leaves the default size's hit box alone — it already clears 40px", () => {
+    render(<Button>·</Button>)
+    expect(screen.getByRole("button").className).not.toMatch(/pointer-coarse/)
+  })
 })
