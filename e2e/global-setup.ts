@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js"
 import { SERVICE_ROLE_KEY, SUPABASE_URL, assertLocalTarget } from "./env"
 import { ADMIN, MEMBER, MEMBER_B, TEST_REWARD } from "./fixtures/accounts"
 import { clearRateLimits } from "./fixtures/db"
+import { startPancakeStub } from "./pancake-stub"
 
 /**
  * Provisions the two identities the suite runs as, plus the reward the
@@ -20,14 +21,25 @@ import { clearRateLimits } from "./fixtures/db"
 export default async function globalSetup() {
   assertLocalTarget()
 
+  // Started before the app: `playwright.config.ts` points PANCAKE_API_URL at it,
+  // so `next dev` must find it listening the moment a spec triggers a signup or
+  // a webhook delivery. Returned as teardown at the bottom of this function.
+  const pancake = await startPancakeStub()
+
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
+  // Cleared by BOTH keys, because the two are set independently. Deleting only
+  // by address leaves a user holding one of the fixed uuids under some earlier
+  // address behind — which is exactly what happens the first time the fixture
+  // emails change — and the next `createUser` then collides on the primary key
+  // with an error whose message serialises to `{}`. Costly hour; hence this.
   const emails = new Set<string>([ADMIN.email, MEMBER.email, MEMBER_B.email])
+  const ids = new Set<string>([MEMBER.authId, MEMBER_B.authId])
   const { data: existing } = await admin.auth.admin.listUsers({ perPage: 1000 })
   for (const user of existing?.users ?? []) {
-    if (user.email && emails.has(user.email)) {
+    if ((user.email && emails.has(user.email)) || ids.has(user.id)) {
       await admin.auth.admin.deleteUser(user.id)
     }
   }
@@ -110,4 +122,8 @@ export default async function globalSetup() {
     { onConflict: "id" },
   )
   if (rewardError) throw new Error(`upsert reward: ${rewardError.message}`)
+
+  return async () => {
+    await new Promise<void>((resolve) => pancake.close(() => resolve()))
+  }
 }

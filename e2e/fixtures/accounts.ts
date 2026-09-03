@@ -8,17 +8,34 @@
  * on. A test that asserts an absence against an empty database asserts nothing.
  */
 
+/**
+ * ADMIN and MEMBER are the project's documented dev identities
+ * (`docs/account-test.md`), so a developer can sign in by hand and see exactly
+ * the state a failing spec left behind.
+ *
+ * `admin`'s five characters are below `config.toml`'s
+ * `minimum_password_length = 6`, and that is fine: the limit governs SELF-signup
+ * through `/auth/v1/signup`. `auth.admin.createUser` — what global setup calls —
+ * does not enforce it, and `/admin/login` runs no length check of its own
+ * (`src/app/admin/login/actions.ts` only tests for emptiness). Verified against
+ * the local stack. The member's password is 9 characters and clears the
+ * `.min(8)` in `makeCustomerLoginSchema` (`src/lib/schemas.ts:65`) that the
+ * sign-in FORM does enforce.
+ */
 export const ADMIN = {
-  email: "e2e.admin@chicha.test",
-  password: "e2e-admin-pw-9137",
+  email: "admin@gmail.com",
+  password: "admin",
 } as const
 
 export const MEMBER = {
   id: "e2e0a001-0000-4000-8000-000000000001",
   authId: "e2e0b001-0000-4000-8000-000000000001",
-  phone: "0900000101",
-  email: "e2e.member@chicha.test",
-  password: "e2e-member-pw-9137",
+  phone: "0376733152",
+  // Supabase Auth is email-keyed, so `signIn` resolves phone -> customers.email
+  // before `signInWithPassword` (0014). The member logs in with the phone; this
+  // address only ever exists to satisfy that lookup.
+  email: "member@gmail.com",
+  password: "123123123",
   fullName: "Nguyễn Test Một",
 } as const
 

@@ -6,9 +6,51 @@ mỗi case ghi rõ file/hàm nguồn để dev đối chiếu khi case fail.
 - **ID**: `<C|A|S>-<NHÓM>-<số>` — `C` = customer, `A` = admin, `S` = hệ thống (webhook / cron / phân quyền / i18n / theme).
 - **Ưu tiên**: `P0` chặn release (tiền, điểm, phân quyền) · `P1` chức năng chính · `P2` hiển thị / phụ.
 - **Tự động**: file test đã phủ ca đó — bỏ qua khi bấm tay, chỉ chạy lại khi nó fail. `—` là
-  vẫn phải bấm. Cột này mới chỉ có ở các nhóm đã được tự động hoá trong đợt P0
-  (S-AUTH, C-LOG, C-RWD, A-CUS); các nhóm khác vẫn thủ công toàn bộ.
+  vẫn phải bấm. Xem §0 bên dưới: phần lớn luồng đã có Playwright phủ, phần còn phải bấm tay
+  gần như chỉ còn là thẩm mỹ (bố cục, hoạt ảnh, responsive).
   Chạy: `npm test` (vitest) · `npm run test:db` (pgTAP, cần Docker) · `npm run test:e2e` (Playwright).
+
+---
+
+## 0. Đã tự động hoá bằng Playwright
+
+`npm run test:e2e` chạy 144 case trên **Supabase local**, bằng đúng 2 tài khoản ở
+`docs/account-test.md`. Bấm tay chỉ cần tập trung vào những gì máy không kiểm được:
+bố cục, hoạt ảnh, responsive thật trên thiết bị.
+
+**Không có một lời gọi nào tới Pancake thật.** `playwright.config.ts` ghi đè
+`PANCAKE_API_URL` sang `e2e/pancake-stub.ts` — một HTTP server chạy trong tiến trình
+Playwright, phục vụ đúng 3 endpoint client dùng (GET đơn, GET khách, PUT khách). Vì host
+thật không bao giờ được nhắc tới, không case nào chạm được vào POS kể cả khi viết sai. Stub
+còn ghi lại mọi lệnh PUT, và các spec khẳng định danh sách đó **rỗng** ở mọi nơi trừ đúng một
+case đăng ký — lần ghi hợp lệ duy nhất của cả app.
+
+| File | Nhóm case cũ | Phủ những gì |
+|------|--------------|--------------|
+| `e2e/guest-register.spec.ts` | C-REG | Đăng ký thành công (tạo `customers`, link `pancake_customer_id`, cộng điểm đơn chứng minh, ghi tên/SĐT thật ngược lên POS), sai đơn, đơn của người khác, đơn không link được, đơn đã thuộc tài khoản khác, SĐT trùng, mật khẩu < 8, POS lỗi **không** trừ lượt thử, chặn ở lần thứ 6 |
+| `e2e/api-webhook.spec.ts` | S-WH | 401/422, cộng điểm, **không lộ PII**, đơn chưa chốt, khách lạ, đơn không tồn tại, giao trùng, POS sập → 503, sai API key → 200, mọi dạng payload, đơn TikTok vào hàng đợi |
+| `e2e/api-cron.spec.ts` | S-CRON | 401, bearer của Vercel, job lạ, áp lịch nâng mốc + **giữ nguyên hạng đã đạt**, lịch tương lai, chạy lại không đổi gì, đối soát TikTok (đổi / không đổi) |
+| `e2e/member-checkin.spec.ts` | (mới) | Ẩn khi tắt, cộng điểm, lần 2 trong ngày im lặng, ghi `transactions` nguồn `checkin` |
+| `e2e/member-spin.spec.ts` | (mới) | Không còn route `/spin`, ẩn pill khi tắt, bảng rỗng, trúng điểm, hết lượt, trúng quà → chờ nhận + chấm báo, quà hết hàng rớt khỏi vòng |
+| `e2e/member-milestones.spec.ts` | (mới) | Mốc khoá/mở, nhận quà **không cộng điểm, không đổi hạng**, chống nhận 2 lần, quà đã nhận không bị thu hồi khi chi tiêu tụt |
+| `e2e/member-profile.spec.ts` | C-PRO | Lưu đủ trường, đóng dấu `profile_completed_at`, tiêu đề đổi, tên hiện ở header |
+| `e2e/member-support.spec.ts` | C-HELP | Gửi yêu cầu, reset form, chặn nội dung rỗng |
+| `e2e/member-history.spec.ts` | C-HIS | Lọc theo `order_code`, lọc ngày, xoá lọc, lọc không khớp |
+| `e2e/member-tiers.spec.ts` | C-TIER | Chưa có hạng vẫn thấy thang, tiến độ tính theo **tiền** chứ không theo điểm, thẻ thành viên che số, ghi chú giữ hạng vĩnh viễn |
+| `e2e/member-chrome.spec.ts` | (mới) | Thu gọn rail + nhớ bằng cookie, nhãn `sr-only` chứ không `hidden`, menu avatar gom đủ hành động, đổi theme không đóng menu, bottom sheet trên điện thoại |
+| `e2e/member-i18n.spec.ts` | S-I18N | Mặc định tiếng Việt, cookie đổi sang tiếng Anh |
+| `e2e/guest-public.spec.ts` | (mới) | `/` → `/login`, `/terms`, `/terms#privacy`, `/faq`, blog công khai chỉ hiện bài đã đăng |
+| `e2e/admin-settings.spec.ts` | A-SET | Lưu 4 tham số, chặn submit khi bỏ hết trạng thái, bật/tắt vòng quay và điểm danh |
+| `e2e/admin-tiers.spec.ts` | A-TIER, A-SCH | Sửa mốc/hệ số, chặn vượt hạng trên/dưới, đặt + huỷ lịch, mỗi hạng 1 lịch chờ, mở trang là áp lịch đến hạn |
+| `e2e/admin-rewards.spec.ts` | A-RWD | Tạo quà đổi điểm / ô vòng quay / cột mốc, tranh chấp "nổi bật", trùng mốc chi tiêu, **quà vòng quay và cột mốc không lọt vào cửa hàng**, xoá có xác nhận |
+| `e2e/admin-blog.spec.ts` | (mới) | Nháp, xuất bản (giữ `published_at` khi gỡ), trùng slug, khách vãng lai đọc được, xoá có xác nhận |
+| `e2e/admin-support.spec.ts` | A-SUP | Xem đầy đủ + link `mailto:`, đóng, mở lại, lọc theo trạng thái |
+| `e2e/admin-fulfilment.spec.ts` | (mới) | Đánh dấu đã trao quà vòng quay (+ hoàn tác, có ghi **ai** trao) và quà cột mốc, lọc "chờ trao" |
+| `e2e/admin-transactions.spec.ts` | A-TRX, A-CUS | Lọc loại / nguồn / ngày, giá trị enum lạ bị bỏ qua chứ không làm trắng trang, tìm khách theo SĐT |
+| `e2e/login.spec.ts`, `guest-guards.spec.ts`, `role-separation.spec.ts`, `redeem.spec.ts`, `adjust-points.spec.ts` | C-LOG, S-AUTH, C-RWD, A-CUS | Đã có từ đợt P0 |
+
+**Còn phải bấm tay**: A-DASH và C-DASH (bố cục bento, quy tắc "không để lỗ"), hoạt ảnh vòng
+quay và `animate-claim-burst`, dark mode, responsive thật, upload ảnh lên Storage.
 
 ---
 
@@ -19,9 +61,9 @@ mỗi case ghi rõ file/hàm nguồn để dev đối chiếu khi case fail.
 | Reset DB | `supabase db reset` (chạy hết `supabase/migrations/*.sql` + `supabase/seed.sql`) |
 | Chạy app | `npm run dev` |
 | Tài khoản test | Xem `docs/account-test.md` — admin `admin@gmail.com/admin`, customer `0376733152/123123123` |
-| Env Pancake | `PANCAKE_*` trỏ tới shop thật (đơn hàng KHÔNG được seed, luôn fetch live) |
+| Env Pancake | Chỉ cần khi bấm tay: `PANCAKE_*` trỏ tới shop thật (đơn hàng KHÔNG được seed, luôn fetch live). `npm run test:e2e` **không** dùng tới — nó tự trỏ sang `e2e/pancake-stub.ts` |
 | Env webhook | `WEBHOOK_SECRET` — dùng chung cho `/api/webhooks/pancake` và `/api/cron/daily` |
-| Dữ liệu cần chuẩn bị tay | ≥ 3 mã đơn Pancake thật: (a) đơn chưa ai đăng ký, status 3 hoặc 16; (b) đơn đã thuộc tài khoản khác; (c) đơn status khác 3/16 |
+| Dữ liệu cần chuẩn bị tay | ≥ 3 mã đơn Pancake thật: (a) đơn chưa ai đăng ký, status 3 hoặc 16; (b) đơn đã thuộc tài khoản khác; (c) đơn status khác 3/16. Chỉ cần cho phần bấm tay — §0 đã phủ cả ba bằng stub |
 
 > Tài khoản admin phải có `app_metadata.role = 'admin'` (xem `public.is_admin()` ở `0005_roles_and_customer_rls.sql`).
 > Tài khoản customer **không bao giờ** được có claim này.
