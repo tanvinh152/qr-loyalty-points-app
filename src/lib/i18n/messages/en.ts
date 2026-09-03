@@ -556,6 +556,7 @@ export const en = {
       lifetimeSpend: "Spend",
       lifetimeSpendHint: "Total money ever spent — decides the tier",
       empty: "No customers yet — they appear here once they sign up.",
+      noMatch: "No customers match that search.",
       search: "Search by phone or name",
       totalMembers: "Total members",
       profileStatus: "Profile",

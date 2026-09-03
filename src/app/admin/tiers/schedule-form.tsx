@@ -5,10 +5,10 @@ import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CalendarClock } from "lucide-react"
 
-import { AnimateIcon } from "@/components/animate-ui/icons/icon"
 import { X } from "@/components/animate-ui/icons/x"
 import { toast } from "sonner"
 
+import { ConfirmDelete } from "@/components/confirm-delete"
 import { FormDialog } from "@/components/form-dialog"
 import { FormError } from "@/components/form-error"
 import { Button } from "@/components/ui/button"
@@ -332,30 +332,37 @@ function ScheduleFields({
   )
 }
 
-/** Drops a queued raise. Only ever rendered for a pending one. */
-export function CancelSchedule({ id }: { id: string }) {
+/** Drops a queued raise. Only ever rendered for a pending one.
+ *
+ *  Behind the same confirmation gate as a delete: it was the one destructive
+ *  control in the portal that fired on a single click, and what it destroys
+ *  is a dated business decision that has to be re-entered by hand. */
+export function CancelSchedule({
+  id,
+  tierName,
+}: {
+  id: string
+  tierName: string
+}) {
   const t = useT()
   const m = t.admin.tiers
-  const [isPending, startTransition] = useTransition()
 
   return (
-    <AnimateIcon animateOnHover asChild>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        aria-label={m.scheduleCancel}
-        disabled={isPending}
-        onClick={() =>
-          startTransition(async () => {
-            const state = await cancelTierSchedule(id)
-            if (state?.ok) toast.success(state.message)
-            else toast.error(state?.message ?? m.scheduleCancelFailed)
-          })
-        }
-      >
-        <X aria-hidden />
-      </Button>
-    </AnimateIcon>
+    <ConfirmDelete
+      name={tierName}
+      icon={X}
+      triggerVariant="ghost"
+      triggerLabel={m.scheduleCancel}
+      title={m.scheduleCancelTitle}
+      description={m.scheduleCancelBody(tierName)}
+      confirmLabel={m.scheduleCancelConfirm}
+      pendingLabel={m.scheduleCanceling}
+      successMessage={m.scheduleCanceled}
+      onConfirm={async () => {
+        const state = await cancelTierSchedule(id)
+        if (state?.ok) return
+        return state?.message ?? m.scheduleCancelFailed
+      }}
+    />
   )
 }

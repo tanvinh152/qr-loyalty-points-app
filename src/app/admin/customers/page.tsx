@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { EmptyState } from "@/components/empty-state"
+import { buttonVariants } from "@/components/ui/button"
 import { InitialsAvatar } from "@/components/initials-avatar"
 import { Pagination } from "@/components/pagination"
 import { PageHeader } from "@/components/page-header"
@@ -108,7 +109,20 @@ export default async function CustomersPage({
         }
       >
         {customers.length === 0 ? (
-          <EmptyState title={cm.empty} icon={Users} />
+          <EmptyState
+            title={search ? cm.noMatch : cm.empty}
+            icon={Users}
+            action={
+              search ? (
+                <Link
+                  href="/admin/customers"
+                  className={buttonVariants({ variant: "secondary" })}
+                >
+                  {t.common.clearFilters}
+                </Link>
+              ) : undefined
+            }
+          />
         ) : (
           <div className="overflow-x-auto">
             <Table className="min-w-[880px]">

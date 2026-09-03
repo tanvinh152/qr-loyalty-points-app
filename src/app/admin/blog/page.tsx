@@ -1,6 +1,8 @@
+import Link from "next/link"
 import { CheckCircle2, Newspaper } from "lucide-react"
 
 import { EmptyState } from "@/components/empty-state"
+import { buttonVariants } from "@/components/ui/button"
 import { PageHeader } from "@/components/page-header"
 import { SearchInput } from "@/components/search-input"
 import { StatCard } from "@/components/stat-card"
@@ -61,7 +63,20 @@ export default async function BlogPage({
       />
 
       {posts.length === 0 ? (
-        <EmptyState title={search ? m.noMatch : m.empty} icon={Newspaper} />
+        <EmptyState
+          title={search ? m.noMatch : m.empty}
+          icon={Newspaper}
+          action={
+            search ? (
+              <Link
+                href="/admin/blog"
+                className={buttonVariants({ variant: "secondary" })}
+              >
+                {t.common.clearFilters}
+              </Link>
+            ) : undefined
+          }
+        />
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {posts.map((post) => (

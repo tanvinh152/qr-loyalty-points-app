@@ -533,6 +533,7 @@ export const vi: Messages = {
       lifetimeSpendHint: "Tổng tiền đã chi tiêu — dùng để xét hạng",
       empty:
         "Chưa có khách hàng nào — khách xuất hiện sau khi đăng ký tài khoản.",
+      noMatch: "Không có khách hàng nào khớp với tìm kiếm này.",
       search: "Tìm theo số điện thoại hoặc tên",
       totalMembers: "Tổng thành viên",
       profileStatus: "Hồ sơ",

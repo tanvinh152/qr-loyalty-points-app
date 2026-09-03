@@ -67,9 +67,9 @@ export default async function RewardsPage({
     kind === "spin"
       ? query.order("sort_order").order("id")
       : kind === "milestone"
-        // Cheapest rung first — the ladder's own order, matching
-        // rewards_milestone_threshold_idx and the customer's roadmap.
-        ? query.order("spend_threshold", { ascending: true })
+        ? // Cheapest rung first — the ladder's own order, matching
+          // rewards_milestone_threshold_idx and the customer's roadmap.
+          query.order("spend_threshold", { ascending: true })
         : query.order("points_cost", { ascending: true })
 
   const [{ data }, categories, tiers, spinDailyLimit] = await Promise.all([
@@ -198,7 +198,20 @@ export default async function RewardsPage({
         {searchBox}
 
         {rows.length === 0 ? (
-          <EmptyState title={search ? ms.noMatch : ms.empty} icon={Gift} />
+          <EmptyState
+            title={search ? ms.noMatch : ms.empty}
+            icon={Gift}
+            action={
+              search ? (
+                <Link
+                  href="/admin/rewards?kind=spin"
+                  className={buttonVariants({ variant: "secondary" })}
+                >
+                  {t.common.clearFilters}
+                </Link>
+              ) : undefined
+            }
+          />
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {rows.map((prize) => (
@@ -284,7 +297,20 @@ export default async function RewardsPage({
         {searchBox}
 
         {rows.length === 0 ? (
-          <EmptyState title={search ? mm.noMatch : mm.empty} icon={Route} />
+          <EmptyState
+            title={search ? mm.noMatch : mm.empty}
+            icon={Route}
+            action={
+              search ? (
+                <Link
+                  href="/admin/rewards?kind=milestone"
+                  className={buttonVariants({ variant: "secondary" })}
+                >
+                  {t.common.clearFilters}
+                </Link>
+              ) : undefined
+            }
+          />
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {rows.map((milestone) => (
@@ -337,7 +363,20 @@ export default async function RewardsPage({
       {searchBox}
 
       {rows.length === 0 ? (
-        <EmptyState title={search ? m.noMatch : m.empty} icon={Gift} />
+        <EmptyState
+          title={search ? m.noMatch : m.empty}
+          icon={Gift}
+          action={
+            search ? (
+              <Link
+                href="/admin/rewards"
+                className={buttonVariants({ variant: "secondary" })}
+              >
+                {t.common.clearFilters}
+              </Link>
+            ) : undefined
+          }
+        />
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {rows.map((reward) => (

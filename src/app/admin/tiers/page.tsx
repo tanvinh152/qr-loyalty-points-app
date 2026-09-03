@@ -123,7 +123,10 @@ export default async function TiersPage() {
                                 )}
                               </span>
                             </div>
-                            <CancelSchedule id={queued.id} />
+                            <CancelSchedule
+                              id={queued.id}
+                              tierName={tier.name}
+                            />
                           </div>
                         ) : (
                           <span className="text-muted-foreground text-body-xs">

@@ -5,8 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { en } from "@/lib/i18n/messages/en"
 import { renderWithProviders } from "@/test/render"
 import { tier } from "@/test/factories"
-import { ScheduleDialog } from "./schedule-form"
-import { previewPercentileAmount, saveTierSchedule } from "./actions"
+import { CancelSchedule, ScheduleDialog } from "./schedule-form"
+import {
+  cancelTierSchedule,
+  previewPercentileAmount,
+  saveTierSchedule,
+} from "./actions"
 
 // This form decides which of TWO MUTUALLY EXCLUSIVE columns carries the number
 // that later moves a whole tier's spend threshold. Get it wrong and either the
@@ -16,16 +20,26 @@ import { previewPercentileAmount, saveTierSchedule } from "./actions"
 vi.mock("./actions", () => ({
   saveTierSchedule: vi.fn(),
   previewPercentileAmount: vi.fn(),
+  cancelTierSchedule: vi.fn(),
 }))
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 const save = vi.mocked(saveTierSchedule)
 const preview = vi.mocked(previewPercentileAmount)
+const cancel = vi.mocked(cancelTierSchedule)
 const m = en.admin.tiers
 
 const TIERS = [
-  tier({ id: "11111111-1111-4111-8111-111111111111", name: "Bạc", sort_order: 1 }),
-  tier({ id: "22222222-2222-4222-8222-222222222222", name: "Vàng", sort_order: 2 }),
+  tier({
+    id: "11111111-1111-4111-8111-111111111111",
+    name: "Bạc",
+    sort_order: 1,
+  }),
+  tier({
+    id: "22222222-2222-4222-8222-222222222222",
+    name: "Vàng",
+    sort_order: 2,
+  }),
 ]
 
 async function open() {
@@ -37,7 +51,10 @@ async function open() {
 }
 
 /** The Select that flips the two mutually exclusive columns. */
-async function chooseMode(user: ReturnType<typeof userEvent.setup>, label: string) {
+async function chooseMode(
+  user: ReturnType<typeof userEvent.setup>,
+  label: string,
+) {
   await user.click(screen.getByRole("combobox", { name: m.scheduleMode }))
   await user.click(await screen.findByRole("option", { name: label }))
 }
@@ -188,8 +205,46 @@ describe("the percentile preview", () => {
 
     vi.advanceTimersByTime(500)
 
-    expect(
-      await screen.findByText(m.schedulePreviewEmpty),
-    ).toBeInTheDocument()
+    expect(await screen.findByText(m.schedulePreviewEmpty)).toBeInTheDocument()
+  })
+})
+
+// Cancelling drops a dated business decision that has to be re-entered by
+// hand. It was the one destructive control in the portal that fired on a
+// single click.
+describe("cancelling a queued raise", () => {
+  beforeEach(() => {
+    cancel.mockReset()
+    cancel.mockResolvedValue({ ok: true, message: m.scheduleCanceled })
+  })
+
+  it("asks first, and touches nothing until the dialog's own action is used", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderWithProviders(<CancelSchedule id="sched-1" tierName="Vàng" />, {
+      locale: "en",
+    })
+
+    await user.click(screen.getByRole("button", { name: m.scheduleCancel }))
+    const dialog = await screen.findByRole("alertdialog")
+    expect(dialog).toHaveTextContent(m.scheduleCancelBody("Vàng"))
+    expect(cancel).not.toHaveBeenCalled()
+
+    await user.click(
+      screen.getByRole("button", { name: m.scheduleCancelConfirm }),
+    )
+    await waitFor(() => expect(cancel).toHaveBeenCalledWith("sched-1"))
+  })
+
+  it("leaves the raise alone on cancel", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderWithProviders(<CancelSchedule id="sched-1" tierName="Vàng" />, {
+      locale: "en",
+    })
+
+    await user.click(screen.getByRole("button", { name: m.scheduleCancel }))
+    await screen.findByRole("alertdialog")
+    await user.click(screen.getByRole("button", { name: en.common.cancel }))
+
+    expect(cancel).not.toHaveBeenCalled()
   })
 })

@@ -25,18 +25,36 @@ import { useT } from "@/lib/i18n/provider"
  *
  * `onConfirm` is a server action bound to the row id; it resolves to an error
  * message, or to nothing when the delete succeeded.
+ *
+ * The copy and glyph are overridable so the same gate can guard any other
+ * one-click destruction — cancelling a queued tier raise, say — without a
+ * second dialog being written. The icon must be an Animate UI one: it is the
+ * control's own affordance, so it animates on hover like the trash does.
  */
 export function ConfirmDelete({
   name,
   onConfirm,
   title,
   description,
+  icon: Icon = Trash2,
+  triggerVariant = "destructive",
+  triggerLabel,
+  confirmLabel,
+  pendingLabel,
+  successMessage,
 }: {
   /** Shown in the confirmation copy so the user can tell rows apart. */
   name: string
   onConfirm: () => Promise<string | void>
   title?: string
   description?: string
+  icon?: typeof Trash2
+  triggerVariant?: React.ComponentProps<typeof Button>["variant"]
+  /** Accessible name of the trigger. Defaults to "Delete — {name}". */
+  triggerLabel?: string
+  confirmLabel?: string
+  pendingLabel?: string
+  successMessage?: string
 }) {
   const t = useT()
   const [open, setOpen] = useState(false)
@@ -49,7 +67,7 @@ export function ConfirmDelete({
         toast.error(error)
         return
       }
-      toast.success(t.common.deleted)
+      toast.success(successMessage ?? t.common.deleted)
       setOpen(false)
     })
   }
@@ -59,12 +77,12 @@ export function ConfirmDelete({
       <AnimateIcon animateOnHover asChild>
         <AlertDialogTrigger asChild>
           <Button
-            variant="destructive"
+            variant={triggerVariant}
             size="icon-sm"
             type="button"
-            aria-label={`${t.common.delete} — ${name}`}
+            aria-label={triggerLabel ?? `${t.common.delete} — ${name}`}
           >
-            <Trash2 aria-hidden />
+            <Icon aria-hidden />
           </Button>
         </AlertDialogTrigger>
       </AnimateIcon>
@@ -86,7 +104,9 @@ export function ConfirmDelete({
             onClick={confirm}
             disabled={isPending}
           >
-            {isPending ? t.common.deleting : t.common.delete}
+            {isPending
+              ? (pendingLabel ?? t.common.deleting)
+              : (confirmLabel ?? t.common.delete)}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

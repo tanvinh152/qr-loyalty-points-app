@@ -255,7 +255,20 @@ export default async function TransactionsPage({
         }
       >
         {rows.length === 0 ? (
-          <EmptyState icon={Receipt} title={filtered ? tx.noMatch : tx.empty} />
+          <EmptyState
+            icon={Receipt}
+            title={filtered ? tx.noMatch : tx.empty}
+            action={
+              filtered ? (
+                <Link
+                  href="/admin/transactions"
+                  className={buttonVariants({ variant: "secondary" })}
+                >
+                  {t.common.clearFilters}
+                </Link>
+              ) : undefined
+            }
+          />
         ) : (
           <div className="overflow-x-auto">
             <Table className="min-w-[860px]">
